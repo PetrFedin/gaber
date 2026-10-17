@@ -4,7 +4,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {SVGRenderer} from 'three/addons/renderers/SVGRenderer.js';
-import {getColor,getFabric} from './domain.js';
+import {getColor,getFabric,colors} from './domain.js';
 
 function texture(kind){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#888';c.fillRect(0,0,256,256);
@@ -12,47 +12,75 @@ function texture(kind){
  for(let y=0;y<256;y+=kind==='boucle'?4:2)for(let x=0;x<256;x+=kind==='boucle'?4:2){let v=100+Math.round(rand()*70);c.fillStyle=`rgb(${v},${v},${v})`;if(kind==='boucle'){c.beginPath();c.ellipse(x,y,1+rand()*2,1+rand()*2,0,0,Math.PI*2);c.fill();}else c.fillRect(x,y,kind==='velvet'?1:2,kind==='velvet'?4:1);}
  const t=new THREE.CanvasTexture(canvas);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(kind==='boucle'?5:10,kind==='boucle'?5:10);t.anisotropy=4;return t;
 }
-function release(group){const gs=new Set(),ms=new Set(),ts=new Set();group.traverse(o=>{if(o.geometry)gs.add(o.geometry);const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach(m=>{ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);});});gs.forEach(x=>x.dispose());ms.forEach(x=>x.dispose());ts.forEach(x=>x.dispose());}
+function release(group){const gs=new Set(),ms=new Set(),ts=new Set();group.traverse(o=>{if(o.geometry)gs.add(o.geometry);const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach(m=>{ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);});});for(const m of group.userData.materials||[]){ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);}gs.forEach(x=>x.dispose());ms.forEach(x=>x.dispose());ts.forEach(x=>x.dispose());}
 function furniture(config,simplified=false){
  const group=new THREE.Group(),col=getColor(config),fab=getFabric(config),bump=texture(fab.texture);
  const cloth=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:fab.roughness,metalness:0,sheen:fab.sheen,sheenColor:new THREE.Color(col.hex).lerp(new THREE.Color('#ffffff'),.22),sheenRoughness:.8,bumpMap:bump,bumpScale:fab.texture==='boucle'?.014:.005});
  const darker=cloth.clone();darker.color.multiplyScalar(.9);
+ const zone=id=>{const m=cloth.clone(),color=colors.find(x=>x.id===id);if(color)m.color.set(color.hex);return m;};
+ const seatCloth=zone(config.seatColor),backCloth=zone(config.backColor),armCloth=zone(config.armColor);group.userData.materials=[cloth,darker,seatCloth,backCloth,armCloth];
+ const timber=new THREE.MeshStandardMaterial({color:'#876345',roughness:.75});
+ const radius=config.shape==='linear'?.025:config.shape==='organic'?.16:.08;
  const wood=new THREE.MeshStandardMaterial({color:config.legs==='wood'?'#785339':config.legs==='black'?'#343531':'#9c7b43',roughness:config.legs==='brass'?.3:.65,metalness:config.legs==='wood'?0:.65});
  const seamMat=new THREE.LineBasicMaterial({color:new THREE.Color(col.hex).multiplyScalar(.73),transparent:true,opacity:.48});
  const box=(w,h,d,x,y,z,material=cloth,r=.08,part='seat')=>{
-  const g=new RoundedBoxGeometry(w,h,d,simplified?1:5,Math.min(r,w/3,h/3,d/3));
+  const g=new RoundedBoxGeometry(w,h,d,simplified?1:5,Math.min(config.shape==='linear'?.02:config.shape==='organic'?r*1.5:r,w/3,h/3,d/3));
   const m=new THREE.Mesh(g,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;m.userData.part=part;group.add(m);return m;
  };
- const leg=(x,z)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.027,.019,.155,16),wood);m.position.set(x,.09,z);m.castShadow=true;m.userData.part='legs';group.add(m);};
- const seam=(w,d,x,y,z)=>{const pts=[];const radius=.08;for(let i=0;i<=80;i++){const angle=i/80*Math.PI*2;const xx=(w/2-radius)*Math.sign(Math.cos(angle))+radius*Math.cos(angle),zz=(d/2-radius)*Math.sign(Math.sin(angle))+radius*Math.sin(angle);pts.push(new THREE.Vector3(xx+x,y,zz+z));}const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),seamMat);group.add(line);};
+ const leg=(x,z)=>{if(config.legs==='none')return;const m=new THREE.Mesh(new THREE.CylinderGeometry(.027,.019,.155,16),wood);m.position.set(x,.09,z);m.castShadow=true;m.userData.part='legs';group.add(m);};
+ const seam=(w,d,x,y,z)=>{if(config.seam==='none')return;const pts=[];const radius=.08;for(let i=0;i<=80;i++){const angle=i/80*Math.PI*2;const xx=(w/2-radius)*Math.sign(Math.cos(angle))+radius*Math.cos(angle),zz=(d/2-radius)*Math.sign(Math.sin(angle))+radius*Math.sin(angle);pts.push(new THREE.Vector3(xx+x,y,zz+z));}const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),seamMat);group.add(line);};
  const w=config.width/100,depth=config.depth/100;
  if(config.category==='headboard'){
   const h=config.height/100,n=config.panels;
   box(w,.10,.16,0,.16,0,darker,.025,'back');
-  for(let i=0;i<n;i++)box(w/n-.012,h,.15,-w/2+w/n*(i+.5),h/2+.13,0,cloth,.07,'back');
+  for(let i=0;i<n;i++){const ph=h-(config.backShape==='arched'?Math.abs(i-(n-1)/2)*.07:0);box(w/n-.012,ph,depth,-w/2+w/n*(i+.5),ph/2,config.exploded?i*.025:0,backCloth,radius,'back');}
+  if(config.backShape==='winged')for(const side of [-1,1])box(.12,h,.35,side*w/2,h/2,.12,backCloth,radius,'back');
+  if(config.lamps)for(const x of [-w*.35,w*.35])box(.05,.45,.05,x,h*.75,.22,timber,.02,'back');
+  if(config.charging)box(.12,.07,.025,w*.35,.35,depth/2+.02,timber,.01,'back');
   leg(-w*.35,0);leg(w*.35,0);
   return group;
  }
+ if(config.category==='bed'){
+  box(w,.32,depth,0,.30,.0,darker,.09,'seat');
+  const mattress=new THREE.MeshStandardMaterial({color:'#e9e4d8',roughness:1});
+  box(w-.13,.22,depth-.22,0,config.storage&&config.exploded?.92:.57,.03,mattress,.09,'seat');
+  for(let i=0;i<config.panels;i++){const ph=config.height/100-(config.backShape==='arched'?Math.abs(i-(config.panels-1)/2)*.06:0);box(w/config.panels-.012,ph,.16,-w/2+w/config.panels*(i+.5),ph/2,-depth/2,backCloth,radius,'back');}
+  if(config.backShape==='winged')for(const side of [-1,1])box(.1,config.height/100,.35,side*w/2,config.height/200,-depth/2+.12,backCloth,radius,'back');
+  for(const x of [-w/2+.15,w/2-.15])for(const z of [-depth/2+.14,depth/2-.14])leg(x,z);
+  for(let i=0;i<config.pillows;i++)box(config.pillowWidth/100,config.pillowHeight/100,.14,-w*.3+(i%3)*w*.3,.8,-depth/2+.4,zone(config.pillowColors[i]),.06,'pillow');
+  if(config.charging)box(.14,.08,.035,w*.38,.8,-depth/2+.1,timber,.01,'back');
+  if(config.lamps)for(const x of [-w*.42,w*.42]){box(.025,.5,.025,x,1.15,-depth/2+.12,timber,.01,'back');box(.15,.08,.1,x,1.4,-depth/2+.15,mattress,.02,'back');}
+  return group;
+ }
  const arm=config.arm==='none'?0:config.arm==='slim'?.12:.23,inner=w-arm*2;
- const count=config.category==='chair'?1:w>=2.6?3:2,seatW=inner/count;
+ const count=['chair','chairbed'].includes(config.category)?1:config.moduleCount,seatW=inner/count;
+ if(config.legs==='none')box(w-.2,.18,depth-.2,0,.09,0,darker,.03,'legs');
  const chaise=config.category==='sofa'&&config.layout!=='straight';
  box(w-.08,.23,depth-.09,0,.29,0,darker,.08,'seat');
  for(let i=0;i<count;i++){
   const x=-inner/2+seatW*(i+.5),extended=chaise&&((config.layout==='left'&&i===0)||(config.layout==='right'&&i===count-1));
   const sd=depth-.22+(extended?.65:0),z=.075+(extended?.325:0);
-  box(seatW-.025,.225,sd,x,.495,z,cloth,.095,'seat');seam(seatW-.045,sd-.025,x,.586,z);
+  box(seatW-.025,.225,sd,x+(config.exploded?(i-(count-1)/2)*.12:0),config.exploded?.82:config.storage?.52:.495,z+(config.expanded?.4:0),seatCloth,radius,'seat');seam(seatW-.045,sd-.025,x,.586,z);
   const backHeight=config.height/100-.44;
-  const back=box(seatW-.028,backHeight,.23,x,.44+backHeight/2,-depth/2+.14,cloth,.08,'back');back.rotation.x=-.06;
+  const bh=backHeight+(config.backShape==='arched'?.12*(1-Math.abs(i-(count-1)/2)/count):0);const back=box(seatW-.028,bh,config.backDepth/100,x,.44+bh/2+(config.exploded?.3:0),-depth/2+.14-(config.exploded?.3:0),backCloth,radius,'back');back.rotation.x=-.06;
  }
- if(arm){for(const side of [-1,1]){const a=box(arm,.44,depth,side*(w/2-arm/2),.49,0,cloth,config.arm==='slim'?.045:.105,'arm');a.rotation.z=side*.012;}}
+ if(arm){for(const side of [-1,1]){const a=box(arm,.44,depth,side*(w/2-arm/2),.49,0,armCloth,config.arm==='slim'?.045:radius*1.3,'arm');a.rotation.z=side*.012;}}
  for(const x of [-w/2+.15,w/2-.15])for(const z of [-depth/2+.14,depth/2-.14])leg(x,z);
  if(chaise){const x=(config.layout==='left'?-1:1)*(inner/2-seatW/2);box(seatW-.04,.23,.67,x,.29,depth/2+.29,darker,.07);for(const lx of [x-seatW*.35,x+seatW*.35])leg(lx,depth/2+.53);}
+ if(config.backShape==='winged')for(const side of [-1,1])box(.12,.45,.35,side*(inner/2),.70,-depth/2+.25,backCloth,radius,'back');
+ if(config.woodArms)for(const side of [-1,1])box(arm+.025,.045,depth*.75,side*(w/2-arm/2),.73,0,timber,.02,'arm');
+ if(config.charging)box(.13,.07,.035,w/2-arm/2,.74,.12,timber,.01,'arm');
+ if(config.lamps){box(.025,.55,.025,-w/2+.08,.96,-depth/2+.12,timber,.01,'arm');box(.18,.08,.14,-w/2+.08,1.23,-depth/2+.16,new THREE.MeshStandardMaterial({color:'#e7d7b1',emissive:'#987c35',emissiveIntensity:.3}),.03,'arm');}
+ if(config.storage){box(w*.72,.12,depth*.6,0,.2,.08,timber,.02,'seat');}
+ if(config.expanded&&config.mechanism!=='none'){box(inner,.16,config.mechanism==='recliner'?.5:.9,0,.47,depth/2+.4,seatCloth,radius,'seat');for(const x of [-inner*.4,inner*.4])leg(x,depth/2+.75);}
+ if(config.seam==='double'){seam(inner-.04,depth-.21,0,.60,.075);}
  for(let i=0;i<config.pillows;i++){
-  const n=Math.min(config.pillows,6),x=n===1?0:-inner*.36+i*(inner*.72/(n-1));
-  const p=box(.32,.30,.13,x,.65,-depth/2+.35,i%2===0?darker:cloth,.065,'pillow');p.rotation.set(-.18,0,(i%2===0?1:-1)*.12);
+  const n=Math.min(config.pillows,8),x=n===1?0:-inner*.36+i*(inner*.72/(n-1));
+  const ph=config.pillowHeight/100*(config.pillowShape==='lumbar'?.65:1),pw=config.pillowWidth/100;const p=box(pw,ph,config.pillowShape==='bolster'?.23:.13,x,.55+ph/2+(config.exploded?.35:0),-depth/2+.4,zone(config.pillowColors[i]),config.pillowShape==='bolster'?.12:.065,'pillow');p.rotation.set(-.18,0,(i%2===0?1:-1)*.12);
  }
  return group;
 }
+function addRoom(group,c,simplified=false){if(c.room==='studio')return;const dark=c.room==='loft',warm=c.room==='house';const mat=new THREE.MeshStandardMaterial({color:dark?'#8b8981':warm?'#c9b396':'#ded9ce',roughness:1}),floorMat=new THREE.MeshStandardMaterial({color:dark?'#918f87':'#b6a58b',roughness:.9});const cube=(w,h,d,x,y,z,m)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.receiveShadow=true;group.add(mesh);};const rw=c.roomWidth/100,rd=c.roomDepth/100;if(!simplified)cube(rw,.03,rd,0,-.03,.2,floorMat);cube(rw,2.8,.04,0,1.38,-rd/2+.2,mat);cube(.04,2.8,rd,-rw/2,1.38,.2,mat);const art=new THREE.MeshStandardMaterial({color:dark?'#4f574c':'#9d997b',roughness:1});cube(.8,.9,.04,rw*.25,1.7,-rd/2+.24,art);const rug=new THREE.MeshStandardMaterial({color:'#cbc5b5',roughness:1});if(!simplified)cube(Math.min(rw-.3,c.width/100+.5),.015,Math.min(rd-.3,c.depth/100+1),0,.005,.3,rug);if(c.room==='hotel')cube(.45,.5,.45,c.width/200+.35,.25,-.5,art);}
 const Scene=forwardRef(function Scene({config,onSelect,hero=false},ref){
  const host=useRef(null),runtime=useRef(null),onSelectRef=useRef(onSelect),[failed,setFailed]=useState(false),[simplified,setSimplified]=useState(false);
  onSelectRef.current=onSelect;
@@ -86,7 +114,7 @@ const Scene=forwardRef(function Scene({config,onSelect,hero=false},ref){
   }catch{setFailed(true);}
   return()=>{disposed=true;cancelAnimationFrame(raf);observer?.disconnect();runtime.current?.cleanup?.();controls?.dispose();if(runtime.current?.model)release(runtime.current.model);if(scene)scene.traverse(o=>{if(o.geometry)o.geometry.dispose();});env?.dispose();pmrem?.dispose();renderer?.dispose?.();renderer?.domElement.remove();runtime.current=null;};
  },[hero]);
- useEffect(()=>{const r=runtime.current;if(!r)return;try{if(r.model){r.scene.remove(r.model);release(r.model);}r.model=furniture(config,r.simplified);r.scene.add(r.model);r.controls.target.set(0,config.category==='headboard'?.7:.55,config.layout==='straight'?0:.25);if(r.lastCategory!==config.category){const scale=config.category==='chair'?.6:config.category==='headboard'?.8:1;r.camera.position.set(3.1*scale,2.05*scale,4.4*scale);r.lastCategory=config.category;}r.controls.update();r.invalidate();}catch{setFailed(true);}},[config]);
+ useEffect(()=>{const r=runtime.current;if(!r)return;try{if(r.model){r.scene.remove(r.model);release(r.model);}r.model=furniture(config,r.simplified);if(!hero)addRoom(r.model,config,r.simplified);r.scene.add(r.model);r.controls.target.set(0,config.category==='headboard'?.7:.55,config.layout==='straight'?0:.25);if(r.lastCategory!==config.category){const scale=config.category==='chair'?.6:config.category==='headboard'?.8:1;r.camera.position.set(3.1*scale,2.05*scale,4.4*scale);r.lastCategory=config.category;}r.controls.update();r.invalidate();}catch{setFailed(true);}},[config]);
  return <div className="scene-host" ref={host}>{simplified&&!failed&&<span className="simplified-badge">Упрощённый просмотр · без WebGL</span>}{failed&&<div className="scene-fallback"><span>3D-просмотр недоступен</span><p>Параметры, расчёт и сохранение проекта продолжают работать. Попробуйте обновить страницу или использовать устройство с WebGL.</p></div>}</div>;
 });
 export default Scene;

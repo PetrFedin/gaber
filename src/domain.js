@@ -1,4 +1,4 @@
-export const CATALOG_VERSION = 'demo-2026.10.17';
+export const CATALOG_VERSION = 'demo-2026.10.17-v03';
 export const families = [
  {id:'sofa',name:'Диван',collection:'Linea',subtitle:'Модульная свобода',label:'LINEA / 01',description:'Спокойные линии, глубокая посадка и композиция, которая подстраивается под ваш ритм.',min:160,max:360,step:10},
  {id:'chair',name:'Кресло',collection:'Forma',subtitle:'Личное пространство',label:'FORMA / 02',description:'Мягкое кресло для любимого места. Выберите фактуру, характер опор и комфорт посадки.',min:75,max:120,step:5},
@@ -25,7 +25,7 @@ export const isHead=c=>c.category==='headboard';
 export const isBed=c=>c.category==='bed';
 export const isChair=c=>['chair','chairbed'].includes(c.category);
 export const bounds=c=>({depth:isHead(c)?[12,30]:isBed(c)?[200,230]:[85,125],height:isHead(c)||isBed(c)?[90,160]:[75,110]});
-export const initialConfig = (category='sofa') => ({category,width:category==='sofa'?280:['chair','chairbed'].includes(category)?90:200,depth:category==='headboard'?15:category==='bed'?215:100,height:['headboard','bed'].includes(category)?120:82,layout:'straight',fabric:'boucle',color:'sand',legs:'wood',arm:'rounded',comfort:'balanced',pillows:category==='sofa'?2:['chair','chairbed','bed'].includes(category)?1:0,panels:5,shape:'rounded',backShape:'straight',backDepth:23,pillowHeight:35,pillowWidth:40,pillowShape:'square',pillowColors:Array(8).fill('inherit'),seatColor:'inherit',backColor:'inherit',armColor:'inherit',seam:'single',covers:'fixed',storage:false,mechanism:category==='chairbed'?'fold':'none',woodArms:false,charging:false,lamps:false,room:'studio',roomWidth:500,roomDepth:450,expanded:false,exploded:false,moduleCount:3});
+export const initialConfig = (category='sofa') => ({category,width:category==='sofa'?280:['chair','chairbed'].includes(category)?90:200,depth:category==='headboard'?15:category==='bed'?215:100,height:['headboard','bed'].includes(category)?120:82,layout:'straight',fabric:'boucle',color:'sand',legs:'wood',arm:'rounded',comfort:'balanced',pillows:category==='sofa'?2:['chair','chairbed','bed'].includes(category)?1:0,panels:5,shape:'rounded',backShape:'straight',backDepth:23,seatHeight:45,seatDepth:55,backLeanDeg:12,support:'zigzag',seatCore:'foam',pillowHeight:35,pillowWidth:40,pillowShape:'square',pillowColors:Array(8).fill('inherit'),seatColor:'inherit',backColor:'inherit',armColor:'inherit',seam:'single',covers:'fixed',storage:false,mechanism:category==='chairbed'?'fold':'none',woodArms:false,charging:false,lamps:false,room:'studio',roomWidth:500,roomDepth:450,expanded:false,exploded:false,moduleCount:3});
 export const money = n => new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(n);
 export const getFamily=c=>families.find(x=>x.id===c.category);
 export const getFabric=c=>fabrics.find(x=>x.id===c.fabric);
@@ -33,8 +33,8 @@ export const getColor=c=>colors.find(x=>x.id===c.color);
 export function validate(c){
  const errors=[],f=getFamily(c);if(!f)return ['Неизвестная категория изделия'];
  const range=(key,min,max,step=1)=>{if(!Number.isFinite(c[key])||c[key]<min||c[key]>max||Math.abs((c[key]-min)/step-Math.round((c[key]-min)/step))>.001)errors.push(`${key}: ${min}–${max}, шаг ${step}`);};
- range('width',f.min,f.max,f.step);range('depth',...bounds(c).depth);range('height',...bounds(c).height);range('pillows',0,8);range('panels',3,8);range('backDepth',15,40);range('pillowHeight',20,65);range('pillowWidth',25,70);range('roomWidth',250,1000,10);range('roomDepth',250,1000,10);range('moduleCount',2,5);
- const enums={legs:['wood','black','brass','none'],arm:['rounded','slim','none'],comfort:['balanced','soft','firm'],layout:['straight','left','right'],shape:['rounded','linear','organic'],backShape:['straight','arched','winged'],pillowShape:['square','lumbar','bolster'],seam:['single','double','piping','none'],covers:['fixed','removable'],mechanism:['none','fold','slide','recliner'],room:['studio','apartment','house','loft','hotel']};
+ range('width',f.min,f.max,f.step);range('depth',...bounds(c).depth);range('height',...bounds(c).height);range('pillows',0,8);range('panels',3,8);range('backDepth',15,40);range('pillowHeight',20,65);range('pillowWidth',25,70);range('roomWidth',250,1000,10);range('roomDepth',250,1000,10);range('moduleCount',2,5);range('seatHeight',40,52);range('seatDepth',45,70);range('backLeanDeg',4,20);
+ const enums={legs:['wood','black','brass','none'],arm:['rounded','slim','none'],comfort:['balanced','soft','firm'],layout:['straight','left','right'],shape:['rounded','linear','organic'],backShape:['straight','arched','winged'],pillowShape:['square','lumbar','bolster'],seam:['single','double','piping','none'],covers:['fixed','removable'],mechanism:['none','fold','slide','recliner'],support:['zigzag','webbing'],seatCore:['foam','pocket'],room:['studio','apartment','house','loft','hotel']};
  for(const [k,v] of Object.entries(enums))if(!v.includes(c[k]))errors.push(`Неизвестное значение: ${k}`);
  if(!getFabric(c)||!getColor(c))errors.push('Неизвестный материал или цвет');
  for(const k of ['seatColor','backColor','armColor'])if(c[k]!=='inherit'&&!colors.some(x=>x.id===c[k]))errors.push('Неизвестный цвет зоны');
@@ -45,6 +45,7 @@ export function validate(c){
  if(c.category==='chairbed'&&!['fold','slide'].includes(c.mechanism))errors.push('Для кресла-кровати нужен раскладной механизм');
  if(isHead(c)&&(c.storage||c.mechanism!=='none'||c.woodArms||c.pillows))errors.push('Изголовье не содержит сиденье, подлокотники и хранение');
  if(isBed(c)&&c.mechanism!=='none')errors.push('Для кровати используется подъёмный узел хранения');
+ if((isHead(c)||isBed(c)||c.category==='chairbed')&&c.seatCore==='pocket')errors.push('Pocket Spring сердечник пока предусмотрен только для дивана и обычного кресла');
  if(c.woodArms&&(c.arm==='none'||isBed(c)))errors.push('Деревянные вставки требуют подлокотников');
  if(c.mechanism==='recliner'&&(c.storage||c.layout!=='straight'))errors.push('Реклайнер несовместим с хранением и шезлонгом в демо-модели');
  return errors;

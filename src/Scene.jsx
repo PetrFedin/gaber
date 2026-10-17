@@ -5,6 +5,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {SVGRenderer} from 'three/addons/renderers/SVGRenderer.js';
 import {getColor,getFabric,colors} from './domain.js';
+import {buildInspectionAssembly} from './EngineeringAssembly.js';
 
 function texture(kind){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#888';c.fillRect(0,0,256,256);
@@ -14,6 +15,7 @@ function texture(kind){
 }
 function release(group){const gs=new Set(),ms=new Set(),ts=new Set();group.traverse(o=>{if(o.geometry)gs.add(o.geometry);const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach(m=>{ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);});});for(const m of group.userData.materials||[]){ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);}gs.forEach(x=>x.dispose());ms.forEach(x=>x.dispose());ts.forEach(x=>x.dispose());}
 function furniture(config,simplified=false){
+ if(config.exploded) return buildInspectionAssembly(config);
  const group=new THREE.Group(),col=getColor(config),fab=getFabric(config),bump=texture(fab.texture);
  const cloth=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:fab.roughness,metalness:0,sheen:fab.sheen,sheenColor:new THREE.Color(col.hex).lerp(new THREE.Color('#ffffff'),.22),sheenRoughness:.8,bumpMap:bump,bumpScale:fab.texture==='boucle'?.014:.005});
  const darker=cloth.clone();darker.color.multiplyScalar(.9);

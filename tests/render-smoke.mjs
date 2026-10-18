@@ -11,5 +11,24 @@ try{
  const {defaultProfile}=await server.ssrLoadModule('/src/costing.js');
  let n=0;
  for(const f of families){const c=initialConfig(f.id);for(const [Component,props] of [[TechnicalPage,{config:c}],[CostingPage,{config:c,profile:defaultProfile(),onChange(){}}],...['composition','dimensions','fabric','details','room','technical'].map(step=>[Panel,{config:c,step,change(){},start(){}}])]){const html=renderToStaticMarkup(React.createElement(Component,props));assert.ok(html.length>100);assert.ok(!html.includes('NaN'));n++;}}
+ for(const layout of ['left','right']){
+   const c={...initialConfig('sofa'),layout,support:layout==='right'?'webbing':'zigzag',legs:layout==='right'?'none':'wood'};
+   for(const [Component,props] of [
+     [TechnicalPage,{config:c}],
+     [CostingPage,{config:c,profile:defaultProfile(),onChange(){}}],
+     [Panel,{config:c,step:'technical',change(){},start(){}}]
+   ]){
+     const html=renderToStaticMarkup(React.createElement(Component,props));
+     assert.ok(html.length>100);
+     assert.ok(!html.includes('NaN'));
+     if(Component===TechnicalPage){
+       assert.match(html,/GABER_PART:CHAISE-F-001/);
+       assert.match(html,/GABER_SUPPORT:CHAISE:/);
+       assert.match(html,/GABER_SOFT:CHAISE:/);
+       assert.match(html,/Блокирует выпуск/);
+     }
+     n++;
+   }
+ }
  console.log(`✓ ${n} server-render smoke scenarios: five categories, six panels, economics and technical pages`);
 }finally{await server.close();}

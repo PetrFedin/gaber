@@ -26,6 +26,22 @@ export function frameInstances(model) {
       const back=model.cutList.find(p=>p.id==='BACK-P');
       add('BACK-P',{x,y:c.seatHeight*10+back.sizeMm.width/2-80,z:-c.depth*5+120},['length','width','height'],-c.backLeanDeg);
     }
+    if(g.chaise){
+      const ci=g.chaise.moduleIndex;
+      const cx=(ci-(n-1)/2)*mw;
+      const frontZ=-c.depth*5+c.backDepth*10+c.seatDepth*5+fd/2-20;
+      const ext=g.chaise.extensionMm;
+      // Rails are positioned edge-to-edge with the existing forward rail.
+      // This is an envelope and does not represent actual mortises or fasteners.
+      add('CHAISE-F',{x:cx,y,z:frontZ+ext});
+      for(const side of [-1,1])add('CHAISE-S',{
+        x:cx+side*(mw/2-20),y,z:frontZ+ext/2
+      },['width','height','length']);
+      add('CHAISE-X',{x:cx,y,z:frontZ+ext/2});
+      for(const side of [-1,1])add('CHAISE-K',{
+        x:cx+side*(mw/2-45),y:y-39,z:frontZ+ext-45
+      });
+    }
     if(g.armCm)for(const side of [-1,1]){
       const arm=model.cutList.find(p=>p.id==='ARM-P');
       add('ARM-P',{x:side*(c.width*5-g.armCm*5),y:arm.sizeMm.width/2,z:0},['height','width','length']);

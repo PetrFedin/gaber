@@ -1,6 +1,7 @@
 import {getEngineeringModel} from './engineering.js';
 import {getFabric} from './domain.js';
 import {frameInstances} from './frameLayout.js';
+import {supportInstances} from './supportLayout.js';
 
 export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.1';
 
@@ -212,6 +213,21 @@ export function createManufacturingPackage(config,evidence={}) {
       approval:'unreleased'
     };
   });
+  const supportRecords=supportInstances(engineering);
+  const suspension={
+    type:engineering.suspension.type,
+    nominalSpacingMm:engineering.suspension.spacingMm,
+    supplierSku:null,approval:'unreleased',
+    pieces:supportRecords.map(s=>({
+      sceneNodeRef:s.sceneNodeRef,kind:s.kind,moduleIndex:s.moduleIndex,
+      location:s.location,positionMm:structuredClone(s.positionMm),
+      sizeMm:structuredClone(s.sizeMm),
+      supplierSku:null,unitCostRUB:null,approval:'unreleased'
+    })),
+    partCount:supportRecords.length,
+    geometryStatus:'concept-only',
+    testEvidence:null
+  };
   const layerSceneRefs=layer=>{
     if(layer.zone==='seat'){
       const count=engineering.geometry.moduleCount;
@@ -265,6 +281,7 @@ export function createManufacturingPackage(config,evidence={}) {
     {id:'BOM_MATERIALS',passed:parts.every(p=>p.actualMaterialSku),message:'Approved supplier materials and SKUs'},
     {id:'JOINTS',passed:joints.every(j=>typeof j.fastenerSku==='string'&&j.fastenerSku&&j.drillPatternMm),message:'Joint fasteners and drilling patterns unverified'},
     {id:'SOFT_MATERIALS',passed:layers.every(x=>x.materialSku&&x.compressionCurveRef),message:'Approved foam material properties and compression curves'},
+    {id:'SUPPORT_SYSTEM',passed:false,message:'Опорная система: артикулы, монтажные натяжения, долговечность и нагрузочные испытания не утверждены'},
     {id:'UPHOLSTERY',passed:finitePositive(evidence.fabric?.rollWidthMm)&&approvedDoc(evidence.patternDrawing)&&!['does-not-fit-roll','cad-template-required'].includes(pattern.status),message:'Approved cutting marker, supplier roll and cover drawing'},
     {id:'HARDWARE',passed:hardware.every(x=>x.supplierSku&&x.drawingsRef),message:'Manufacturer specifications and hardware certifications'},
     {id:'ROUTING',passed:false,message:'Operation standards and QC route require factory MES approval'},
@@ -283,9 +300,10 @@ export function createManufacturingPackage(config,evidence={}) {
     sourceConfig:structuredClone(config),
     engineeringVersion:engineering.schemaVersion,
     envelopeCm:structuredClone(engineering.envelopeCm),
-    joinery:joints,parts,layers,hardware,routing,upholstery:pattern,
+    joinery:joints,parts,layers,suspension,hardware,routing,upholstery:pattern,
     traceability:{
       partCount:parts.length,
+      supportPartCount:suspension.partCount,
       linkedPartIds:parts.map(p=>p.partId),
       nodeToPartId:Object.fromEntries(parts.map(p=>[p.sceneNodeRef,p.partId])),
       costingMode:'no-verified-production-price',

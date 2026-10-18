@@ -45,6 +45,13 @@ export function getEngineeringModel(c) {
   const seatLayers = seating ? seatStack(c) : [];
   const seatStackMm = seatLayers.reduce((sum,layer) => sum + layer.thicknessMm,0);
   const frameTopCm = seating ? round1(c.seatHeight - seatStackMm / 10) : null;
+  // The 650 mm chaise depth is the existing demo envelope, not an approved load span.
+  const chaise = c.category==='sofa'&&c.layout!=='straight' ? {
+    side:c.layout,moduleIndex:c.layout==='left'?0:n-1,
+    extensionMm:650,moduleWidthMm:cmToMm(moduleWidthCm),
+    loadPath:'cantilever not assumed; forward rail requires separately rated supports',
+    qualification:'concept-only: bending, connections, dynamic loading and stability unverified'
+  } : null;
   const fabric = getFabric(c);
   const cutList = [];
   if(seating) {
@@ -58,6 +65,12 @@ export function getEngineeringModel(c) {
       makePart('BACK-P','Основание спинки',n,{length:cmToMm(moduleWidthCm-2),width:cmToMm(Math.max(20,c.height-c.seatHeight+8)),height:12},'Берёзовая фанера 12 мм, проектный вариант','Раскрой, крепление, контроль угла',['width','height','seatHeight','backLeanDeg'])
     );
     if(armCm)cutList.push(makePart('ARM-P','Боковины подлокотников',2,{length:cmToMm(c.depth-4),width:cmToMm(Math.max(10,c.seatHeight+18)),height:18},'Берёзовая фанера 18 мм','Раскрой, закладные, крепление',['arm','depth','seatHeight']));
+    if(chaise)cutList.push(
+      makePart('CHAISE-F','Торцевая царга удлинения шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Проверить торцевой узел и установку опор',['layout','width','moduleCount']),
+      makePart('CHAISE-S','Продольная царга шезлонга',2,{length:chaise.extensionMm-40,width:40,height:60},'Брус 40×60 мм; проектное сечение','Стыковка с поперечной царгой модуля',['layout']),
+      makePart('CHAISE-X','Поперечное усиление шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Уточнить положение усиления',['layout','width','moduleCount']),
+      makePart('CHAISE-K','Передние угловые косынки',2,{length:90,width:90,height:18},'Берёзовая фанера 18 мм; проектное сечение','Конструкция крепежа на проверку',['layout'])
+    );
   } else if(bed) {
     cutList.push(
       makePart('BED-L','Продольные царги кровати',2,{length:cmToMm(c.depth-8),width:200,height:18},'Берёзовая фанера 18 мм; усиления по расчёту','Раскрой, кромка, стяжки',['depth']),
@@ -110,7 +123,10 @@ export function getEngineeringModel(c) {
     ...(c.legs!=='none' && !head ? [{id:'legs',qty:1,name:'Комплект опор ' + c.legs,evidence:'Артикул, высота, узел крепления, допустимая нагрузка и испытания устойчивости'}] : []),
     ...(c.charging ? [{id:'charging',qty:1,name:'USB-электромодуль',evidence:'Модель блока питания, электробезопасность, кабельный маршрут, тепловой режим'}] : []),
     ...(c.lamps ? [{id:'lamps',qty:1,name:'Светильники',evidence:'Модель, драйвер, напряжение, температура, доступ к обслуживанию'}] : []),
-    ...(c.covers==='removable' ? [{id:'zipper',qty:1,name:'Молнии/фиксация съёмного чехла',evidence:'Артикул, ресурс циклов, технологические припуски'}] : [])
+    ...(c.covers==='removable' ? [{id:'zipper',qty:1,name:'Молнии/фиксация съёмного чехла',evidence:'Артикул, ресурс циклов, технологические припуски'}] : []),
+    ...(chaise ? [{id:c.legs==='none'?'chaisePlinth':'chaiseFoot',qty:c.legs==='none'?1:2,
+      name:c.legs==='none'?'Подпорный цоколь шезлонга':'Дополнительная передняя опора шезлонга',
+      evidence:'Точки опирания, крепежи, устойчивость и паспорт допустимой нагрузки требуют подтверждения'}] : [])
   ];
   const checks = [
     gate('CONFIG_SCHEMA','pass','Все значения проходят схему конфигурации'),
@@ -119,6 +135,10 @@ export function getEngineeringModel(c) {
       gate('MODULE_CLEARANCE',moduleWidthCm>=52?'pass':'review', 'Ширина посадочного модуля >= 52 см — внутренний проектный порог, не норматив'),
       gate('SEAT_ENVELOPE',c.seatDepth+c.backDepth+7<=c.depth?'pass':'review','Глубина посадки + спинка + 7 см техзазора должны помещаться в габарит'),
       gate('SEAT_VERTICAL',frameTopCm>=22&&c.height>=c.seatHeight+18?'pass':'review','Высота базы под настил и высота спинки требуют компоновочной проверки')
+    ] : []),
+    ...(chaise ? [
+      gate('CHAISE_LOAD_PATH','pending','Требуются испытания несущей схемы и соединений удлинения шезлонга'),
+      gate('CHAISE_SUPPORT','pending','Требуется утверждённая конструкция опор шезлонга, устойчивость и предельные нагрузки')
     ] : []),
     gate('SUPPLIER_PROOFS','pending','Нужны реальные артикулы, сертификаты, партии и паспорта материалов'),
     gate('LOAD_STABILITY','pending','Нужны испытания конструкции, соединений, устойчивости и долговечности'),
@@ -145,7 +165,7 @@ export function getEngineeringModel(c) {
       seatDepthCm:seating?c.seatDepth:null,
       backLeanDeg:seating?c.backLeanDeg:null,
       seatPitchDeg:seating?3:null,
-      frameTopCm,seatStackMm
+      frameTopCm,seatStackMm,chaise
     },
     cutList,layers,suspension,upholstery,hardware,checks,
     productionRelease:{

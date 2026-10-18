@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {getEngineeringModel} from './engineering.js';
 import {frameInstances} from './frameLayout.js';
+import {supportInstances} from './supportLayout.js';
 
 /**
  * Visual inspection overlay for the same design model as the technical sheet.
@@ -53,24 +54,6 @@ export function buildInspectionAssembly(config) {
     const yTop=model.geometry.frameTopCm/100;
     for(let i=0;i<n;i++){
       const x=-span/2+moduleW*(i+.5);
-      const springs=Math.min(16,model.suspension.countPerModule);
-      const available=Math.max(.04,moduleW-.09);
-      for(let j=0;j<springs;j++){
-        const sx=x-available/2+available*(j+.5)/springs;
-        if(config.support==='webbing'){
-          box(.055,.007,Math.max(.1,frameD-.065),sx,yTop+.005,originZ,mat.pocket,'support');
-        }else{
-          const pts=[];
-          for(let k=0;k<=18;k++){
-            const t=k/18;
-            pts.push(new THREE.Vector3(sx+Math.sin(k*Math.PI/2)*.015,yTop+.011,originZ+(t-.5)*(frameD-.09)));
-          }
-          const path=new THREE.CatmullRomCurve3(pts);
-          const coil=new THREE.Mesh(new THREE.TubeGeometry(path,36,.003,4,false),mat.metal);
-          coil.userData.part='support';
-          group.add(coil);
-        }
-      }
       let y=yTop;
       model.layers.filter(l=>l.zone==='seat').forEach((layer,j)=>{
         const t=layer.thicknessMm/1000;
@@ -91,23 +74,6 @@ export function buildInspectionAssembly(config) {
       const frontZ=originZ+frameD/2-.02;
       const ext=ch.extensionMm/1000;
       const cz=frontZ+ext/2;
-      const supportCount=Math.min(16,model.suspension.countPerModule);
-      for(let j=0;j<supportCount;j++){
-        const sx=cx-(mw-.09)/2+(mw-.09)*(j+.5)/supportCount;
-        if(config.support==='webbing'){
-          box(.055,.007,ext-.08,sx,yTop+.005,cz,mat.pocket,'support');
-        }else{
-          const pts=[];
-          for(let k=0;k<=18;k++){
-            const t=k/18;
-            pts.push(new THREE.Vector3(sx+Math.sin(k*Math.PI/2)*.015,yTop+.011,cz+(t-.5)*(ext-.09)));
-          }
-          const curve=new THREE.CatmullRomCurve3(pts);
-          const spring=new THREE.Mesh(new THREE.TubeGeometry(curve,36,.003,4,false),mat.metal);
-          spring.userData.part='support';
-          group.add(spring);
-        }
-      }
       // The upholstering envelope must reach the +650 mm OUTER depth,
       // while the frame end rail remains inset 40 mm. The soft layer
       // joins the base seat at its nominal forward edge.
@@ -145,10 +111,35 @@ export function buildInspectionAssembly(config) {
         registerSupport(mesh,i+1);
       }
     }
-  }else if(config.category==='bed'){
-    const w=config.width/100,d=config.depth/100;
-    const count=Math.max(10,Math.floor((d-.25)/.11));
-    for(let i=0;i<count;i++)box(w-.16,.012,.06,0,.405,-d/2+.13+(d-.26)*(i+.5)/count,mat.beam,'support');
+  }
+  // Suspension, webbing and mattress slats are all placed from the same
+  // manufacturing support register: never use a separate visual count.
+  for(const item of supportInstances(model)){
+    const p=item.positionMm,s=item.sizeMm;
+    let mesh;
+    if(item.kind==='webbing'||item.kind==='slat'){
+      mesh=box(s.width/1000,s.height/1000,s.length/1000,
+        p.x/1000,p.y/1000,p.z/1000,
+        item.kind==='slat'?mat.beam:mat.pocket,'support');
+    }else{
+      const pts=[];
+      for(let k=0;k<=18;k++){
+        const fraction=k/18;
+        pts.push(new THREE.Vector3(
+          p.x/1000+Math.sin(k*Math.PI/2)*.015,
+          p.y/1000,
+          p.z/1000+(fraction-.5)*s.length/1000
+        ));
+      }
+      const curve=new THREE.CatmullRomCurve3(pts);
+      mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,36,.003,4,false),mat.metal);
+      mesh.userData.part='support';
+      group.add(mesh);
+    }
+    mesh.name=item.sceneNodeRef;
+    mesh.userData.supportRef=item.sceneNodeRef;
+    mesh.userData.supportKind=item.kind;
+    mesh.userData.approved=false;
   }
   // Upholstered back and headboard layers share physical panel instance IDs.
   // Geometry is an inspected envelope; no actual compression or folds simulated.

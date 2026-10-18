@@ -28,6 +28,19 @@ export function assessBeam(input) {
   const bendingMomentNmm = q * L ** 2 / 8;
   const maxStressMPa = bendingMomentNmm / W;
   const deflectionMm = 5 * q * L ** 4 / (384 * E * I);
+  // Finite inputs may still overflow or underflow intermediate arithmetic,
+  // and 3-decimal presentation can conceal a non-zero result as zero.
+  // Neither situation can justify a positive engineering safety conclusion.
+  const derived = [I, W, q, bendingMomentNmm, maxStressMPa, deflectionMm];
+  const reported = [round(bendingMomentNmm), round(I), round(maxStressMPa), round(deflectionMm)];
+  if (derived.some(n => !Number.isFinite(n) || n <= 0) ||
+      reported.some(n => !Number.isFinite(n) || n <= 0)) {
+    return {
+      status:'numerical-range-invalid', withinUserLimits:false,
+      certifiesFurniture:false,
+      disclaimer:'Расчёт вышел за устойчивый числовой диапазон или точность отображения; вывод о прочности запрещён'
+    };
+  }
   return {
     status:'preliminary-simple-span',
     assumptions:['Равномерно распределённая нагрузка','Два шарнирных опирания','Линейная упругость','Без учёта креплений, ползучести, боковой устойчивости и динамики'],

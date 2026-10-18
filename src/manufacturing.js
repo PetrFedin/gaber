@@ -92,6 +92,31 @@ export function jointProposals(model) {
       review:'Bracing anchor detail to be engineered'
     });
   }
+  if(model.geometry.chaise){
+    const ch=model.geometry.chaise,ci=ch.moduleIndex;
+    const mx=(ci-(n-1)/2)*ch.moduleWidthMm;
+    const xx=ch.moduleWidthMm/2-20;
+    const z0=model.geometry.frameDepthCm*5-20;
+    const rearFrontId='FRAME-F-'+String(ci*2+2).padStart(3,'0');
+    for(const side of [-1,1]){
+      const lr=side===-1?'L':'R';
+      const s='CHAISE-S-'+(side===-1?'001':'002');
+      const plate='CHAISE-K-'+(side===-1?'001':'002');
+      for(const [name,kind,z,refs] of [
+        ['ANCHOR','extension-anchor',z0,[s,rearFrontId]],
+        ['END','extension-front-corner',z0+ch.extensionMm,[s,'CHAISE-F-001',plate]],
+        ['BRACE','extension-intermediate-brace',z0+ch.extensionMm/2,[s,'CHAISE-X-001']]
+      ])joints.push({
+        id:'J-CHAISE-'+name+'-'+lr,kind,
+        partRefs:[...new Set(refs.map(r=>r.replace(/-\d{3}$/,'')))],
+        partInstanceRefs:refs,
+        locationMm:{x:round(mx+side*xx),y:round(y),z:round(z)},
+        nominalJointGapMm:null,proposedCutToleranceMm:null,
+        fastenerSku:null,drillPatternMm:null,
+        review:'Проектный интерфейс удлинения шезлонга: испытания соединения, сдвига, изгиба и устойчивости отсутствуют'
+      });
+    }
+  }
   return joints;
 }
 
@@ -160,7 +185,7 @@ export function createManufacturingPackage(config,evidence={}) {
   const joints=jointProposals(engineering).map(j=>{
     const match=/^J-(\d+)-/.exec(j.id),module=match?Number(match[1])-1:null;
     const suffix=j.id.split('-').at(-1);
-    const partInstanceRefs=module===null
+    const partInstanceRefs=j.partInstanceRefs?.length ? [...j.partInstanceRefs] : module===null
       ? instances.filter(p=>j.partRefs.includes(p.sourceGroup)).map(p=>p.partId)
       : j.kind==='cross-brace-interface'
         ? [instanceRef('FRAME-X',module+1),instanceRef('FRAME-S',module*2+(suffix==='L'?1:2))]

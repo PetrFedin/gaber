@@ -221,6 +221,13 @@ export function createManufacturingPackage(config,evidence={}) {
   }));
   const hardware=engineering.hardware.map(h=>({
     hardwareId:h.id,description:h.name,quantity:h.qty,
+    // Only explicitly modelled hardware receives real scene references.
+    // Other mechanisms and accessories remain unmodelled and unreleased.
+    sceneNodeRefs:['chaiseFoot','chaisePlinth'].includes(h.id)
+      ? Array.from({length:h.qty},(_,i)=>'GABER_HW:'+h.id+':'+String(i+1).padStart(3,'0'))
+      : [],
+    geometryStatus:['chaiseFoot','chaisePlinth'].includes(h.id)
+      ? 'unapproved-placeholder':'not-modelled',
     supplierSku:lookupApproved(evidence,'HW-'+h.id)?.sku??null,
     drawingsRef:approvedDoc(evidence.drawings?.['HW-'+h.id])?evidence.drawings['HW-'+h.id].reference:null,
     unitCostRUB:null,approval:'unreleased'

@@ -45,10 +45,20 @@ export function getEngineeringModel(c) {
   const seatLayers = seating ? seatStack(c) : [];
   const seatStackMm = seatLayers.reduce((sum,layer) => sum + layer.thicknessMm,0);
   const frameTopCm = seating ? round1(c.seatHeight - seatStackMm / 10) : null;
-  // The 650 mm chaise depth is the existing demo envelope, not an approved load span.
+  // 650 mm is added to the OUTER product depth. Frame rails are inset
+  // from upholstery; the structural extension is calculated independently.
+  const outerDepthExtensionMm=650;
+  const conceptFrontRailInsetMm=40;
+  const baseFrontRailZMm=round1(
+    -c.depth*5+c.backDepth*10+c.seatDepth*5+frameDepthCm*5-20
+  );
+  const chaiseEndRailZMm=c.depth*5+outerDepthExtensionMm-conceptFrontRailInsetMm;
   const chaise = c.category==='sofa'&&c.layout!=='straight' ? {
     side:c.layout,moduleIndex:c.layout==='left'?0:n-1,
-    extensionMm:650,moduleWidthMm:cmToMm(moduleWidthCm),
+    outerDepthExtensionMm,frontRailInsetMm:conceptFrontRailInsetMm,
+    baseFrontRailZMm,frontRailZMm:chaiseEndRailZMm,
+    extensionMm:round1(chaiseEndRailZMm-baseFrontRailZMm),
+    moduleWidthMm:cmToMm(moduleWidthCm),
     loadPath:'cantilever not assumed; forward rail requires separately rated supports',
     qualification:'concept-only: bending, connections, dynamic loading and stability unverified'
   } : null;

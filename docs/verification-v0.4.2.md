@@ -51,3 +51,10 @@ To reproduce: `npm ci`, `npm test`, `npm run build`; then verify GUI interaction
 Manufacturing remains **fail closed**: `productionRelease.allowed=false`, unverified materials and test evidence, no server authentication/authority, no signoff or production file release. We must obtain one real GABER model with approved CAD, joint details, fabric markers, supplier bills, spring/foam test reports and final product load tests before moving towards validated manufacturing.
 
 The `main` branch and hosted public Site remain unchanged by the draft PR.
+
+## Additional QA on 2026-10-18
+
+- Static source-contract audit of eight linked source/test files: **13/13 checks passed** for shared frame and suspension imports, schema versions, scene-node conventions, technical exports and fail-closed manufacture gates. This is a static audit, **not** compilation.
+- Independent Node.js arithmetic reproduction of the front-rail/chaise formula: **486/486 sampled combinations** of depth, back thickness, seat depth, module count, arm width and left/right side passed positive-envelope/alignment invariants. For the default sofa, original rail = +335 mm, front rail = +1110 mm, structural extension = 775 mm, side rail concept = 735 mm. This checks the mathematics only; **not the repository modules or factory safety**.
+- CI workflow now triggers feature verification on pull requests rather than duplicating PR and feature-push checks; older runs are cancelled on superseding commits. The workflow still needs an assigned runner.
+- The operational P0 blocker is tracked at [GitHub issue #3](https://github.com/PetrFedin/gaber/issues/3). The root cause of Actions failures is **not confirmed**.

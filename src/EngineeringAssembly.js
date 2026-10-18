@@ -115,10 +115,19 @@ export function buildInspectionAssembly(config) {
       // These supports are deliberately UNTRACEABLE placeholders; vendor-rated
       // foot or plinth geometry must replace them before any manufacturing use.
       const footH=Math.max(.06,model.geometry.frameTopCm/100-.065);
+      const supportId=config.legs==='none'?'chaisePlinth':'chaiseFoot';
+      const registerSupport=(mesh,ordinal)=>{
+        mesh.name='GABER_HW:'+supportId+':'+String(ordinal).padStart(3,'0');
+        mesh.userData.hardwareId=supportId;
+        mesh.userData.geometryStatus='unapproved-placeholder';
+        mesh.userData.productionApproved=false;
+      };
       if(config.legs==='none'){
-        box(Math.max(.05,mw-.12),footH,.07,cx,footH/2,frontZ+ext-.10,mat.pocket,'support');
-      }else for(const side of [-1,1]){
-        box(.045,footH,.045,cx+side*(mw/2-.09),footH/2,frontZ+ext-.10,mat.metal,'support');
+        const mesh=box(Math.max(.05,mw-.12),footH,.07,cx,footH/2,frontZ+ext-.10,mat.pocket,'support');
+        registerSupport(mesh,1);
+      }else for(const [i,side] of [-1,1].entries()){
+        const mesh=box(.045,footH,.045,cx+side*(mw/2-.09),footH/2,frontZ+ext-.10,mat.metal,'support');
+        registerSupport(mesh,i+1);
       }
     }
   }else if(config.category==='bed'){

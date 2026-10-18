@@ -43,6 +43,27 @@ function checkScene(configuration){
     const documentedRefs=new Set(manufacturing.hardware.flatMap(h=>h.sceneNodeRefs));
     for(const placeholder of group.children.filter(n=>n.userData.hardwareId))
       assert.ok(documentedRefs.has(placeholder.name),'Undocumented hardware mesh: '+placeholder.name);
+    const seenLayers=new Set();
+    for(const layer of manufacturing.layers){
+      if(['seat','back','headboard'].includes(layer.zone))assert.ok(layer.sceneNodeRefs.length>0,layer.id);
+      for(const ref of layer.sceneNodeRefs){
+        const mesh=group.getObjectByName(ref);
+        assert.ok(mesh,'Missing physical filling mesh: '+ref);
+        assert.equal(mesh.userData.sourceLayer,layer.id);
+        assert.equal(mesh.userData.approved,false);
+        assert.ok(!seenLayers.has(ref),'Duplicated filling ID: '+ref);
+        seenLayers.add(ref);
+      }
+    }
+    const visibleLayers=group.children.filter(mesh=>mesh.userData.sourceLayer);
+    assert.equal(visibleLayers.length,seenLayers.size);
+    for(const mesh of visibleLayers)assert.ok(seenLayers.has(mesh.name));
+    if(engineering.geometry.chaise)for(const layer of engineering.layers.filter(l=>l.zone==='seat')){
+      const foam=group.getObjectByName('GABER_SOFT:CHAISE:'+layer.id);
+      assert.ok(foam);
+      const forwardEdge=foam.position.z+foam.geometry.parameters.depth/2;
+      assert.ok(Math.abs(forwardEdge-(configuration.depth/200+0.65))<1e-7,'Cushion exterior envelope mismatch');
+    }
     assert.equal(manufacturing.productionRelease.allowed,false);
     return {engineering,manufacturing};
   }finally{

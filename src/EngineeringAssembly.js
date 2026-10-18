@@ -79,6 +79,48 @@ export function buildInspectionAssembly(config) {
         y+=t;
       });
     }
+    // Additional fore-aft chaise support and foam use the same +650 mm
+    // concept envelope as the frame instance registry, not a vendor mechanism.
+    const ch=model.geometry.chaise;
+    if(ch){
+      const mw=ch.moduleWidthMm/1000;
+      const cx=(ch.moduleIndex-(n-1)/2)*mw;
+      const frontZ=originZ+frameD/2-.02;
+      const ext=ch.extensionMm/1000;
+      const cz=frontZ+ext/2;
+      const supportCount=Math.min(16,model.suspension.countPerModule);
+      for(let j=0;j<supportCount;j++){
+        const sx=cx-(mw-.09)/2+(mw-.09)*(j+.5)/supportCount;
+        if(config.support==='webbing'){
+          box(.055,.007,ext-.08,sx,yTop+.005,cz,mat.pocket,'support');
+        }else{
+          const pts=[];
+          for(let k=0;k<=18;k++){
+            const t=k/18;
+            pts.push(new THREE.Vector3(sx+Math.sin(k*Math.PI/2)*.015,yTop+.011,cz+(t-.5)*(ext-.09)));
+          }
+          const curve=new THREE.CatmullRomCurve3(pts);
+          const spring=new THREE.Mesh(new THREE.TubeGeometry(curve,36,.003,4,false),mat.metal);
+          spring.userData.part='support';
+          group.add(spring);
+        }
+      }
+      let elevation=yTop;
+      for(const [j,layer] of model.layers.filter(l=>l.zone==='seat').entries()){
+        const th=layer.thicknessMm/1000;
+        const material=layer.id==='seat-pocket'?mat.pocket:j===0?mat.core:layer.id==='seat-periotek'?mat.batting:mat.top;
+        box(Math.max(.02,mw-.045),th,Math.max(.05,ext-.06),cx,elevation+th/2,cz,material,'filling');
+        elevation+=th;
+      }
+      // These supports are deliberately UNTRACEABLE placeholders; vendor-rated
+      // foot or plinth geometry must replace them before any manufacturing use.
+      const footH=Math.max(.06,model.geometry.frameTopCm/100-.065);
+      if(config.legs==='none'){
+        box(Math.max(.05,mw-.12),footH,.07,cx,footH/2,frontZ+ext-.10,mat.pocket,'support');
+      }else for(const side of [-1,1]){
+        box(.045,footH,.045,cx+side*(mw/2-.09),footH/2,frontZ+ext-.10,mat.metal,'support');
+      }
+    }
   }else if(config.category==='bed'){
     const w=config.width/100,d=config.depth/100;
     const count=Math.max(10,Math.floor((d-.25)/.11));

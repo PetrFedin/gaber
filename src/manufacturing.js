@@ -212,13 +212,30 @@ export function createManufacturingPackage(config,evidence={}) {
       approval:'unreleased'
     };
   });
-  const layers=engineering.layers.map(layer=>({
-    id:layer.id,zone:layer.zone,thicknessMm:layer.thicknessMm,
-    nominalDensityKgM3:layer.densityKgM3,
-    compressionCurveRef:approvedDoc(evidence.foam?.[layer.id])?evidence.foam[layer.id].reference:null,
-    materialSku:lookupApproved(evidence,layer.id)?.sku??null,
-    quantity:null,costRUB:null,approval:'unreleased'
-  }));
+  const layerSceneRefs=layer=>{
+    if(layer.zone==='seat'){
+      const count=engineering.geometry.moduleCount;
+      const references=Array.from({length:count},(_,i)=>'GABER_SOFT:SEAT:'+(i+1)+':'+layer.id);
+      if(engineering.geometry.chaise)references.push('GABER_SOFT:CHAISE:'+layer.id);
+      return references;
+    }
+    if(layer.zone==='back')return instances.filter(p=>p.sourceGroup==='BACK-P')
+      .map(p=>'GABER_SOFT:BACK:'+p.partId+':'+layer.id);
+    if(layer.zone==='headboard')return instances.filter(p=>p.sourceGroup==='HB-P')
+      .map(p=>'GABER_SOFT:HEADBOARD:'+p.partId+':'+layer.id);
+    return [];
+  };
+  const layers=engineering.layers.map(layer=>{
+    const sceneNodeRefs=layerSceneRefs(layer);
+    return {
+      id:layer.id,zone:layer.zone,thicknessMm:layer.thicknessMm,
+      nominalDensityKgM3:layer.densityKgM3,sceneNodeRefs,
+      geometryStatus:sceneNodeRefs.length?'schematic-layer-envelope':'not-modelled',
+      compressionCurveRef:approvedDoc(evidence.foam?.[layer.id])?evidence.foam[layer.id].reference:null,
+      materialSku:lookupApproved(evidence,layer.id)?.sku??null,
+      quantity:null,costRUB:null,approval:'unreleased'
+    };
+  });
   const hardware=engineering.hardware.map(h=>({
     hardwareId:h.id,description:h.name,quantity:h.qty,
     // Only explicitly modelled hardware receives real scene references.

@@ -6,7 +6,7 @@ import {validate,dimensions,getFabric} from './domain.js';
  * measured CAD geometry, load calculation, material certificate or approval.
  * One deterministic config drives this model, inspection geometry and tech exports.
  */
-export const ENGINEERING_VERSION = 'gaber-engineering-concept-0.3.0';
+export const ENGINEERING_VERSION = 'gaber-engineering-concept-0.4.2';
 const cmToMm = n => Math.round(n * 10);
 const round1 = n => Math.round(n * 10) / 10;
 const makePart = (id, name, quantity, sizeMm, material, operation, sourceFields) => ({

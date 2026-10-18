@@ -34,6 +34,15 @@ function checkScene(configuration){
       assert.equal(joint.partInstanceRefs.length,new Set(joint.partInstanceRefs).size);
       assert.ok(joint.partInstanceRefs.every(id=>manufacturing.parts.some(p=>p.partId===id)),joint.id);
     }
+    for(const item of manufacturing.hardware)for(const ref of item.sceneNodeRefs){
+      const mesh=group.getObjectByName(ref);
+      assert.ok(mesh,'Unlinked hardware mesh: '+ref);
+      assert.equal(mesh.userData.hardwareId,item.hardwareId);
+      assert.equal(mesh.userData.productionApproved,false);
+    }
+    const documentedRefs=new Set(manufacturing.hardware.flatMap(h=>h.sceneNodeRefs));
+    for(const placeholder of group.children.filter(n=>n.userData.hardwareId))
+      assert.ok(documentedRefs.has(placeholder.name),'Undocumented hardware mesh: '+placeholder.name);
     assert.equal(manufacturing.productionRelease.allowed,false);
     return {engineering,manufacturing};
   }finally{

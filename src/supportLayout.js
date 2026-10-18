@@ -14,7 +14,7 @@ export function supportInstances(model){
     const n=g.moduleCount,spanMm=g.usableWidthCm*10,moduleW=spanMm/n;
     const frameDepthMm=g.frameDepthCm*10;
     const originZMm=-c.depth*5+c.backDepth*10+c.seatDepth*5;
-    const yMm=g.frameTopCm*10+10;
+    const yMm=g.frameTopCm*10+(c.support==='webbing'?5:11);
     const count=model.suspension.countPerModule;
     if(!Number.isInteger(count)||count<2||count>100)throw Error('Invalid suspension count');
     const availableMm=Math.max(40,moduleW-90);

@@ -105,11 +105,23 @@ export function buildInspectionAssembly(config) {
           group.add(spring);
         }
       }
+      // The upholstering envelope must reach the +650 mm OUTER depth,
+      // while the frame end rail remains inset 40 mm. The soft layer
+      // joins the base seat at its nominal forward edge.
+      const softStartZ=originZ+seatD/2;
+      const softEndZ=config.depth/200+ch.outerDepthExtensionMm/1000;
+      const softLength=softEndZ-softStartZ;
+      const softCenterZ=(softEndZ+softStartZ)/2;
+      if(!Number.isFinite(softLength)||softLength<=0)
+        throw Error('Invalid chaise cushion geometry');
       let elevation=yTop;
       for(const [j,layer] of model.layers.filter(l=>l.zone==='seat').entries()){
         const th=layer.thicknessMm/1000;
         const material=layer.id==='seat-pocket'?mat.pocket:j===0?mat.core:layer.id==='seat-periotek'?mat.batting:mat.top;
-        box(Math.max(.02,mw-.045),th,Math.max(.05,ext-.06),cx,elevation+th/2,cz,material,'filling');
+        const foam=box(Math.max(.02,mw-.045),th,softLength,cx,elevation+th/2,softCenterZ,material,'filling');
+        foam.name='GABER_SOFT:CHAISE:'+layer.id;
+        foam.userData.sourceLayer=layer.id;
+        foam.userData.approved=false;
         elevation+=th;
       }
       // These supports are deliberately UNTRACEABLE placeholders; vendor-rated

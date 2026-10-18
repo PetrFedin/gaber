@@ -62,3 +62,26 @@ test('document evidence cannot bypass missing physical test or server authorizat
  assert.ok(p.productionRelease.blockers.includes('AUTHORITY'));
  assert.throws(()=>requireProductionRelease(p));
 });
+
+
+test('beam estimator never accepts numeric overflow or rounded-to-zero outputs',()=>{
+ const nominal={
+  spanMm:1000,widthMm:40,heightMm:60,loadN:500,
+  elasticModulusMPa:10000,allowableStressMPa:50,allowableDeflectionMm:5
+ };
+ const normal=assessBeam(nominal);
+ assert.equal(normal.status,'preliminary-simple-span');
+ assert.ok(normal.withinUserLimits);
+ for(const changes of [
+  {widthMm:1e308},
+  {heightMm:1e308},
+  {elasticModulusMPa:1e308},
+  {loadN:Number.MIN_VALUE}
+ ]){
+  const result=assessBeam({...nominal,...changes});
+  assert.equal(result.status,'numerical-range-invalid',JSON.stringify(changes));
+  assert.equal(result.withinUserLimits,false);
+  assert.equal(result.certifiesFurniture,false);
+  assert.ok(result.disclaimer);
+ }
+});

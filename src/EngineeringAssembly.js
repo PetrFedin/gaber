@@ -75,7 +75,10 @@ export function buildInspectionAssembly(config) {
       model.layers.filter(l=>l.zone==='seat').forEach((layer,j)=>{
         const t=layer.thicknessMm/1000;
         const material=layer.id==='seat-pocket'?mat.pocket:j===0?mat.core:layer.id==='seat-periotek'?mat.batting:mat.top;
-        box(Math.max(.02,moduleW-.045),t,Math.max(.1,seatD-.025),x,y+t/2,originZ,material,'filling');
+        const mesh=box(Math.max(.02,moduleW-.045),t,Math.max(.1,seatD-.025),x,y+t/2,originZ,material,'filling');
+        mesh.name='GABER_SOFT:SEAT:'+(i+1)+':'+layer.id;
+        mesh.userData.sourceLayer=layer.id;
+        mesh.userData.approved=false;
         y+=t;
       });
     }
@@ -124,8 +127,8 @@ export function buildInspectionAssembly(config) {
         foam.userData.approved=false;
         elevation+=th;
       }
-      // These supports are deliberately UNTRACEABLE placeholders; vendor-rated
-      // foot or plinth geometry must replace them before any manufacturing use.
+      // Support placeholders have scene IDs, but require verified supplier
+      // geometry, attachment details and safety tests before manufacture.
       const footH=Math.max(.06,model.geometry.frameTopCm/100-.065);
       const supportId=config.legs==='none'?'chaisePlinth':'chaiseFoot';
       const registerSupport=(mesh,ordinal)=>{
@@ -147,13 +150,35 @@ export function buildInspectionAssembly(config) {
     const count=Math.max(10,Math.floor((d-.25)/.11));
     for(let i=0;i<count;i++)box(w-.16,.012,.06,0,.405,-d/2+.13+(d-.26)*(i+.5)/count,mat.beam,'support');
   }
-  // Keep soft headboard layers visible without creating duplicate frame panels.
+  // Upholstered back and headboard layers share physical panel instance IDs.
+  // Geometry is an inspected envelope; no actual compression or folds simulated.
+  for(const part of frameInstances(model).filter(p=>p.sourceGroup==='BACK-P')){
+    const angle=part.rotationXDeg*Math.PI/180;
+    let offsetMm=part.sizeMm.z/2;
+    for(const layer of model.layers.filter(l=>l.zone==='back')){
+      const t=layer.thicknessMm;
+      const distance=(offsetMm+t/2)/1000;
+      const nx=-Math.sin(angle),nz=Math.cos(angle);
+      const mesh=box(part.sizeMm.x/1000,part.sizeMm.y/1000,t/1000,
+        part.positionMm.x/1000,part.positionMm.y/1000+nx*distance,
+        part.positionMm.z/1000+nz*distance,
+        layer.id==='back-foam'?mat.core:mat.batting,'filling');
+      mesh.rotation.x=angle;
+      mesh.name='GABER_SOFT:BACK:'+part.partId+':'+layer.id;
+      mesh.userData.sourceLayer=layer.id;
+      mesh.userData.approved=false;
+      offsetMm+=t;
+    }
+  }
   for(const part of frameInstances(model).filter(p=>p.sourceGroup==='HB-P')){
     let z=part.positionMm.z+part.sizeMm.z/2;
     for(const layer of model.layers.filter(l=>l.zone==='headboard')){
       const t=layer.thicknessMm;
-      box(part.sizeMm.x/1000,part.sizeMm.y/1000,t/1000,part.positionMm.x/1000,
+      const mesh=box(part.sizeMm.x/1000,part.sizeMm.y/1000,t/1000,part.positionMm.x/1000,
         part.positionMm.y/1000,(z+t/2)/1000,layer.id==='head-foam'?mat.core:mat.batting,'filling');
+      mesh.name='GABER_SOFT:HEADBOARD:'+part.partId+':'+layer.id;
+      mesh.userData.sourceLayer=layer.id;
+      mesh.userData.approved=false;
       z+=t;
     }
   }

@@ -76,9 +76,9 @@ export function getEngineeringModel(c) {
     );
     if(armCm)cutList.push(makePart('ARM-P','Боковины подлокотников',2,{length:cmToMm(c.depth-4),width:cmToMm(Math.max(10,c.seatHeight+18)),height:18},'Берёзовая фанера 18 мм','Раскрой, закладные, крепление',['arm','depth','seatHeight']));
     if(chaise)cutList.push(
-      makePart('CHAISE-F','Торцевая царга удлинения шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Проверить торцевой узел и установку опор',['layout','width','moduleCount']),
-      makePart('CHAISE-S','Продольная царга шезлонга',2,{length:chaise.extensionMm-40,width:40,height:60},'Брус 40×60 мм; проектное сечение','Стыковка с поперечной царгой модуля',['layout']),
-      makePart('CHAISE-X','Поперечное усиление шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Уточнить положение усиления',['layout','width','moduleCount']),
+      makePart('CHAISE-F','Торцевая царга удлинения шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Проверить торцевой узел и установку опор',['layout','width','moduleCount','arm']),
+      makePart('CHAISE-S','Продольная царга шезлонга',2,{length:chaise.extensionMm-40,width:40,height:60},'Брус 40×60 мм; проектное сечение','Стыковка с поперечной царгой модуля',['layout','depth','seatDepth','backDepth']),
+      makePart('CHAISE-X','Поперечное усиление шезлонга',1,{length:cmToMm(moduleWidthCm-8),width:40,height:60},'Брус 40×60 мм; проектное сечение','Уточнить положение усиления',['layout','width','moduleCount','arm']),
       makePart('CHAISE-K','Передние угловые косынки',2,{length:90,width:90,height:18},'Берёзовая фанера 18 мм; проектное сечение','Конструкция крепежа на проверку',['layout'])
     );
   } else if(bed) {

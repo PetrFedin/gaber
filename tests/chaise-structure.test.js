@@ -43,6 +43,30 @@ function checkScene(configuration){
     const documentedRefs=new Set(manufacturing.hardware.flatMap(h=>h.sceneNodeRefs));
     for(const placeholder of group.children.filter(n=>n.userData.hardwareId))
       assert.ok(documentedRefs.has(placeholder.name),'Undocumented hardware mesh: '+placeholder.name);
+    assert.equal(manufacturing.suspension.pieces.length,manufacturing.traceability.supportPartCount);
+    const supportRefs=new Set();
+    for(const part of manufacturing.suspension.pieces){
+      const mesh=group.getObjectByName(part.sceneNodeRef);
+      assert.ok(mesh,'Missing spring, webbing or slat: '+part.sceneNodeRef);
+      assert.equal(mesh.userData.supportKind,part.kind);
+      assert.equal(mesh.userData.approved,false);
+      assert.ok(!supportRefs.has(part.sceneNodeRef),'Duplicate support: '+part.sceneNodeRef);
+      supportRefs.add(part.sceneNodeRef);
+      if(part.kind==='webbing'||part.kind==='slat'){
+        const dimensions=mesh.geometry.parameters;
+        assert.ok(Math.abs(dimensions.width*1000-part.sizeMm.width)<1e-7);
+        assert.ok(Math.abs(dimensions.height*1000-part.sizeMm.height)<1e-7);
+        assert.ok(Math.abs(dimensions.depth*1000-part.sizeMm.length)<1e-7);
+        for(const axis of ['x','y','z'])
+          assert.ok(Math.abs(mesh.position[axis]*1000-part.positionMm[axis])<1e-7);
+      }else{
+        assert.equal(part.kind,'zigzag');
+        assert.equal(mesh.geometry.type,'TubeGeometry');
+      }
+    }
+    const visibleSupports=group.children.filter(mesh=>mesh.userData.supportRef);
+    assert.equal(visibleSupports.length,supportRefs.size);
+    for(const mesh of visibleSupports)assert.ok(supportRefs.has(mesh.name));
     const seenLayers=new Set();
     for(const layer of manufacturing.layers){
       if(['seat','back','headboard'].includes(layer.zone))assert.ok(layer.sceneNodeRefs.length>0,layer.id);
@@ -141,6 +165,14 @@ test('base frame does not silently change when toggling left/right',()=>{
   const l=left.parts.find(p=>p.partId==='CHAISE-F-001');
   const r=right.parts.find(p=>p.partId==='CHAISE-F-001');
   assert.equal(l.sceneTransform.positionMm.x,-r.sceneTransform.positionMm.x);
+});
+
+test('springs, elastic belts and bed slats use the same IDs in 3D and manufacturing',()=>{
+  for(const support of ['zigzag','webbing'])
+    for(const layout of ['straight','left','right'])
+      checkScene(c(layout,{support}));
+  for(const category of ['chair','chairbed','bed','headboard'])
+    checkScene(initialConfig(category));
 });
 
 test('chaise with plinth support is still not approved or costed as a real mechanism',()=>{

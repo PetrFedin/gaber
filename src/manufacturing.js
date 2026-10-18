@@ -1,7 +1,8 @@
 import {getEngineeringModel} from './engineering.js';
 import {getFabric} from './domain.js';
+import {frameInstances} from './frameLayout.js';
 
-export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.0';
+export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.1';
 
 const round = n => Math.round(n * 1000) / 1000;
 const finitePositive = n => typeof n === 'number' && Number.isFinite(n) && n > 0;
@@ -99,7 +100,8 @@ export function panelPattern(config,materialSpec={}) {
     status:'roll-width-unverified',pieces,markerLengthMm:null,
     requiredEvidence:['Подтверждённая ширина рулона','Раппорт рисунка','Усадка','Направление ворса']
   };
-  const impossible=pieces.filter(p=>Math.min(p.widthMm,p.heightMm)>rollWidthMm);
+  // Grain is fixed: rotating a directed textile piece is not an allowed fallback.
+  const impossible=pieces.filter(p=>(p.grain==='along-height'?p.widthMm:p.heightMm)>rollWidthMm);
   return {
     status:impossible.length?'does-not-fit-roll':'layout-required',
     pieces,rollWidthMm,markerLengthMm:null,
@@ -130,8 +132,6 @@ export function foamCompression(curve,relativeCompression,originalThicknessMm) {
   };
 }
 
-const refForPart = (row,n) => row.id+'-'+String(n).padStart(3,'0');
-
 function lookupApproved(evidence,id) {
   const entry=evidence?.materials?.[id];
   return approvedDoc(entry)?{
@@ -142,9 +142,23 @@ function lookupApproved(evidence,id) {
 
 export function createManufacturingPackage(config,evidence={}) {
   const engineering=getEngineeringModel(config);
-  const joints=jointProposals(engineering);
-  const parts=engineering.cutList.flatMap(row=>Array.from({length:row.quantity},(_,i)=>{
-    const partId=refForPart(row,i+1),materialApproval=lookupApproved(evidence,row.id);
+  const instances=frameInstances(engineering);
+  const instanceRef=(group,ordinal)=>group+'-'+String(ordinal).padStart(3,'0');
+  const joints=jointProposals(engineering).map(j=>{
+    const match=/^J-(\d+)-/.exec(j.id),module=match?Number(match[1])-1:null;
+    const suffix=j.id.split('-').at(-1);
+    const partInstanceRefs=module===null
+      ? instances.filter(p=>j.partRefs.includes(p.sourceGroup)).map(p=>p.partId)
+      : j.kind==='cross-brace-interface'
+        ? [instanceRef('FRAME-X',module+1),instanceRef('FRAME-S',module*2+(suffix==='L'?1:2))]
+        : [instanceRef('FRAME-F',module*2+(suffix==='F'?1:2)),instanceRef('FRAME-S',module*2+(j.id.split('-')[2]==='L'?1:2))];
+    // Seat frames are offset from the product origin; use the same transform as 3D.
+    const locationMm=j.locationMm?{...j.locationMm,z:round(j.locationMm.z-config.depth*5+config.backDepth*10+config.seatDepth*5)}:null;
+    return {...j,locationMm,partInstanceRefs};
+  });
+  const parts=instances.map(instance=>{
+    const row=engineering.cutList.find(p=>p.id===instance.sourceGroup);
+    const partId=instance.partId,materialApproval=lookupApproved(evidence,row.id);
     return {
       partId,sourceGroup:row.id,name:row.name,
       drawingRevision:approvedDoc(evidence.drawings?.[row.id])?evidence.drawings[row.id].revision:null,
@@ -152,13 +166,14 @@ export function createManufacturingPackage(config,evidence={}) {
       actualMaterialSku:materialApproval?.sku??null,
       supplyEvidenceRef:materialApproval?.documentRef??null,
       workflow:['cut','join','assemble'],
-      manufacturingRouteId:'RT-'+row.id,
-      sceneNodeRef:'GABER_PART:'+partId,
+      manufacturingRouteId:'RT-'+partId,
+      sceneNodeRef:instance.sceneNodeRef,
+      sceneTransform:structuredClone(instance),
       unitCostRUB:null,
       unitCostEvidenceRef:null,
       approval:'unreleased'
     };
-  }));
+  });
   const layers=engineering.layers.map(layer=>({
     id:layer.id,zone:layer.zone,thicknessMm:layer.thicknessMm,
     nominalDensityKgM3:layer.densityKgM3,
@@ -173,7 +188,7 @@ export function createManufacturingPackage(config,evidence={}) {
     unitCostRUB:null,approval:'unreleased'
   }));
   const routing=parts.map(p=>({
-    id:p.manufacturingRouteId+':'+p.partId,partId:p.partId,
+    id:p.manufacturingRouteId,partId:p.partId,
     operations:[
       {code:'CUT',timeMin:null,machine:null,revision:null},
       {code:'DRILL-JOIN',timeMin:null,machine:null,revision:null},
@@ -182,12 +197,13 @@ export function createManufacturingPackage(config,evidence={}) {
   }));
   const pattern=panelPattern(config,evidence.fabric);
   const releaseChecks=[
+    ...engineering.checks.filter(g=>g.status!=='pass').map(g=>({id:'ENGINEERING:'+g.id,passed:false,message:g.message})),
     {id:'DESIGN_REVIEW',passed:approvedDoc(evidence.designReview),message:'Engineering signoff with approved revision'},
     {id:'CAD_DRAWINGS',passed:engineering.cutList.every(p=>approvedDoc(evidence.drawings?.[p.id])),message:'Approved revision for each frame part family'},
     {id:'BOM_MATERIALS',passed:parts.every(p=>p.actualMaterialSku),message:'Approved supplier materials and SKUs'},
     {id:'JOINTS',passed:joints.every(j=>typeof j.fastenerSku==='string'&&j.fastenerSku&&j.drillPatternMm),message:'Joint fasteners and drilling patterns unverified'},
     {id:'SOFT_MATERIALS',passed:layers.every(x=>x.materialSku&&x.compressionCurveRef),message:'Approved foam material properties and compression curves'},
-    {id:'UPHOLSTERY',passed:pattern.status==='none'||Boolean(approvedDoc(evidence.patternDrawing)),message:'Approved cutting marker, supplier roll and cover drawing'},
+    {id:'UPHOLSTERY',passed:finitePositive(evidence.fabric?.rollWidthMm)&&approvedDoc(evidence.patternDrawing)&&!['does-not-fit-roll','cad-template-required'].includes(pattern.status),message:'Approved cutting marker, supplier roll and cover drawing'},
     {id:'HARDWARE',passed:hardware.every(x=>x.supplierSku&&x.drawingsRef),message:'Manufacturer specifications and hardware certifications'},
     {id:'ROUTING',passed:false,message:'Operation standards and QC route require factory MES approval'},
     {id:'PRICE',passed:false,message:'Cost rates, effective dates, scrap and finance approval absent'},
@@ -224,3 +240,4 @@ export function requireProductionRelease(pkg) {
     throw new Error('Производственный выпуск запрещён: недостаточно подтверждённых нормативов и полномочий');
   throw new Error('Выпуск возможен только через будущий серверный авторизованный контур');
 }
+

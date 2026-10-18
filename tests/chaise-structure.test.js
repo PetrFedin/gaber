@@ -59,7 +59,7 @@ test('straight frame has no chaise parts, left/right adds six unique frame parts
   }
 });
 
-test('chaise-end rail moves exactly 650 mm past existing front rail on selected module',()=>{
+test('chaise rail reaches the outer depth envelope with a declared 40 mm inset',()=>{
   for(const layout of ['left','right']){
     const m=createManufacturingPackage(c(layout));
     const n=m.sourceConfig.moduleCount;
@@ -67,7 +67,11 @@ test('chaise-end rail moves exactly 650 mm past existing front rail on selected 
     const front=m.parts.find(p=>p.partId==='FRAME-F-'+padded(ci*2+2));
     const extended=m.parts.find(p=>p.partId==='CHAISE-F-001');
     assert.ok(front&&extended);
-    assert.ok(Math.abs(extended.sceneTransform.positionMm.z-front.sceneTransform.positionMm.z-650)<0.001);
+    const g=getEngineeringModel(c(layout)).geometry.chaise;
+    assert.ok(Math.abs(extended.sceneTransform.positionMm.z-front.sceneTransform.positionMm.z-g.extensionMm)<0.001);
+    assert.ok(Math.abs(extended.sceneTransform.positionMm.z-(c(layout).depth*5+650-40))<0.001);
+    assert.equal(g.outerDepthExtensionMm,650);
+    assert.equal(g.frontRailInsetMm,40);
     const cx=extended.sceneTransform.positionMm.x;
     assert.ok(layout==='left'?cx<0:cx>0);
     for(const joint of m.joinery.filter(j=>j.id.startsWith('J-CHAISE-'))){
@@ -84,6 +88,18 @@ test('chaise frame and joinery remain connected across width, modules, arm and s
         for(const arm of ['rounded','none']){
           checkScene(c(layout,{width,moduleCount,arm,support:'webbing',seatCore:'pocket'}));
         }
+});
+
+test('structural extension is recalculated when base depth and cushion setback change',()=>{
+  for(const depth of [85,100,125])for(const seatDepth of [45,55,70]){
+    const config=c('left',{depth,seatDepth});
+    const m=createManufacturingPackage(config);
+    const end=m.parts.find(p=>p.partId==='CHAISE-F-001');
+    const g=getEngineeringModel(config).geometry.chaise;
+    assert.ok(g.extensionMm>40);
+    assert.ok(Math.abs(end.sceneTransform.positionMm.z-(depth*5+650-40))<0.001);
+    assert.ok(Math.abs(g.frontRailZMm-g.baseFrontRailZMm-g.extensionMm)<0.001);
+  }
 });
 
 test('base frame does not silently change when toggling left/right',()=>{

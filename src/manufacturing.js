@@ -3,7 +3,7 @@ import {getFabric} from './domain.js';
 import {frameInstances} from './frameLayout.js';
 import {supportInstances} from './supportLayout.js';
 
-export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.1';
+export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.2';
 
 const round = n => Math.round(n * 1000) / 1000;
 const finitePositive = n => typeof n === 'number' && Number.isFinite(n) && n > 0;

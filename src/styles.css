@@ -19,3 +19,11 @@
 @media(max-width:1100px){.header nav{gap:15px;font-size:12px}.header-actions .nav-icon span{display:none}.formula-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.costing-summary{grid-template-columns:1fr}.costing-summary article{padding:20px}.formula-grid,.assembly-grid{grid-template-columns:1fr}.collection-grid{grid-template-columns:1fr}.rates-section .section-top{flex-wrap:wrap}.technical-actions .button{flex:1}.studio-panel{padding-bottom:30px}.category-switch button{flex:1 1 40%}.costing-page,.technical-page{overflow:hidden}}
 .configuration-details{margin:20px 0;border-top:1px solid #dedfd5;border-bottom:1px solid #dedfd5;padding:15px 0}.configuration-details summary{font-size:13px;font-weight:500;cursor:pointer}.configuration-details .spec-list{margin-bottom:0}.category-switch{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}.category-switch button{min-height:40px;font-size:12px}.category-switch button:last-child{grid-column:1/-1}
+
+
+.project-storage{border:1px solid var(--line,#d8d5cc);padding:22px;margin:0 0 28px;border-radius:12px;background:var(--paper,#faf9f5)}
+.project-storage h2{font-size:20px;margin:0 0 8px}.project-storage p{font-size:14px;line-height:1.6;margin:8px 0;overflow-wrap:anywhere}
+.project-storage-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}.project-storage-actions .button{min-height:44px}
+.project-import-label{display:flex;flex-direction:column;gap:6px;font-size:14px}.project-import-label input{max-width:260px;font:inherit}
+.project-recovery-preview{border-top:1px solid var(--line,#d8d5cc);margin-top:20px;padding-top:16px}.project-recovery-preview h3{margin:0 0 10px}
+@media(max-width:600px){.project-storage{padding:16px}.project-storage-actions{align-items:stretch;flex-direction:column}.project-import-label input{max-width:100%;width:100%}}

@@ -40,6 +40,7 @@ try{
      const html=renderToStaticMarkup(React.createElement(App));
      assert.ok(!html.includes('NaN'));
      assert.match(html,/role="alert"/);
+     if(route==='projects'){assert.match(html,/Резервные копии проектов/);assert.match(html,/Импорт проектов из JSON/);}
      if(raw!=='{')assert.match(html,/Восстановленный проект/);
      if(raw==='{')assert.match(html,/сохранение заблокировано/);
      n++;

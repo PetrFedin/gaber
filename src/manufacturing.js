@@ -2,8 +2,10 @@ import {getEngineeringModel} from './engineering.js';
 import {getFabric} from './domain.js';
 import {frameInstances} from './frameLayout.js';
 import {supportInstances} from './supportLayout.js';
+import {softInstances} from './softLayout.js';
+import {auditProductionTraceability} from './traceability.js';
 
-export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.2';
+export const PRODUCTION_SCHEMA = 'gaber-production-concept/0.4.3';
 
 const round = n => Math.round(n * 1000) / 1000;
 const finitePositive = n => typeof n === 'number' && Number.isFinite(n) && n > 0;
@@ -228,28 +230,25 @@ export function createManufacturingPackage(config,evidence={}) {
     geometryStatus:'concept-only',
     testEvidence:null
   };
-  const layerSceneRefs=layer=>{
-    if(layer.zone==='seat'){
-      const count=engineering.geometry.moduleCount;
-      const references=Array.from({length:count},(_,i)=>'GABER_SOFT:SEAT:'+(i+1)+':'+layer.id);
-      if(engineering.geometry.chaise)references.push('GABER_SOFT:CHAISE:'+layer.id);
-      return references;
-    }
-    if(layer.zone==='back')return instances.filter(p=>p.sourceGroup==='BACK-P')
-      .map(p=>'GABER_SOFT:BACK:'+p.partId+':'+layer.id);
-    if(layer.zone==='headboard')return instances.filter(p=>p.sourceGroup==='HB-P')
-      .map(p=>'GABER_SOFT:HEADBOARD:'+p.partId+':'+layer.id);
-    return [];
-  };
+  const soft=softInstances(engineering);
   const layers=engineering.layers.map(layer=>{
-    const sceneNodeRefs=layerSceneRefs(layer);
+    const nodes=soft.filter(p=>p.layerId===layer.id);
+    const sceneNodeRefs=nodes.map(p=>p.sceneNodeRef);
+    const volumeM3=nodes.reduce((sum,p)=>sum+p.sizeMm.x*p.sizeMm.y*p.sizeMm.z,0)/1e9;
+    const roundedVolume=nodes.length?Math.round(volumeM3*1000000)/1000000:null;
+    const theoreticalMass=Number.isFinite(layer.densityKgM3)&&layer.densityKgM3>0
+      ?Math.round(volumeM3*layer.densityKgM3*1000000)/1000000:null;
     return {
       id:layer.id,zone:layer.zone,thicknessMm:layer.thicknessMm,
       nominalDensityKgM3:layer.densityKgM3,sceneNodeRefs,
       geometryStatus:sceneNodeRefs.length?'schematic-layer-envelope':'not-modelled',
+      quantity:nodes.length||null,
+      nominalEnvelopeVolumeM3:roundedVolume,
+      conceptEnvelopeMassKg:theoreticalMass,
+      quantityBasis:'rectangular uncompressed 3D envelopes; not a cutting or material consumption norm',
       compressionCurveRef:approvedDoc(evidence.foam?.[layer.id])?evidence.foam[layer.id].reference:null,
       materialSku:lookupApproved(evidence,layer.id)?.sku??null,
-      quantity:null,costRUB:null,approval:'unreleased'
+      costRUB:null,approval:'unreleased'
     };
   });
   const hardware=engineering.hardware.map(h=>({
@@ -290,7 +289,7 @@ export function createManufacturingPackage(config,evidence={}) {
     {id:'MOTION_SAFETY',passed:config.mechanism==='none'||approvedDoc(evidence.motionTest),message:'Vendor-certified mechanism motion and entrapment inspection'},
     {id:'AUTHORITY',passed:false,message:'Client-side prototype has no authenticated engineer/factory approval'}
   ];
-  return {
+  const packageData = {
     schemaVersion:PRODUCTION_SCHEMA,
     productionRelease:{
       allowed:false,
@@ -304,6 +303,7 @@ export function createManufacturingPackage(config,evidence={}) {
     traceability:{
       partCount:parts.length,
       supportPartCount:suspension.partCount,
+      softNodeCount:soft.length,
       linkedPartIds:parts.map(p=>p.partId),
       nodeToPartId:Object.fromEntries(parts.map(p=>[p.sceneNodeRef,p.partId])),
       costingMode:'no-verified-production-price',
@@ -313,6 +313,13 @@ export function createManufacturingPackage(config,evidence={}) {
     releaseChecks,
     referenceFabric:{digitalId:getFabric(config).id,approvedSku:null}
   };
+  packageData.integrity=auditProductionTraceability(packageData,engineering);
+  packageData.releaseChecks.push({
+    id:'DIGITAL_TRACEABILITY',passed:packageData.integrity.ok,
+    message:'Shared scene/BOM/route/soft/support identifiers and envelope geometry; not a factory approval'
+  });
+  packageData.productionRelease.blockers=packageData.releaseChecks.filter(x=>!x.passed).map(x=>x.id);
+  return packageData;
 }
 
 export function requireProductionRelease(pkg) {

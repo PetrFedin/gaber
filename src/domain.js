@@ -31,6 +31,7 @@ export const getFamily=c=>families.find(x=>x.id===c.category);
 export const getFabric=c=>fabrics.find(x=>x.id===c.fabric);
 export const getColor=c=>colors.find(x=>x.id===c.color);
 export function validate(c){
+ if(!c||typeof c!=='object'||Array.isArray(c))return ['Неверный формат конфигурации'];
  const errors=[],f=getFamily(c);if(!f)return ['Неизвестная категория изделия'];
  const range=(key,min,max,step=1)=>{if(!Number.isFinite(c[key])||c[key]<min||c[key]>max||Math.abs((c[key]-min)/step-Math.round((c[key]-min)/step))>.001)errors.push(`${key}: ${min}–${max}, шаг ${step}`);};
  range('width',f.min,f.max,f.step);range('depth',...bounds(c).depth);range('height',...bounds(c).height);range('pillows',0,8);range('panels',3,8);range('backDepth',15,40);range('pillowHeight',20,65);range('pillowWidth',25,70);range('roomWidth',250,1000,10);range('roomDepth',250,1000,10);range('moduleCount',2,5);range('seatHeight',40,52);range('seatDepth',45,70);range('backLeanDeg',4,20);
@@ -53,8 +54,9 @@ export function validate(c){
 export {estimate} from './costing.js';
 export function dimensions(c){return {width:c.width,depth:c.category==='sofa'&&c.layout!=='straight'?c.depth+65:c.depth,height:c.height};}
 export function normalize(input){
- if(!input||typeof input!=='object')return null;
+ if(!input||typeof input!=='object'||Array.isArray(input))return null;
  const base=initialConfig(input.category),out=Object.fromEntries(Object.keys(base).map(k=>[k,input[k]??base[k]]));
  return validate(out).length?null:out;
 }
 export function csv(rows){const cell=v=>'"'+String(v).replace(/^[=+@-]/,match=>"'"+match).replaceAll('"','""')+'"';return '\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n');}
+

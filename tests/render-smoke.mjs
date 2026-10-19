@@ -30,5 +30,21 @@ try{
      n++;
    }
  }
+ const {default:App}=await server.ssrLoadModule('/src/App.jsx');
+ const originalLocation=globalThis.location,originalStorage=globalThis.localStorage;
+ try{
+   const legacy={id:'legacy',status:'requested',config:{category:'chair'}};
+   for(const route of ['projects','factory'])for(const raw of ['{',JSON.stringify([null,legacy]),JSON.stringify([legacy])]){
+     globalThis.location={hash:'#'+route,origin:'https://example.test',pathname:'/'};
+     globalThis.localStorage={getItem:key=>key==='gaber.projects.v1'?raw:null};
+     const html=renderToStaticMarkup(React.createElement(App));
+     assert.ok(!html.includes('NaN'));
+     assert.match(html,/role="alert"/);
+     if(raw!=='{')assert.match(html,/Восстановленный проект/);
+     if(raw==='{')assert.match(html,/сохранение заблокировано/);
+     n++;
+   }
+ }finally{globalThis.location=originalLocation;globalThis.localStorage=originalStorage;}
  console.log(`✓ ${n} server-render smoke scenarios: five categories, six panels, economics and technical pages`);
 }finally{await server.close();}
+

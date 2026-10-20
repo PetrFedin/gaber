@@ -241,6 +241,11 @@ export function createManufacturingPackage(config,evidence={}) {
     return {
       id:layer.id,zone:layer.zone,thicknessMm:layer.thicknessMm,
       nominalDensityKgM3:layer.densityKgM3,sceneNodeRefs,
+      envelopes:nodes.map(p=>({
+        sceneNodeRef:p.sceneNodeRef,sizeMm:structuredClone(p.sizeMm),
+        positionMm:structuredClone(p.positionMm),
+        rotationXDeg:p.rotationXDeg,geometryKind:p.geometryKind
+      })),
       geometryStatus:sceneNodeRefs.length?'schematic-layer-envelope':'not-modelled',
       quantity:nodes.length||null,
       nominalEnvelopeVolumeM3:roundedVolume,

@@ -24,7 +24,9 @@ export function auditProductionTraceability(pkg,model){
     if(!same(sorted(expected),sorted(actual)))record(kind+'_MISMATCH','Expected and exported identifiers differ');
   };
   const validPos=p=>p&&['x','y','z'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k]));
-  const validSize=s=>validPos(s)&&Object.values(s).every(n=>n>0);
+  const validBoxSize=s=>validPos(s)&&Object.values(s).every(n=>n>0);
+  const validSupportSize=s=>s&&['width','height','length'].every(k=>
+    typeof s[k]==='number'&&Number.isFinite(s[k])&&s[k]>0);
   if(!same(pkg.sourceConfig,model.source.configuration))record('CONFIG_SOURCE','Exported configuration differs from engineering source');
   if(!same(pkg.envelopeCm,model.envelopeCm))record('ENVELOPE','Product envelope differs from engineering source');
   compareIds('FRAME',frame.map(p=>p.partId),parts.map(p=>p.partId));
@@ -42,7 +44,7 @@ export function auditProductionTraceability(pkg,model){
        !same(part.sceneTransform,expected) ||
        !same(part.nominalSizeMm,row?.sizeMm) ||
        !same(sorted(Object.values(part.sceneTransform?.sizeMm||{})),sorted(Object.values(row?.sizeMm||{}))) ||
-       !validSize(part.sceneTransform?.sizeMm) || !validPos(part.sceneTransform?.positionMm))
+       !validBoxSize(part.sceneTransform?.sizeMm) || !validPos(part.sceneTransform?.positionMm))
       record('FRAME_GEOMETRY',expected.partId+' differs from model or cut list');
     if(part.manufacturingRouteId!=='RT-'+part.partId)
       record('FRAME_ROUTE_REF',expected.partId+' has an invalid route');
@@ -59,7 +61,7 @@ export function auditProductionTraceability(pkg,model){
     if(!item)continue;
     if(item.kind!==expected.kind || item.moduleIndex!==expected.moduleIndex ||
        item.location!==expected.location || !same(item.positionMm,expected.positionMm) ||
-       !same(item.sizeMm,expected.sizeMm)||!validPos(item.positionMm)||!validSize(item.sizeMm))
+       !same(item.sizeMm,expected.sizeMm)||!validPos(item.positionMm)||!validSupportSize(item.sizeMm))
       record('SUPPORT_GEOMETRY',expected.sceneNodeRef+' differs from scene layout');
   }
   if(pkg.suspension?.partCount!==supports.length ||
@@ -71,6 +73,12 @@ export function auditProductionTraceability(pkg,model){
     if(!recordLayer)continue;
     const expected=softByLayer.get(source.id);
     compareIds('SOFT_'+source.id,expected.map(s=>s.sceneNodeRef),recordLayer.sceneNodeRefs||[]);
+    const expectedEnvelopes=expected.map(p=>({
+      sceneNodeRef:p.sceneNodeRef,sizeMm:p.sizeMm,positionMm:p.positionMm,
+      rotationXDeg:p.rotationXDeg,geometryKind:p.geometryKind
+    }));
+    if(!same(recordLayer.envelopes,expectedEnvelopes))
+      record('SOFT_TRANSFORMS',source.id+' has mismatched per-instance dimensions or positions');
     const volumeM3=expected.reduce((sum,s)=>sum+s.sizeMm.x*s.sizeMm.y*s.sizeMm.z,0)/1e9;
     const mass=Number.isFinite(source.densityKgM3)&&source.densityKgM3>0
       ?round6(volumeM3*source.densityKgM3):null;

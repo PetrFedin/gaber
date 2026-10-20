@@ -20,11 +20,11 @@ export function softInstances(model) {
   };
   const layers=zone=>model.layers.filter(l=>l.zone===zone);
   if(!['bed','headboard'].includes(c.category)){
-    const n=g.moduleCount, moduleWidthMm=g.usableWidthCm*10/n;
+    const n=g.moduleCount, moduleWidthMm=g.moduleWidthCm*10, spanMm=moduleWidthMm*n;
     const originZMm=-c.depth*5+c.backDepth*10+c.seatDepth*5;
     const seatDepthMm=c.seatDepth*10;
     for(let i=0;i<n;i++){
-      const x=-g.usableWidthCm*5+moduleWidthMm*(i+.5);
+      const x=-spanMm/2+moduleWidthMm*(i+.5);
       let y=g.frameTopCm*10;
       for(const layer of layers('seat')){
         const t=layer.thicknessMm;

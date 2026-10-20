@@ -11,7 +11,7 @@ export function supportInstances(model){
   if(!c||!g||!model.suspension)throw Error('Engineering model required for support layout');
   const out=[];
   if(['chair','chairbed','sofa'].includes(c.category)){
-    const n=g.moduleCount,spanMm=g.usableWidthCm*10,moduleW=spanMm/n;
+    const n=g.moduleCount,moduleW=g.moduleWidthCm*10,spanMm=moduleW*n;
     const frameDepthMm=g.frameDepthCm*10;
     const originZMm=-c.depth*5+c.backDepth*10+c.seatDepth*5;
     const yMm=g.frameTopCm*10+(c.support==='webbing'?5:11);

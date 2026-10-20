@@ -1,6 +1,6 @@
 import React,{useMemo,useState} from 'react';
 import {emptyFactoryCostDraft,evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
-import {money} from './domain.js';
+import {money,csv} from './domain.js';
 
 /** Local human-input review only. Never a production or purchasing approval UI. */
 export default function FactoryCostDraftPanel({config}){
@@ -15,6 +15,16 @@ export default function FactoryCostDraftPanel({config}){
     return {report,audit};
   }catch(e){return {error:'Некорректный JSON: '+e.message};}
  },[text,config]);
+ const exportRequirements=()=>{
+  if(!review?.report)return;
+  const coverage=review.report.coverage;
+  const rows=[['Тип','ID','Единица','Источник / замер'],
+   ...coverage.requiredMaterialRefs.map(id=>['MATERIAL',id,'Уточнить','Уточнить']),
+   ...coverage.requiredOperations.map(id=>['OPERATION',id,'мин','Уточнить'])];
+  const url=URL.createObjectURL(new Blob([csv(rows)],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download='gaber-cost-required-ids.csv';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
  const loadTemplate=()=>{
   const date=new Date().toISOString().slice(0,10);
   setText(JSON.stringify(emptyFactoryCostDraft(config,date),null,2));
@@ -29,10 +39,11 @@ export default function FactoryCostDraftPanel({config}){
   setMessage('Экспортирован непроверенный черновик. Это не производственная смета и не разрешение на выпуск.');
  };
  return <section className="rates-section" aria-label="Ввод заводских нормативов">
-  <div className="section-top"><div><h2>Заводские нормативы · черновик v0.4.7</h2>
+  <div className="section-top"><div><h2>Заводские нормативы · черновик v0.4.8</h2>
    <p>Ставки поставщиков, реальные измерения, нормы отходов и операции привязываются к существующим ID производственных деталей. Вводимые данные не утверждены заводом.</p>
   </div></div>
   <div className="technical-actions"><button type="button" className="button outline" onClick={loadTemplate}>Создать пустой шаблон JSON</button>
+   <button type="button" className="button outline" disabled={!review?.report} onClick={exportRequirements}>Реестр ID · CSV</button>
    <button type="button" className="button outline" disabled={!review?.report||!review.audit.ok} onClick={save}>Экспортировать черновик</button></div>
   <label className="advanced-field"><span>JSON реестра поставщиков, расходов и нормо-времени</span>
    <textarea value={text} rows={9} spellCheck={false} onChange={e=>{setText(e.target.value);setMessage('');}} placeholder="Сначала создайте пустой шаблон. Указывайте только подтверждаемые самостоятельно исходные данные." /></label>
@@ -46,6 +57,10 @@ export default function FactoryCostDraftPanel({config}){
    {review.report.issues.length>0&&<div className="inline-warning" role="alert"><strong>Обнаружены ошибки</strong><ul>{review.report.issues.slice(0,15).map((i,n)=><li key={n}>{i.path}: {i.code}</li>)}</ul></div>}
    <details><summary>Неоценённые материалы ({review.report.coverage.missingMaterialRefs.length})</summary><p>{review.report.coverage.missingMaterialRefs.join(' · ')||'Нет пропусков'}</p></details>
    <details><summary>Операции без нормо-времени ({review.report.coverage.missingOperations.length})</summary><p>{review.report.coverage.missingOperations.join(' · ')||'Нет пропусков'}</p></details>
+   <details><summary>Единицы расхода и лекала требуют проверки ({review.report.coverage.unitReviewRefs?.length??0})</summary>
+     <p>Для новых записей указывайте measuredUnit той же единицей, что и unit в прайсе. Проверка единицы не подтверждает физическую норму расхода, артикул или раскладку обивки.</p>
+     <small>{review.report.coverage.unitReviewRefs?.join(' · ')||'Неотмеченных единиц нет; заводская валидация всё равно обязательна.'}</small>
+   </details>
    <p className="page-disclaimer">Источник: данные пользователя, не проверенные независимой фабрикой. Утверждённая и фактическая себестоимость неизвестны. Производственный выпуск всегда заблокирован.</p>
   </>}
  </section>;

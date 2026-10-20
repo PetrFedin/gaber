@@ -2,7 +2,7 @@ import {createManufacturingPackage} from './manufacturing.js';
 import {createCostTraceability} from './costTraceability.js';
 
 export const FACTORY_DRAFT_SCHEMA='gaber-factory-cost-draft/0.4.7';
-export const FACTORY_REVIEW_SCHEMA='gaber-factory-cost-review/0.4.7';
+export const FACTORY_REVIEW_SCHEMA='gaber-factory-cost-review/0.4.8';
 const UNITS=new Set(['pcs','m','m2','m3','kg']);
 const text=x=>typeof x==='string'&&x.trim().length>0&&x.length<=200;
 const nonnegative=x=>Number.isFinite(x)&&x>=0&&x<=1e9;
@@ -19,7 +19,7 @@ export function emptyFactoryCostDraft(config,asOfDate,revisionId='LOCAL-DRAFT'){
 }
 function emptyReview(d,issues){
  return {schemaVersion:FACTORY_REVIEW_SCHEMA,revisionId:d?.revisionId??null,status:'invalid-input',issues,
-  materialLines:[],operationLines:[],coverage:{requiredMaterialRefs:[],missingMaterialRefs:[],requiredOperations:[],missingOperations:[],unmodelledRefs:[]},
+  materialLines:[],operationLines:[],coverage:{requiredMaterialRefs:[],missingMaterialRefs:[],requiredOperations:[],missingOperations:[],unmodelledRefs:[],unitReviewRefs:[]},
   totals:{enteredMaterialRUB:0,enteredLaborRUB:0,partialDirectRUB:0,provisionalDirectRUB:null,approvedCostRUB:null,actualCostRUB:null},
   sourceAuthority:'user-supplied-unverified',productionRelease:{allowed:false}};
 }
@@ -46,12 +46,19 @@ export function evaluateFactoryCostDraft(config,draft){
  const requiredOperations=pkg.routing.flatMap(r=>r.operations.map(o=>r.id+'|'+o.code));
  const routes=new Map(pkg.routing.map(r=>[r.id,new Set(r.operations.map(o=>o.code))]));
  const quotes=new Map(),rates=new Map(),materialLines=[],operationLines=[];
+ const quoteSkuKeys=new Set(),workCenterKeys=new Set(),unitReviewRefs=new Set();
+ const normalizeKey=value=>value.trim().toLowerCase();
  for(const [i,q] of draft.quotes.entries()){
    if(!q||!text(q.priceId)||!text(q.sku)||!text(q.supplierRef)||!text(q.documentRef)||!text(q.revision)||
      !UNITS.has(q.unit)||q.currency!=='RUB'||!nonnegative(q.unitPriceRUB)||!validPeriod(q,draft.asOfDate)){
      bad('QUOTE_INVALID','quotes['+i+']');continue;
    }
    if(quotes.has(q.priceId)){bad('QUOTE_DUPLICATE','quotes['+i+']');continue;}
+   // There is no current-date quote priority contract; a supplier+SKU
+   // combination must be unique, including case and spacing variants.
+   const quoteKey=JSON.stringify([normalizeKey(q.supplierRef),normalizeKey(q.sku)]);
+   if(quoteSkuKeys.has(quoteKey)){bad('AMBIGUOUS_SUPPLIER_SKU','quotes['+i+']');continue;}
+   quoteSkuKeys.add(quoteKey);
    quotes.set(q.priceId,q);
  }
  for(const [i,r] of draft.workCenters.entries()){
@@ -60,6 +67,11 @@ export function evaluateFactoryCostDraft(config,draft){
      bad('WORKCENTER_INVALID','workCenters['+i+']');continue;
    }
    if(rates.has(r.rateId)){bad('WORKCENTER_DUPLICATE','workCenters['+i+']');continue;}
+   // Different active rates for the same work center cannot be selected
+   // without an explicit effective-time, shift and priority rule.
+   const centerKey=normalizeKey(r.workCenterId);
+   if(workCenterKeys.has(centerKey)){bad('AMBIGUOUS_WORKCENTER','workCenters['+i+']');continue;}
+   workCenterKeys.add(centerKey);
    rates.set(r.rateId,r);
  }
  const charged=new Set(),pricedEntities=new Set();
@@ -70,15 +82,26 @@ export function evaluateFactoryCostDraft(config,draft){
    const entity=entities.get(row.entityId),q=quotes.get(row.priceId);
    if(!entity||!costable.has(entity.kind)){bad('ENTITY_UNKNOWN',at);continue;}
    if(!q){bad('QUOTE_NOT_ACTIVE',at);continue;}
-   const key=row.entityId+'|'+row.priceId;
-   if(charged.has(key)){bad('CONSUMPTION_DUPLICATE',at);continue;}
-   charged.add(key);
+   // One measurement per production entity in this provisional schema.
+   // Multi-supplier lot splits require a future auditable allocation model.
+   if(charged.has(row.entityId)){bad('CONSUMPTION_ENTITY_DUPLICATE',at);continue;}
+   charged.add(row.entityId);
+   if(row.measuredUnit!==undefined&&row.measuredUnit!==q.unit){
+     bad('CONSUMPTION_UNIT_MISMATCH',at);continue;
+   }
+   // Legacy v0.4.7 drafts lacked measuredUnit; keep them readable but
+   // explicitly flag source-unit uncertainty for manual factory review.
+   const needsUnitReview=row.measuredUnit===undefined||entity.kind.startsWith('unmodelled-');
+   if(needsUnitReview)unitReviewRefs.add(row.entityId);
    const amount=money(row.measuredQty*(1+row.wastePct/100)*q.unitPriceRUB);
    if(!Number.isFinite(amount)||amount>1e12){bad('PRICE_OVERFLOW',at);continue;}
    pricedEntities.add(row.entityId);
    materialLines.push({entityId:row.entityId,priceId:q.priceId,sku:q.sku,unit:q.unit,
      measuredQty:row.measuredQty,wastePct:row.wastePct,rateRUB:q.unitPriceRUB,amountRUB:amount,
-     sourceRef:q.documentRef,measurementRef:row.measurementRef,factoryVerified:false});
+     sourceRef:q.documentRef,quoteRevision:q.revision,supplierRef:q.supplierRef,
+     validFrom:q.validFrom,validTo:q.validTo,
+     measuredUnit:row.measuredUnit??null,unitReviewRequired:needsUnitReview,
+     measurementRef:row.measurementRef,factoryVerified:false});
  }
  const usedOperations=new Set(),pricedSteps=new Set();
  for(const [i,row] of draft.operations.entries()){
@@ -107,7 +130,8 @@ export function evaluateFactoryCostDraft(config,draft){
  return {schemaVersion:FACTORY_REVIEW_SCHEMA,revisionId:draft.revisionId,
   status:issues.length?'invalid-input':complete?'self-reported-input-complete':'incomplete',issues,
   materialLines,operationLines,coverage:{requiredMaterialRefs,missingMaterialRefs,requiredOperations,missingOperations,
-    unmodelledRefs:trace.designElements.filter(e=>e.kind.startsWith('unmodelled-')).map(e=>e.id)},
+    unmodelledRefs:trace.designElements.filter(e=>e.kind.startsWith('unmodelled-')).map(e=>e.id),
+    unitReviewRefs:[...unitReviewRefs]},
   totals:{enteredMaterialRUB:materialSum,enteredLaborRUB:laborSum,
     partialDirectRUB:money(materialSum+laborSum),provisionalDirectRUB:complete?money(materialSum+laborSum):null,
     approvedCostRUB:null,actualCostRUB:null},

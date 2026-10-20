@@ -4,6 +4,30 @@ import {estimate,defaultProfile} from './costing.js';
 export const COST_TRACE_VERSION='gaber-cost-traceability/0.4.6';
 const round6=n=>Math.round(n*1e6)/1e6;
 const volume=s=>round6(s.x*s.y*s.z/1e9);
+/** Shared canonical demo expense mapping; never an approved part-level cost. */
+function expectedEntityLinks(id,entities,textile){
+ const known=new Set(entities.map(e=>e.id));
+ const group=k=>entities.filter(e=>e.kind===k).map(e=>e.id);
+ const hw=k=>known.has('HARDWARE:'+k)?['HARDWARE:'+k]:[];
+ switch(id){
+  case 'fabric':case 'seam':return [textile];
+  case 'frame':return group('frame');
+  case 'filling':return [...group('soft'),...group('unmodelled-layer'),...group('support')];
+  case 'mount':return ['UNMODELLED:HEADBOARD_MOUNT'];
+  case 'legs':return hw('legs');
+  case 'storage':return hw('storage');
+  case 'woodArms':return ['UNMODELLED:WOOD_ARM_INSERTS'];
+  case 'charging':return hw('charging');
+  case 'lamps':return hw('lamps');
+  case 'covers':return [...hw('zipper'),textile];
+  case 'connector':return hw('connector');
+  case 'fold':case 'slide':case 'recliner':return hw('mechanism');
+  case 'labor':return [...group('routing'),'UNMODELLED:UPHOLSTERY_LABOR'];
+  case 'packing':return ['UNMODELLED:PACKING'];
+  case 'overhead':return ['FINANCE:OVERHEAD'];
+  default:throw Error('No cost mapping: '+id);
+ }
+}
 
 /**
  * Demo line-item references to manufacturing entities only. These are NOT
@@ -47,30 +71,8 @@ export function createCostTraceability(config,profile=defaultProfile()){
    ['FINANCE:OVERHEAD','financial-only','Demonstration overhead, not a part']
  ])add(id,kind,{quantity:null,quantityUnit:null,reason});
  const ids=new Set(entities.map(e=>e.id));
- const group=k=>entities.filter(e=>e.kind===k).map(e=>e.id);
- const hardware=k=>ids.has('HARDWARE:'+k)?['HARDWARE:'+k]:[];
- const target=id=>{
-   switch(id){
-     case 'fabric':case 'seam':return [textile];
-     case 'frame':return group('frame');
-     case 'filling':return [...group('soft'),...group('unmodelled-layer'),...group('support')];
-     case 'mount':return ['UNMODELLED:HEADBOARD_MOUNT'];
-     case 'legs':return hardware('legs');
-     case 'storage':return hardware('storage');
-     case 'woodArms':return ['UNMODELLED:WOOD_ARM_INSERTS'];
-     case 'charging':return hardware('charging');
-     case 'lamps':return hardware('lamps');
-     case 'covers':return [...hardware('zipper'),textile];
-     case 'connector':return hardware('connector');
-     case 'fold':case 'slide':case 'recliner':return hardware('mechanism');
-     case 'labor':return [...group('routing'),'UNMODELLED:UPHOLSTERY_LABOR'];
-     case 'packing':return ['UNMODELLED:PACKING'];
-     case 'overhead':return ['FINANCE:OVERHEAD'];
-     default:throw Error('Missing explicit mapping for cost row '+id);
-   }
- };
  const rows=quote.rows.map(r=>{
-   const linkedEntityIds=target(r.id);
+   const linkedEntityIds=expectedEntityLinks(r.id,entities,textile);
    if(!linkedEntityIds.length||new Set(linkedEntityIds).size!==linkedEntityIds.length||
       linkedEntityIds.some(id=>!ids.has(id)))throw Error('Unlinked demo expense '+r.id);
    return {
@@ -113,16 +115,42 @@ export function auditCostTraceability(ledger,expectedEstimate=null){
  const refs=new Set(ledger.designElements.map(x=>x.id)),rows=new Set(ledger.rows.map(x=>x.id));
  if(refs.size!==ledger.designElements.length)fail('DUPLICATE_ENTITY','Duplicate entity ID');
  if(rows.size!==ledger.rows.length)fail('DUPLICATE_ROW','Duplicate expense ID');
+ if(ledger.manufacturingIntegrityOk!==true)
+   fail('GEOMETRY_AUDIT_FAIL','Engineering traceability is not verified');
+ for(const entity of ledger.designElements)
+   if(entity?.approved!==false||entity?.productionCostRUB!==null)
+     fail('FAKE_ENTITY_APPROVAL','Concept entity cannot assert real cost or approval');
+ if(typeof ledger.sourceConfig?.fabric!=='string')
+   fail('INVALID_FABRIC','Fabric source is missing');
  for(const r of ledger.rows){
    if(!Array.isArray(r.linkedEntityIds)||!r.linkedEntityIds.length||
       new Set(r.linkedEntityIds).size!==r.linkedEntityIds.length||
       r.linkedEntityIds.some(x=>!refs.has(x)))fail('UNLINKED_EXPENSE','Unmatched cost row '+r.id);
+   try{
+     const expected=expectedEntityLinks(r.id,ledger.designElements,'UPHOLSTERY:'+ledger.sourceConfig.fabric);
+     if(JSON.stringify(expected)!==JSON.stringify(r.linkedEntityIds))
+       fail('WRONG_ENTITY_LINK','Expense '+r.id+' is mapped to a wrong entity set');
+     const unknown=expected.some(id=>id.startsWith('UNMODELLED:')||id==='UPHOLSTERY:'+ledger.sourceConfig.fabric);
+     if(r.hasUnmodelledBasis!==unknown)
+       fail('FALSE_COVERAGE','Unmodelled scope hidden for '+r.id);
+   }catch{fail('UNKNOWN_COST_MAPPING','Unmapped expense '+r.id);}
    if(!Number.isFinite(r.demoAmountRUB)||r.demoAmountRUB<0)
      fail('INVALID_AMOUNT','Invalid expense amount '+r.id);
    if(r.realMaterialConsumption!==null||r.realUnitCostRUB!==null||r.realTotalCostRUB!==null)
      fail('FAKE_REAL_COST','Unverified rates must remain unknown '+r.id);
  }
  const summed=ledger.rows.reduce((n,r)=>n+r.demoAmountRUB,0);
+ const direct=ledger.rows.filter(r=>r.id!=='overhead').reduce((s,r)=>s+r.demoAmountRUB,0);
+ if(direct!==ledger.totals?.demoDirectRUB)fail('DIRECT_COST_MISMATCH','Direct cost total differs');
+ const linked=new Set(ledger.rows.flatMap(r=>r.linkedEntityIds||[]));
+ const unmodelled=ledger.rows.filter(r=>r.hasUnmodelledBasis).map(r=>r.id);
+ const uncovered=ledger.designElements.filter(e=>e.kind==='hardware'&&!linked.has(e.id)).map(e=>e.id);
+ if(ledger.coverage?.entityCount!==ledger.designElements.length||
+    ledger.coverage?.mappedEntityCount!==linked.size||
+    JSON.stringify(ledger.coverage?.rowsWithUnmodelledBasis)!==JSON.stringify(unmodelled)||
+    JSON.stringify(ledger.coverage?.unpricedHardwareRefs)!==JSON.stringify(uncovered))
+   fail('COVERAGE_MISMATCH','Cost coverage summary does not match rows');
+
  if(!Number.isSafeInteger(summed)||summed!==ledger.totals?.demoCostRUB||
     summed!==ledger.totals?.demoRowTotalRUB)
    fail('UNBALANCED_LEDGER','Demo expenses do not balance');

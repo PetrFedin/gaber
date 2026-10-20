@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useMemo,useState} from 'react';
 import {money} from './domain.js';
 import {createCostTraceability,compareCostTraceability} from './costTraceability.js';
 
@@ -8,8 +8,8 @@ import {createCostTraceability,compareCostTraceability} from './costTraceability
  */
 export default function CostTraceabilityPanel({config,profile}){
   const [baseline,setBaseline]=useState(null);
-  const trace=createCostTraceability(config,profile);
-  const delta=baseline?compareCostTraceability(baseline.config,config,baseline.profile,profile):null;
+  const trace=useMemo(()=>createCostTraceability(config,profile),[config,profile]);
+  const delta=useMemo(()=>baseline?compareCostTraceability(baseline.config,config,baseline.profile,profile):null,[baseline,config,profile]);
   return <section className="rates-section" aria-label="Трассировка затрат к производственным элементам">
     <div className="section-top"><div>
       <h2>Связь калькуляции с деталями · v0.4.6</h2>

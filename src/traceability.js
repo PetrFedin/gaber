@@ -1,8 +1,9 @@
 import {frameInstances} from './frameLayout.js';
 import {supportInstances} from './supportLayout.js';
 import {softInstances} from './softLayout.js';
+import {jointInstances} from './jointLayout.js';
 
-export const TRACEABILITY_AUDIT_VERSION='gaber-traceability-audit/0.4.3';
+export const TRACEABILITY_AUDIT_VERSION='gaber-traceability-audit/0.4.5';
 const round6=n=>Math.round(n*1000000)/1000000;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const sorted=a=>[...a].sort();
@@ -106,6 +107,17 @@ export function auditProductionTraceability(pkg,model){
     if(!same(item.sceneNodeRefs,wanted)||
        item.geometryStatus!==(shouldRender?'unapproved-placeholder':'not-modelled'))
       record('HARDWARE_SCENE',item.hardwareId+' placeholder geometry mismatch');
+  }
+  const expectedJoints=jointInstances(model.source.configuration,model,frame);
+  compareIds('JOINT',expectedJoints.map(j=>j.id),joints.map(j=>j.id));
+  const jointById=new Map(joints.map(j=>[j.id,j]));
+  for(const expected of expectedJoints){
+    const actual=jointById.get(expected.id);
+    if(!actual)continue;
+    for(const key of ['kind','partRefs','partInstanceRefs','locationMm',
+      'nominalJointGapMm','proposedCutToleranceMm','worstCaseRemainingGapMm'])
+      if(!same(actual[key]??null,expected[key]??null))
+        record('JOINT_GEOMETRY',expected.id+' mismatches '+key);
   }
   if(!unique(joints.map(j=>j.id)))record('JOINT_DUPLICATE','Joint IDs must be unique');
   for(const j of joints){

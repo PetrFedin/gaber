@@ -20,6 +20,16 @@ export async function submitTechnologistReview({principal,projectId,revisionId,r
   return {accepted:false,code:'INVALID_REQUEST',productionRelease:{allowed:false}};
  if(!repository||typeof repository.withSerializableTransaction!=='function')
   throw new TypeError('NO_AUTHORITATIVE_REPOSITORY');
+ // Reject unauthorized requests before reading any factory data from DB.
+ if(!principal||principal.identitySource!=='server-session'||
+  principal.authenticated!==true||!named(principal.subject)||
+  !Array.isArray(principal.roles)||
+  !principal.roles.some(role=>role==='technologist'||role==='factory-admin')||
+  principal.mfaVerified!==true||!Number.isSafeInteger(nowMs)||
+  !Number.isSafeInteger(principal.sessionExpiresAtMs)||
+  principal.sessionExpiresAtMs<=nowMs)
+  return {accepted:false,code:'UNAUTHORIZED_TECHNOLOGIST',
+   productionRelease:{allowed:false}};
  return repository.withSerializableTransaction(async tx=>{
   const revision=await tx.getRevisionForUpdate(projectId,revisionId);
   const evidenceEnvelopes=await tx.getEvidenceForRevision(projectId,revisionId);

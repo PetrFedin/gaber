@@ -89,3 +89,14 @@ test('bad IDs and missing transaction layer fail closed',async()=>{
  assert.equal(bad.productionRelease.allowed,false);
  await assert.rejects(submitTechnologistReview(args(null)),/NO_AUTHORITATIVE_REPOSITORY/);
 });
+
+test('unauthorized session never performs a factory database query',async()=>{
+ let called=false;
+ const repository={withSerializableTransaction:async()=>{called=true;throw new Error('QUERY_NOT_ALLOWED');}};
+ const result=await submitTechnologistReview(args(repository,{
+  principal:{...principal,mfaVerified:false}
+ }));
+ assert.equal(result.accepted,false);
+ assert.equal(result.code,'UNAUTHORIZED_TECHNOLOGIST');
+ assert.equal(called,false);
+});

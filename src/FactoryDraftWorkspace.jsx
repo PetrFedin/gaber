@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {emptyFactoryCostDraft,evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
+import {emptyFactoryCostDraft,evaluateFactoryCostDraft,auditFactoryCostDraft,compareFactoryCostDrafts} from './factoryCosting.js';
 import {money} from './domain.js';
 import {
   FACTORY_WORKSPACE_KEY, MAX_FACTORY_REVISIONS, MAX_FACTORY_IMPORT_BYTES,
@@ -67,12 +67,26 @@ export default function FactoryDraftWorkspace({config,text,onChange,onMessage}){
   const [label,setLabel]=useState('Рабочий расчёт');
   const [selected,setSelected]=useState('');
   const [preview,setPreview]=useState(null);
+  const [compareEnabled,setCompareEnabled]=useState(false);
   const [externalChange,setExternalChange]=useState(false);
   const input=useRef(null),generation=useRef(0),editorContext=useRef(structuredClone(config));
   const configKey=factoryConfigKey(config);
   const history=useMemo(()=>matchingFactoryRevisions(workspace,config),[workspace,configKey]);
   const selectedId=history.some(r=>r.id===selected)?selected:history[0]?.id??'';
   const dirty=text!==savedText;
+  const comparison=useMemo(()=>{
+    if(!compareEnabled||!selectedId||!text.trim())return null;
+    try{
+      const baseline=getFactoryRevision(workspace,selectedId,config);
+      const before=JSON.parse(baseline.text),after=JSON.parse(text);
+      const oldReview=evaluateFactoryCostDraft(config,before);
+      const newReview=evaluateFactoryCostDraft(config,after);
+      if(oldReview.status==='invalid-input'||newReview.status==='invalid-input')
+        return {error:'Для сравнения исправьте неверные входные данные обеих ревизий.'};
+      return compareFactoryCostDrafts(config,before,config,after);
+    }catch{return {error:'Сравнение невозможно: несовпадение конфигурации или некорректный исходный текст.'};}
+  },[compareEnabled,selectedId,workspace,text,configKey]);
+
 
   useEffect(()=>{generation.current++;setPreview(null);},[text,configKey]);
   useEffect(()=>()=>{generation.current++;},[]);
@@ -170,7 +184,7 @@ export default function FactoryDraftWorkspace({config,text,onChange,onMessage}){
   return <section className="gaber-workspace" aria-label="Локальные ревизии заводского расчёта">
     <h3>История расчёта · v0.4.9</h3>
     <p className="helper">Ревизии привязаны к текущим размерам и материалам, а не к номеру заказа.
-      Сохранение — кнопкой. Перед сменой раздела сохраните правки.
+      Ревизии сохраняются кнопкой. Незавершённый текст дополнительно сохраняется во временной копии текущей вкладки; для надёжного переноса скачайте JSON.
       Журнал хранится только в этом браузере и экспортируется отдельно от клиентских проектов.</p>
     {workspace.error&&<p className="inline-warning" role="alert">{messages[workspace.error]}</p>}
     {externalChange&&<p className="inline-warning" role="status">Журнал изменён в другой вкладке. Перед записью обновите историю.</p>}
@@ -191,11 +205,38 @@ export default function FactoryDraftWorkspace({config,text,onChange,onMessage}){
       </select>
       <div className="technical-actions">
         <button type="button" className="button outline" onClick={restore}>Восстановить выбранную</button>
+        <button type="button" className="button outline" aria-pressed={compareEnabled}
+          onClick={()=>setCompareEnabled(value=>!value)}>
+          {compareEnabled?'Скрыть сравнение':'Сравнить с текущим'}</button>
         <button type="button" className="button outline" onClick={()=>{
           try{download('gaber-factory-revision.json',exportFactoryRevision(getFactoryRevision(workspace,selectedId,config)));}
           catch(error){notifyError(error);}
         }}>Экспорт ревизии JSON</button>
       </div>
+    </div>}
+    {comparison?.error&&<p className="gaber-insights-alert" role="alert">{comparison.error}</p>}
+    {comparison&&!comparison.error&&<div className="gaber-revision-diff" role="region" aria-label="Сравнение с выбранной ревизией">
+      <h4>Изменения относительно сохранённой ревизии</h4>
+      <div className="gaber-revision-diff-metrics">
+        <div><span>Изменение введённых затрат</span><strong>{money(comparison.partialDirectDeltaRUB)}</strong></div>
+        <div><span>Материальные строки</span><strong>{comparison.materialChanges.length}</strong></div>
+        <div><span>Технологические операции</span><strong>{comparison.operationChanges.length}</strong></div>
+      </div>
+      <p>Сравниваются самостоятельно введённые значения. Это не изменение подтверждённой себестоимости.</p>
+      <details><summary>Просмотреть различия</summary>
+        <div className="gaber-insights-table"><table><thead><tr>
+          <th>Деталь или операция</th><th>Было</th><th>Стало</th><th>Разница</th>
+        </tr></thead><tbody>
+          {[...comparison.materialChanges.map(r=>({...r,kind:'Материал'})),
+            ...comparison.operationChanges.map(r=>({...r,kind:'Операция'}))]
+            .slice(0,30).map(row=><tr key={row.kind+row.key}>
+              <td>{row.kind} · {row.key}</td><td>{money(row.beforeRUB)}</td>
+              <td>{money(row.afterRUB)}</td><td>{money(row.deltaRUB)}</td>
+            </tr>)}
+        </tbody></table></div>
+        {comparison.materialChanges.length+comparison.operationChanges.length>30&&
+          <p>Отображены первые 30 изменений. Для полного набора сохраните оба JSON-черновика.</p>}
+      </details>
     </div>}
     <div className="technical-actions">
       <input ref={input} type="file" accept=".json,application/json" hidden aria-label="Импорт расчёта JSON" onChange={readImport}/>

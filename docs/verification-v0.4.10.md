@@ -27,3 +27,9 @@ This change builds on engineering branch v0.4.9 without merging to main or autho
 1. Exact head `npm ci && npm test && npm run build`, plus SSR and browser tests of form update, journal, session scratch, revision compare, corrupt JSON, file upload, CSV download.
 2. Desktop/mobile screenshots at 375/768/1440, keyboard and focus order, SVG fallback and WebGL.
 3. Supplier-backed reference product and measured CAD/pattern/fastener/load evidence; remain Production HOLD until independent authority verifies.
+
+## Revision change analytics (incremental)
+- FactoryDraftWorkspace now compares the selected locally saved revision against current source inputs only on explicit user request.
+- Both revisions are independently re-evaluated; invalid/stale input cannot be shown as a valid delta.
+- Provisional direct cost delta, material rows, operation changes and a limited first-30 difference list are displayed. Never interpreted as approved/actual cost or business revenue.
+- Temporary session copy status explained separately from durable local revision export.

@@ -1,10 +1,11 @@
 import React,{useMemo,useState} from 'react';
 import {emptyFactoryCostDraft,evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
 import {money,csv} from './domain.js';
+import FactoryDraftWorkspace,{loadInitialFactoryText} from './FactoryDraftWorkspace.jsx';
 
 /** Local human-input review only. Never a production or purchasing approval UI. */
 export default function FactoryCostDraftPanel({config}){
- const [text,setText]=useState('');
+ const [text,setText]=useState(()=>loadInitialFactoryText(config));
  const [message,setMessage]=useState('');
  const review=useMemo(()=>{
   if(!text.trim())return null;
@@ -25,11 +26,6 @@ export default function FactoryCostDraftPanel({config}){
   const a=document.createElement('a');a.href=url;a.download='gaber-cost-required-ids.csv';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  };
- const loadTemplate=()=>{
-  const date=new Date().toISOString().slice(0,10);
-  setText(JSON.stringify(emptyFactoryCostDraft(config,date),null,2));
-  setMessage('Создан пустой черновик для текущей конфигурации. Источники цен и замеры необходимо ввести самостоятельно.');
- };
  const save=()=>{
   if(!review?.report||!review.audit.ok){setMessage('Экспорт заблокирован: устраните некорректные или устаревшие данные.');return;}
   const payload={kind:'GABER_FACTORY_COST_PREVIEW_NOT_APPROVED',draft:JSON.parse(text),review:review.report};
@@ -39,10 +35,11 @@ export default function FactoryCostDraftPanel({config}){
   setMessage('Экспортирован непроверенный черновик. Это не производственная смета и не разрешение на выпуск.');
  };
  return <section className="rates-section" aria-label="Ввод заводских нормативов">
-  <div className="section-top"><div><h2>Заводские нормативы · черновик v0.4.8</h2>
+  <div className="section-top"><div><h2>Заводские нормативы · рабочие ревизии v0.4.9</h2>
    <p>Ставки поставщиков, реальные измерения, нормы отходов и операции привязываются к существующим ID производственных деталей. Вводимые данные не утверждены заводом.</p>
   </div></div>
-  <div className="technical-actions"><button type="button" className="button outline" onClick={loadTemplate}>Создать пустой шаблон JSON</button>
+  <FactoryDraftWorkspace config={config} text={text} onChange={setText} onMessage={setMessage}/>
+  <div className="technical-actions">
    <button type="button" className="button outline" disabled={!review?.report} onClick={exportRequirements}>Реестр ID · CSV</button>
    <button type="button" className="button outline" disabled={!review?.report||!review.audit.ok} onClick={save}>Экспортировать черновик</button></div>
   <label className="advanced-field"><span>JSON реестра поставщиков, расходов и нормо-времени</span>

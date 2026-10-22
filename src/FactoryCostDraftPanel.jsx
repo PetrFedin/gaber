@@ -26,12 +26,14 @@ export default function FactoryCostDraftPanel({config}){
  const [message,setMessage]=useState('');
  const review=useMemo(()=>{
   if(!text.trim())return null;
+  let draft;
+  try{draft=JSON.parse(text);}
+  catch(e){return {error:'Некорректный JSON: '+e.message};}
   try{
-    const draft=JSON.parse(text);
     const report=evaluateFactoryCostDraft(config,draft);
     const audit=auditFactoryCostDraft(config,draft,report);
     return {draft,report,audit};
-  }catch(e){return {error:'Некорректный JSON: '+e.message};}
+  }catch(e){return {draft,error:'Не удалось проверить исходные данные: '+e.message};}
  },[text,config]);
  const exportRequirements=()=>{
   if(!review?.report)return;
@@ -52,7 +54,7 @@ export default function FactoryCostDraftPanel({config}){
   setMessage('Экспортирован непроверенный черновик. Это не производственная смета и не разрешение на выпуск.');
  };
  return <section className="rates-section" aria-label="Ввод заводских нормативов">
-  <div className="section-top"><div><h2>Заводские нормативы · рабочие ревизии v0.4.9</h2>
+  <div className="section-top"><div><h2>Заводские нормативы · финансовая модель</h2>
    <p>Ставки поставщиков, реальные измерения, нормы отходов и операции привязываются к существующим ID производственных деталей. Вводимые данные не утверждены заводом.</p>
   </div></div>
   <FactoryDraftWorkspace config={config} text={text} onChange={changeText} onMessage={setMessage}/>
@@ -69,11 +71,10 @@ export default function FactoryCostDraftPanel({config}){
   </details>
   {message&&<p className="helper" role="status">{message}</p>}
   {review?.error&&<p className="inline-warning" role="alert">{review.error}</p>}
-  {review?.report&&<><div className="costing-summary">
-    <article><small>Статус</small><strong>{review.report.status}</strong><span>Утверждение производства запрещено</span></article>
-    <article><small>Введённые прямые затраты</small><strong>{money(review.report.totals.partialDirectRUB)}</strong><span>Частичный расчёт; не итог заказа</span></article>
-    <article><small>Непокрытые элементы/операции</small><strong>{review.report.coverage.missingMaterialRefs.length+review.report.coverage.missingOperations.length}</strong><span>Отсутствующие заводские нормативы</span></article>
-   </div>
+  {review?.report&&<>
+   <p className="gaber-checkline">Техническая проверка: {review.audit?.ok?'логика отчёта согласована':'обнаружены расхождения'} ·
+    Ввод: {review.report.status==='self-reported-input-complete'?'все обязательные позиции заполнены':review.report.status==='incomplete'?'неполные данные':'ошибки исходных данных'}.
+    Производственное утверждение недоступно.</p>
    {review.report.issues.length>0&&<div className="inline-warning" role="alert"><strong>Обнаружены ошибки</strong><ul>{review.report.issues.slice(0,15).map((i,n)=><li key={n}>{i.path}: {i.code}</li>)}</ul></div>}
    <details><summary>Неоценённые материалы ({review.report.coverage.missingMaterialRefs.length})</summary><p>{review.report.coverage.missingMaterialRefs.join(' · ')||'Нет пропусков'}</p></details>
    <details><summary>Операции без нормо-времени ({review.report.coverage.missingOperations.length})</summary><p>{review.report.coverage.missingOperations.join(' · ')||'Нет пропусков'}</p></details>

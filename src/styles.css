@@ -208,3 +208,6 @@ textarea:focus-visible,summary:focus-visible{
 .gaber-revision-diff details summary{font-size:12px;font-weight:600;cursor:pointer}
 .gaber-revision-diff .gaber-insights-table{margin-top:12px}
 @media(max-width:740px){.gaber-revision-diff-metrics{grid-template-columns:1fr}.gaber-revision-diff{padding:15px}}
+
+.gaber-checkline{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+ padding:13px 0;margin:24px 0 16px;color:var(--gaber-subtle);font-size:11px;line-height:1.75}

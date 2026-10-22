@@ -1,11 +1,28 @@
-import React,{useMemo,useState} from 'react';
-import {emptyFactoryCostDraft,evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
+import React,{useEffect,useMemo,useState} from 'react';
+import {evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
 import {money,csv} from './domain.js';
 import FactoryDraftWorkspace,{loadInitialFactoryText} from './FactoryDraftWorkspace.jsx';
+import FactoryCostEditor from './FactoryCostEditor.jsx';
+import FactoryInsightsPanel from './FactoryInsightsPanel.jsx';
+import {factoryConfigKey} from './factoryDraftStorage.js';
+import {readFactoryScratch,writeFactoryScratch} from './factoryScratch.js';
+function initialText(config){
+  try{const saved=readFactoryScratch(config);if(saved!==null)return saved;}catch{}
+  return loadInitialFactoryText(config);
+}
 
 /** Local human-input review only. Never a production or purchasing approval UI. */
 export default function FactoryCostDraftPanel({config}){
- const [text,setText]=useState(()=>loadInitialFactoryText(config));
+ const [text,setText]=useState(()=>initialText(config));
+ const [scratchWarning,setScratchWarning]=useState('');
+ const configKey=factoryConfigKey(config);
+ useEffect(()=>{setText(initialText(config));setScratchWarning('');},[configKey]);
+ const changeText=next=>{
+   setText(next);
+   try{writeFactoryScratch(config,next);setScratchWarning('');}
+   catch(e){setScratchWarning('Временная копия в этом браузере не сохранилась ('+e.message+'). Сохраните локальную ревизию или скачайте исходный текст.');}
+ };
+
  const [message,setMessage]=useState('');
  const review=useMemo(()=>{
   if(!text.trim())return null;
@@ -13,7 +30,7 @@ export default function FactoryCostDraftPanel({config}){
     const draft=JSON.parse(text);
     const report=evaluateFactoryCostDraft(config,draft);
     const audit=auditFactoryCostDraft(config,draft,report);
-    return {report,audit};
+    return {draft,report,audit};
   }catch(e){return {error:'Некорректный JSON: '+e.message};}
  },[text,config]);
  const exportRequirements=()=>{
@@ -38,12 +55,18 @@ export default function FactoryCostDraftPanel({config}){
   <div className="section-top"><div><h2>Заводские нормативы · рабочие ревизии v0.4.9</h2>
    <p>Ставки поставщиков, реальные измерения, нормы отходов и операции привязываются к существующим ID производственных деталей. Вводимые данные не утверждены заводом.</p>
   </div></div>
-  <FactoryDraftWorkspace config={config} text={text} onChange={setText} onMessage={setMessage}/>
+  <FactoryDraftWorkspace config={config} text={text} onChange={changeText} onMessage={setMessage}/>
+  {scratchWarning&&<p className="gaber-insights-alert" role="alert">{scratchWarning}</p>}
+  <FactoryCostEditor config={config} text={text} onChange={changeText}/>
+  {review?.draft&&<FactoryInsightsPanel config={config} draft={review.draft}/>}
+
   <div className="technical-actions">
    <button type="button" className="button outline" disabled={!review?.report} onClick={exportRequirements}>Реестр ID · CSV</button>
    <button type="button" className="button outline" disabled={!review?.report||!review.audit.ok} onClick={save}>Экспортировать черновик</button></div>
+  <details className="gaber-raw-editor"><summary>Расширенный режим · исходный JSON</summary>
   <label className="advanced-field"><span>JSON реестра поставщиков, расходов и нормо-времени</span>
-   <textarea value={text} rows={9} spellCheck={false} onChange={e=>{setText(e.target.value);setMessage('');}} placeholder="Сначала создайте пустой шаблон. Указывайте только подтверждаемые самостоятельно исходные данные." /></label>
+   <textarea value={text} rows={12} spellCheck={false} onChange={e=>{changeText(e.target.value);setMessage('');}} placeholder="Данные для расширенного редактирования" /></label>
+  </details>
   {message&&<p className="helper" role="status">{message}</p>}
   {review?.error&&<p className="inline-warning" role="alert">{review.error}</p>}
   {review?.report&&<><div className="costing-summary">

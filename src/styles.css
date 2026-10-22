@@ -27,3 +27,170 @@
 .project-import-label{display:flex;flex-direction:column;gap:6px;font-size:14px}.project-import-label input{max-width:260px;font:inherit}
 .project-recovery-preview{border-top:1px solid var(--line,#d8d5cc);margin-top:20px;padding-top:16px}.project-recovery-preview h3{margin:0 0 10px}
 @media(max-width:600px){.project-storage{padding:16px}.project-storage-actions{align-items:stretch;flex-direction:column}.project-import-label input{max-width:100%;width:100%}}
+
+
+/* GABER / interface system v0.4.10 — restrained furniture atelier + accountable factory desk.
+   Keeps all demo/safety disclosures visible; removes redundant gradient-card styling. */
+:root{
+ --paper:#f7f6f2;
+ --stage:#eeebe5;
+ --green:#34453c;
+ --line:#d8d9d1;
+ --muted:#6e776e;
+ --gaber-ink:#262d29;
+ --gaber-subtle:#69736a;
+ --gaber-quiet:#f3f2ed;
+ --gaber-soft:#efeee8;
+ --gaber-accent:#98806a;
+}
+body{color:var(--gaber-ink);background:var(--paper)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,summary:focus-visible{
+ outline:2px solid var(--gaber-accent);outline-offset:3px;
+}
+.button{border-radius:2px;min-height:44px;transition:background-color .15s ease,border-color .15s ease}
+.button:hover:not(:disabled){transform:none}
+.button.dark{background:var(--green)}
+.button.outline{background:transparent;border-color:#aeb5a8}
+.button.outline:hover:not(:disabled){background:#f0f1ec}
+.eyebrow{font-size:10px;letter-spacing:.13em;font-weight:600;color:var(--gaber-subtle)}
+.costing-page .page-top h1,.technical-page .page-top h1{
+ font-family:var(--serif);font-weight:400;letter-spacing:-.035em;
+}
+.costing-summary article,.stats-grid article{
+ border-radius:2px;background:transparent;border:1px solid var(--line);
+ border-top:2px solid var(--green);gap:9px;box-shadow:none;
+}
+.costing-summary strong{color:var(--gaber-ink)}
+.formula-details,.technical-banner{
+ background:var(--gaber-soft);border:1px solid var(--line);border-radius:2px;
+}
+.assembly-grid article,.project-storage{border-radius:2px;background:var(--gaber-quiet);border:1px solid var(--line)}
+.mode-tag,.simplified-badge,.status{border-radius:2px}
+.gaber-ledger,.gaber-insights{
+ padding:28px;margin:28px 0 32px;
+ border:1px solid var(--line);border-radius:2px;background:#fffefa;
+}
+.gaber-ledger-intro,.gaber-insights-heading{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:28px;
+ padding-bottom:21px;border-bottom:1px solid var(--line);
+}
+.gaber-ledger-intro h3,.gaber-insights-heading h3{
+ font:400 clamp(23px,2vw,32px)/1.25 var(--serif);
+ letter-spacing:-.025em;margin:7px 0 9px;color:var(--gaber-ink);
+}
+.gaber-ledger-intro p,.gaber-insights-heading p{
+ max-width:660px;font-size:12px;line-height:1.8;color:var(--gaber-subtle);
+}
+.gaber-ledger-revision,.gaber-insights-status{
+ padding:7px 10px;white-space:nowrap;font:500 10px/1.5 'Golos Text',sans-serif;
+ border:1px solid var(--line);color:var(--gaber-ink);letter-spacing:.03em;
+}
+.gaber-ledger-tabs{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ border-bottom:1px solid var(--line);margin:12px 0 24px;
+}
+.gaber-ledger-tabs button{
+ border-bottom:2px solid transparent;padding:15px 12px;
+ text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;
+ font-size:12px;color:var(--gaber-subtle);min-height:48px;
+}
+.gaber-ledger-tabs button.is-active{border-color:var(--green);color:var(--gaber-ink);font-weight:600}
+.gaber-ledger-tabs button:hover{background:var(--gaber-quiet)}
+.gaber-ledger-tabs small{font-size:10px;color:var(--gaber-subtle)}
+.gaber-ledger-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+.gaber-ledger-toolbar h4,.gaber-insights-columns h4{
+ font-size:15px;line-height:1.35;font-weight:600;margin:0 0 6px;
+}
+.gaber-ledger-toolbar small{display:block;font-size:11px;color:var(--gaber-subtle);line-height:1.5}
+.gaber-ledger-item{border:1px solid var(--line);margin-bottom:12px;background:#fff;padding:17px}
+.gaber-ledger-item-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+ padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e7e8e1}
+.gaber-ledger-item-head span{font-size:11px;font-weight:600;overflow-wrap:anywhere}
+.gaber-ledger-item-head .text-button{color:#76564c}
+.gaber-ledger-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px 15px}
+.gaber-ledger-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.gaber-ledger-field>span{font-size:10px;font-weight:600;color:#657167}
+.gaber-ledger-field input,.gaber-ledger-field select{
+ display:block;width:100%;min-width:0;height:41px;padding:9px 10px;border-radius:2px;
+ background:#fff;border:1px solid #cbd0c6;color:var(--gaber-ink);
+ font-family:inherit;font-size:12px;
+}
+.gaber-ledger-field input:focus,.gaber-ledger-field select:focus{border-color:var(--green)}
+.gaber-ledger-empty,.gaber-ledger-foot,.gaber-muted{font-size:12px;color:var(--gaber-subtle);line-height:1.7}
+.gaber-ledger-foot{padding-top:18px;margin-top:20px;border-top:1px solid var(--line)}
+.gaber-raw-editor{border:1px solid var(--line);border-radius:2px;padding:17px 20px;margin:20px 0;background:#f8f7f3}
+.gaber-raw-editor summary{font-size:12px;font-weight:600;cursor:pointer}
+.gaber-raw-editor textarea{
+ width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+ font-size:11px;line-height:1.5;white-space:pre;resize:vertical;
+ min-height:200px;border:1px solid var(--line);padding:13px;border-radius:2px;
+ background:#fff;
+}
+.gaber-insights-heading{margin-bottom:22px}
+.gaber-insights-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+ background:var(--line);border:1px solid var(--line)}
+.gaber-insights-metrics article{
+ display:flex;flex-direction:column;gap:8px;padding:19px;background:#fffefa;
+}
+.gaber-insights-metrics span{color:var(--gaber-subtle);font-size:11px}
+.gaber-insights-metrics strong{font-family:'Manrope',sans-serif;font-weight:600;
+ font-size:clamp(17px,2.5vw,28px);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.gaber-insights-metrics small{color:var(--gaber-subtle);line-height:1.5;font-size:10px}
+.gaber-insights-coverage{padding:23px 0;border-bottom:1px solid var(--line)}
+.gaber-insights-coverage>div:first-child{display:flex;justify-content:space-between;gap:16px;font-size:12px}
+.gaber-progress{height:4px;background:#e3e4dc;overflow:hidden;margin:12px 0 8px}
+.gaber-progress>span{display:block;height:100%;background:var(--green);max-width:100%}
+.gaber-insights-coverage-detail{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--gaber-subtle);font-size:11px}
+.gaber-insights-coverage>p{color:var(--gaber-subtle);font-size:11px;margin-top:15px;line-height:1.6}
+.gaber-insights-columns{display:grid;grid-template-columns:1fr 1fr;gap:38px;padding:23px 0}
+.gaber-insights-columns>div{min-width:0}
+.gaber-insights-group{padding:10px 0;border-bottom:1px solid #e9eae4}
+.gaber-insights-group>div:first-child{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+.gaber-insights-group>div:first-child strong{white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums}
+.gaber-insights-group small{display:block;font-size:10px;color:var(--gaber-subtle);line-height:1.6}
+.gaber-insights-group .gaber-progress{margin:8px 0 6px;height:3px}
+.gaber-insights-subheading{margin-top:28px!important}
+.gaber-insights-table{max-height:320px;overflow:auto;border:1px solid var(--line)}
+.gaber-insights-table table{width:100%;border-collapse:collapse;font-size:11px}
+.gaber-insights-table th,.gaber-insights-table td{padding:10px;vertical-align:top;
+ text-align:left;border-bottom:1px solid #e6e7df}
+.gaber-insights-table th{font-size:10px;background:#f4f4ef;color:#647064;font-weight:600}
+.gaber-insights-table td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gaber-insights-table td:first-child{overflow-wrap:anywhere;max-width:230px}
+.gaber-insights-table td small{display:block;margin-top:3px;color:var(--gaber-subtle)}
+.gaber-insights-disclosure{font-size:11px;line-height:1.7;color:var(--gaber-subtle);
+ border-top:1px solid var(--line);padding-top:15px}
+.gaber-insights-alert{padding:13px 15px;margin:12px 0;color:#754b36;
+ border-left:3px solid #9b795e;background:#f8f2e9;font-size:12px;line-height:1.6}
+.gaber-insights-alert p{margin-top:4px}
+.gaber-workspace{padding:20px 24px;border:1px solid var(--line);background:#f7f7f2;
+ margin:28px 0;border-radius:2px}
+.gaber-workspace h3{font:400 26px/1.25 var(--serif)}
+.gaber-workspace .technical-actions{margin:15px 0}
+.gaber-workspace .technical-actions .button{margin:0}
+.gaber-workspace select,.gaber-workspace input:not([type=file]){
+ padding:9px 10px;border:1px solid #cbd0c6;background:#fff;border-radius:2px;
+ min-height:40px;font-size:12px;
+}
+.gaber-workspace .advanced-field{margin-top:16px}
+@media(max-width:1100px){
+ .gaber-ledger-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .gaber-insights-columns{gap:25px}
+}
+@media(max-width:740px){
+ .gaber-ledger,.gaber-insights{padding:18px 15px}
+ .gaber-ledger-intro,.gaber-insights-heading{flex-wrap:wrap;gap:12px}
+ .gaber-ledger-tabs{grid-template-columns:repeat(2,1fr)}
+ .gaber-ledger-tabs button{min-height:42px}
+ .gaber-ledger-toolbar{flex-wrap:wrap;align-items:flex-start}
+ .gaber-ledger-fields{grid-template-columns:1fr}
+ .gaber-insights-metrics,.gaber-insights-columns{grid-template-columns:1fr}
+ .gaber-insights-columns{gap:28px}
+ .gaber-insights-metrics strong{font-size:24px}
+ .gaber-workspace{padding:17px 15px}
+ .gaber-insights-coverage-detail{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+ .button,.furniture-mark{transition:none!important;transform:none!important}
+}

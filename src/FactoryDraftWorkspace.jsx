@@ -167,7 +167,7 @@ export default function FactoryDraftWorkspace({config,text,onChange,onMessage}){
     }catch(error){notifyError(error);}
   };
 
-  return <section aria-label="Локальные ревизии заводского расчёта">
+  return <section className="gaber-workspace" aria-label="Локальные ревизии заводского расчёта">
     <h3>История расчёта · v0.4.9</h3>
     <p className="helper">Ревизии привязаны к текущим размерам и материалам, а не к номеру заказа.
       Сохранение — кнопкой. Перед сменой раздела сохраните правки.

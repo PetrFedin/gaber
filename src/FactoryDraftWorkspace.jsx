@@ -60,10 +60,12 @@ function newRevisionId(){
 }
 
 /** Local journal is keyed by exact configuration, not by customer/order identity. */
-export default function FactoryDraftWorkspace({config,text,onChange,onMessage}){
+export default function FactoryDraftWorkspace({config,text,persistedText='',onChange,onMessage}){
   const [storage]=useState(localStorageOrNull);
   const [workspace,setWorkspace]=useState(()=>readFactoryWorkspace(storage));
-  const [savedText,setSavedText]=useState(text);
+  // A recovered session scratch is NOT yet saved in the durable local
+  // revision journal, even when it is the initial text of this component.
+  const [savedText,setSavedText]=useState(persistedText);
   const [label,setLabel]=useState('Рабочий расчёт');
   const [selected,setSelected]=useState('');
   const [preview,setPreview]=useState(null);

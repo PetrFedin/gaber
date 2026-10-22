@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useMemo,useState} from 'react';
 import {evaluateFactoryCostDraft,auditFactoryCostDraft} from './factoryCosting.js';
 import {money,csv} from './domain.js';
 import FactoryDraftWorkspace,{loadInitialFactoryText} from './FactoryDraftWorkspace.jsx';
@@ -6,17 +6,29 @@ import FactoryCostEditor from './FactoryCostEditor.jsx';
 import FactoryInsightsPanel from './FactoryInsightsPanel.jsx';
 import {factoryConfigKey} from './factoryDraftStorage.js';
 import {readFactoryScratch,writeFactoryScratch} from './factoryScratch.js';
-function initialText(config){
-  try{const saved=readFactoryScratch(config);if(saved!==null)return saved;}catch{}
-  return loadInitialFactoryText(config);
+function initialSession(config){
+  const persistedText=loadInitialFactoryText(config);
+  try{
+    const scratch=readFactoryScratch(config);
+    return {text:scratch??persistedText,persistedText,
+      recoveredUnsaved: scratch!==null&&scratch!==persistedText};
+  }catch{
+    return {text:persistedText,persistedText,recoveredUnsaved:false};
+  }
 }
 
 /** Local human-input review only. Never a production or purchasing approval UI. */
 export default function FactoryCostDraftPanel({config}){
- const [text,setText]=useState(()=>initialText(config));
- const [scratchWarning,setScratchWarning]=useState('');
- const configKey=factoryConfigKey(config);
- useEffect(()=>{setText(initialText(config));setScratchWarning('');},[configKey]);
+ // Configuration identity is also React state identity: never display a
+ // previous furniture variant's editable supplier/operation rows for a frame.
+ const key=factoryConfigKey(config);
+ return <FactoryCostSession key={key} config={config}/>;
+}
+function FactoryCostSession({config}){
+ const [initial]=useState(()=>initialSession(config));
+ const [text,setText]=useState(initial.text);
+ const [scratchWarning,setScratchWarning]=useState(
+   initial.recoveredUnsaved?'Восстановлен незаписанный текст из временной копии этой вкладки. Сохраните отдельную ревизию, чтобы зафиксировать его в локальном журнале.':'');
  const changeText=next=>{
    setText(next);
    try{writeFactoryScratch(config,next);setScratchWarning('');}
@@ -57,7 +69,8 @@ export default function FactoryCostDraftPanel({config}){
   <div className="section-top"><div><h2>Заводские нормативы · финансовая модель</h2>
    <p>Ставки поставщиков, реальные измерения, нормы отходов и операции привязываются к существующим ID производственных деталей. Вводимые данные не утверждены заводом.</p>
   </div></div>
-  <FactoryDraftWorkspace config={config} text={text} onChange={changeText} onMessage={setMessage}/>
+  <FactoryDraftWorkspace config={config} text={text} persistedText={initial.persistedText}
+    onChange={changeText} onMessage={setMessage}/>
   {scratchWarning&&<p className="gaber-insights-alert" role="alert">{scratchWarning}</p>}
   <FactoryCostEditor config={config} text={text} onChange={changeText}/>
   {review?.draft&&<FactoryInsightsPanel config={config} draft={review.draft}/>}

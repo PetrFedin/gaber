@@ -1,3 +1,4 @@
+import {buildCostVariance} from './costVariance.js';
 import {createManufacturingPackage} from './manufacturing.js';
 import {createCostTraceability} from './costTraceability.js';
 
@@ -151,6 +152,7 @@ export function compareFactoryCostDrafts(aConfig,aDraft,bConfig,bDraft){
  const diff=(x,y)=>[...new Set([...x.keys(),...y.keys()])].filter(k=>x.get(k)!==y.get(k))
   .map(key=>({key,beforeRUB:x.get(key)??0,afterRUB:y.get(key)??0,deltaRUB:money((y.get(key)??0)-(x.get(key)??0))}));
  return {beforeRevisionId:a.revisionId,afterRevisionId:b.revisionId,beforeStatus:a.status,afterStatus:b.status,
+  variance:buildCostVariance(a,b),
   materialChanges:diff(keyed(a.materialLines,r=>r.entityId+'|'+r.priceId),keyed(b.materialLines,r=>r.entityId+'|'+r.priceId)),
   operationChanges:diff(keyed(a.operationLines,r=>r.routeId+'|'+r.operationCode),keyed(b.operationLines,r=>r.routeId+'|'+r.operationCode)),
   partialDirectDeltaRUB:money(b.totals.partialDirectRUB-a.totals.partialDirectRUB),
@@ -169,3 +171,4 @@ export function snapshotFactoryCostDraft(config,draft,recordedAt,revisionId){
   configSnapshot:structuredClone(config),inputSnapshot:structuredClone(draft),reviewSnapshot:structuredClone(review),
   authority:'LOCAL_DRAFT_NOT_FACTORY_APPROVED'};
 }
+

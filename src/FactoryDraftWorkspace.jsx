@@ -184,7 +184,7 @@ export default function FactoryDraftWorkspace({config,text,persistedText='',onCh
   };
 
   return <section className="gaber-workspace" aria-label="Локальные ревизии заводского расчёта">
-    <h3>История расчёта · v0.4.9</h3>
+    <h3>История расчёта</h3>
     <p className="helper">Ревизии привязаны к текущим размерам и материалам, а не к номеру заказа.
       Ревизии сохраняются кнопкой. Незавершённый текст дополнительно сохраняется во временной копии текущей вкладки; для надёжного переноса скачайте JSON.
       Журнал хранится только в этом браузере и экспортируется отдельно от клиентских проектов.</p>
@@ -225,6 +225,15 @@ export default function FactoryDraftWorkspace({config,text,persistedText='',onCh
         <div><span>Технологические операции</span><strong>{comparison.operationChanges.length}</strong></div>
       </div>
       <p>Сравниваются самостоятельно введённые значения. Это не изменение подтверждённой себестоимости.</p>
+      {comparison.variance&&!comparison.variance.comparable&&<p role="alert">Факторный расчёт недоступен: проверьте исходные данные и диапазон денежных значений.</p>}
+      {comparison.variance?.comparable&&<div className="gaber-variance">
+        <h4>Причины изменения затрат</h4>
+        <p>Последовательный расчёт: расход → отходы → цена; время → ставка. Взаимное влияние факторов относится к следующему шагу.</p>
+        <dl>{Object.entries({quantity:'Расход материала',waste:'Норма отходов',price:'Цена материала',time:'Время операций',rate:'Ставки участков',scope:'Добавление, удаление и замена',rounding:'Округление до копеек'}).map(([key,label])=>
+          <div key={key}><dt>{label}</dt><dd>{money(comparison.variance.totals[key])}</dd></div>)}</dl>
+        <p role="status">{comparison.variance.reconciled?'Факторы согласованы с общим изменением.':'Расхождение факторов: сравнение требует проверки.'} Смена артикула или единицы учитывается как замена.</p>
+        {comparison.variance.rows.some(row=>row.sourceChanged)&&<p>В отдельных строках изменился источник цены. Проверьте поставщика и документ, даже если сумма осталась прежней.</p>}
+      </div>}
       <details><summary>Просмотреть различия</summary>
         <div className="gaber-insights-table"><table><thead><tr>
           <th>Деталь или операция</th><th>Было</th><th>Стало</th><th>Разница</th>
@@ -264,3 +273,4 @@ export default function FactoryDraftWorkspace({config,text,persistedText='',onCh
     <p className="page-disclaimer">Локальная история не заменяет серверные ревизии, резервное копирование фабрики или подпись технолога. Производственный допуск закрыт.</p>
   </section>;
 }
+

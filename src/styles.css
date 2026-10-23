@@ -211,3 +211,11 @@ textarea:focus-visible,summary:focus-visible{
 
 .gaber-checkline{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
  padding:13px 0;margin:24px 0 16px;color:var(--gaber-subtle);font-size:11px;line-height:1.75}
+
+/* Revision analysis uses the same ruled ledger as factory inputs. */
+.gaber-variance{margin:24px 0;border-top:1px solid var(--line);padding-top:20px}
+.gaber-variance>p{font-size:12px;line-height:1.7;color:var(--gaber-subtle);max-width:72ch}
+.gaber-variance dl{margin:16px 0;font-size:12px}
+.gaber-variance dl>div{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid var(--line)}
+.gaber-variance dt{overflow-wrap:anywhere}.gaber-variance dd{margin:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gaber-workspace :is(button,input,select,summary):focus-visible{outline:2px solid var(--green);outline-offset:3px}

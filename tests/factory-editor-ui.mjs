@@ -43,8 +43,26 @@ try{
  assert.match(raw(),/A-ONLY/);
  assert.doesNotMatch(raw(),/B-ONLY/);
  console.log('✓ DOM factory editor: keyed configuration switch, per-product scratch and revision warning');
+ const storage=await server.ssrLoadModule('/src/factoryDraftStorage.js');
+ const {default:Workspace}=await server.ssrLoadModule('/src/FactoryDraftWorkspace.jsx');
+ storage.saveFactoryRevision(localStorage,storage.readFactoryWorkspace(localStorage),{
+  id:'bridge-baseline',label:'Baseline',savedAt:'2026-10-23T15:00:00.000Z',
+  sourceConfig:first,text:JSON.stringify(a)
+ });
+ await act(async()=>root.render(React.createElement(Workspace,{
+  config:first,text:JSON.stringify(a),onChange(){},onMessage(){}
+ })));
+ const compareButton=[...document.querySelectorAll('button')].find(x=>x.textContent==='Сравнить с текущим');
+ assert.ok(compareButton);
+ await act(async()=>compareButton.click());
+ assert.match(document.body.textContent,/Причины изменения затрат/);
+ assert.match(document.body.textContent,/Факторы согласованы с общим изменением/);
+ assert.equal(document.querySelectorAll('.gaber-variance dl>div').length,7);
+ console.log('✓ DOM revision comparison: factor bridge, seven drivers and reconciliation status');
+
 }finally{
  await act(async()=>root.unmount());
  await server.close();
  dom.window.close();
 }
+

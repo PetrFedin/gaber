@@ -60,7 +60,7 @@ test('wrong source, invalid JSON and overlarge imports are rejected',()=>{
  assert.throws(()=>parseFactoryDraftImport('x'.repeat(1024*1024+1),c),/IMPORT_TOO_LARGE/);
 });
 test('revision capacity does not evict historical evidence silently',()=>{
- const s=store(),records=Array.from({length:MAX_FACTORY_REVISIONS},(_,i)=>rec('r'+i));
+ const s=store(),records=Array.from({length:MAX_FACTORY_REVISIONS},(_,i)=>({...rec('r'+i),authority:'LOCAL_UNVERIFIED'}));
  s.setRaw(JSON.stringify({schemaVersion:FACTORY_WORKSPACE_SCHEMA,records}));
  const w=readFactoryWorkspace(s);
  assert.equal(w.status,'ready');
@@ -71,3 +71,4 @@ test('storage quota failure cannot be reported as saved',()=>{
  const s=store();s.setItem=()=>{throw new Error('Quota exceeded')};
  assert.throws(()=>saveFactoryRevision(s,readFactoryWorkspace(s),rec()),/STORAGE_WRITE_FAILED/);
 });
+

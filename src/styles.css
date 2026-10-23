@@ -219,3 +219,38 @@ textarea:focus-visible,summary:focus-visible{
 .gaber-variance dl>div{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid var(--line)}
 .gaber-variance dt{overflow-wrap:anywhere}.gaber-variance dd{margin:0;white-space:nowrap;font-variant-numeric:tabular-nums}
 .gaber-workspace :is(button,input,select,summary):focus-visible{outline:2px solid var(--green);outline-offset:3px}
+
+/* Order dossiers share the atelier's typography and ruled production ledgers. */
+.order-workspace{border-top:1px solid var(--line);padding-top:42px;padding-bottom:50px}
+.order-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap}
+.order-heading h2{font:400 clamp(28px,4vw,42px)/1.2 var(--serif);margin:10px 0}
+.order-heading h3{font:400 28px/1.25 var(--serif);margin:0}
+.order-heading p,.order-workspace p{font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.order-local-notice{border-left:2px solid #9b795e;background:#f6f3ec;padding:14px 18px;margin:22px 0;color:#645e51;max-width:95ch}
+.order-workspace .technical-actions{margin:20px 0}
+.order-field{display:flex;flex-direction:column;gap:8px;font-size:12px;margin:15px 0;max-width:640px}
+.order-field :is(input,select,textarea){font:inherit;color:inherit;background:#fffefa;border:1px solid var(--line);border-radius:2px;padding:11px 12px;min-height:44px;min-width:0;width:100%}
+.order-field textarea{min-height:82px;resize:vertical}
+.order-field :is(input,select,textarea):focus-visible,.order-workspace :is(button,a,summary):focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.order-dossier{border:1px solid var(--line);background:#fffefa;padding:28px;margin-top:24px}
+.order-stage{font-size:12px;border-bottom:2px solid var(--green);padding:7px 0;line-height:1.5}
+.order-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;margin-top:25px}
+.order-columns>div{min-width:0}.order-dossier h4{font-size:15px;margin:18px 0}
+.order-ledger{font-size:12px;margin:20px 0}.order-ledger>div{display:flex;justify-content:space-between;gap:22px;border-bottom:1px solid var(--line);padding:11px 0}
+.order-ledger dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.order-actions-panel{border-left:1px solid var(--line);padding-left:30px}
+.order-actions-panel form,.order-decision,.order-credit{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.order-decision label{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.6;margin:12px 0 20px}
+.order-decision input{margin-top:4px;accent-color:var(--green)}
+.order-workspace .button{white-space:normal;text-align:center;line-height:1.4}
+.order-workspace button:disabled{opacity:.45;cursor:not-allowed}
+.order-workspace details{padding-top:16px;margin-top:16px;border-top:1px solid var(--line)}
+.order-workspace summary{font-size:13px;cursor:pointer;line-height:1.6}
+.order-conversation{margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+.order-conversation>p{border-left:2px solid var(--line);padding:10px 16px}
+.order-history ol{list-style:none;padding:0}.order-history li{padding:13px 0;border-bottom:1px solid var(--line);font-size:12px}
+.order-history li>span{display:block;color:var(--gaber-subtle);font-size:11px;margin-top:5px}
+.order-feedback{padding:14px 18px;border-left:2px solid var(--green);background:var(--gaber-soft)}
+.order-overview{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:24px 0;padding:10px 0;gap:18px 36px}
+.order-overview>div{display:flex;align-items:baseline;gap:12px;font-size:12px}.order-overview dd{margin:0;font-size:22px;font-variant-numeric:tabular-nums}
+@media(max-width:740px){.order-columns{grid-template-columns:1fr;gap:16px}.order-actions-panel{border-left:0;border-top:1px solid var(--line);padding:15px 0 0}.order-dossier{padding:18px 14px}.order-heading{gap:15px}.order-ledger>div{gap:10px}.order-ledger dt{max-width:65%}.order-stage{font-size:11px}}

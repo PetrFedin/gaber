@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import {JSDOM} from 'jsdom';
+import React,{act} from 'react';
+import {createServer} from 'vite';
+
+const dom=new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',{url:'https://gaber.example.test/#projects'});
+globalThis.window=dom.window;globalThis.document=dom.window.document;
+globalThis.localStorage=dom.window.localStorage;globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=await import('react-dom/client');
+const server=await createServer({optimizeDeps:{noDiscovery:true,include:[]},server:{middlewareMode:true},appType:'custom'});
+const root=createRoot(document.getElementById('root'));
+try{
+ const {default:Workspace}=await server.ssrLoadModule('/src/OrderWorkspace.jsx');
+ const {initialConfig}=await server.ssrLoadModule('/src/domain.js');
+ const {readOrderWorkspace,saveOrderCommand,ORDER_STORAGE_KEY}=await server.ssrLoadModule('/src/orderStorage.js');
+ const projects=[{id:'ui-project',name:'UI Sofa',status:'requested',config:initialConfig()}];let renders=0;
+ const render=async role=>act(async()=>root.render(React.createElement(Workspace,{key:role+(++renders),projects,role})));
+ const button=label=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===label);assert.ok(b,'Missing button '+label);return b;};
+ const click=async label=>act(async()=>{const b=button(label);assert.equal(b.disabled,false,'Button disabled '+label);b.click();});
+ const field=label=>{const el=[...document.querySelectorAll('label')].find(el=>el.textContent.trim()===label);assert.ok(el,'Missing field '+label);return el.querySelector('input,textarea,select');};
+ const fill=async(label,value)=>act(async()=>{
+  const el=field(label),proto=el.tagName==='TEXTAREA'?window.HTMLTextAreaElement.prototype:window.HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto,'value').set.call(el,value);el.dispatchEvent(new window.Event('input',{bubbles:true}));
+ });
+ const current=()=>readOrderWorkspace(localStorage).orders[0].state;
+ const pay=async(amount,ref)=>{await fill('Сумма, ₽',amount);await fill('Номер / ссылка на платёжный документ',ref);await click('Добавить локальную запись оплаты');};
+ await render('client');await click('Создать заказ из проекта');assert.equal(current().stage,'requested');
+ await render('factory');await fill('Цена предложения, ₽','1000');await fill('Плановая дата готовности','2027-01-01');await fill('Состав предложения / изменения','First terms');await click('Подготовить предложение R1');
+ assert.equal(current().stage,'offered');
+ await render('client');assert.equal(button('Согласовать R1').disabled,true);
+ await act(async()=>document.querySelector('.order-decision input').click());await click('Согласовать R1');
+ await fill('Сумма, ₽','1000');await fill('Номер / ссылка на платёжный документ','CLAIM');await click('Сообщить об оплате');
+ await render('factory');assert.equal(button('Запустить производственный сценарий').disabled,true);
+ await pay('600','LOCAL-1');assert.equal(button('Запустить производственный сценарий').disabled,false);
+ await render('client');await fill('Что необходимо скорректировать','Need 300 cm');await click('Запросить корректировку');
+ await render('factory');await fill('Ширина изделия, см','300');await fill('Цена предложения, ₽','1200');await fill('Состав предложения / изменения','New width and price');await click('Выпустить новую ревизию');
+ await render('client');assert.equal(current().acceptedRevisionId,null);assert.equal(current().revisions[0].config.width,280);
+ assert.match(document.body.textContent,/300 ×/);assert.equal(button('Согласовать R2').disabled,true);
+ await act(async()=>document.querySelector('.order-decision input').click());await click('Согласовать R2');
+ const transfer=[...document.querySelectorAll('button')].find(b=>b.textContent.startsWith('Перенести '));assert.ok(transfer);await act(async()=>transfer.click());
+ assert.equal(current().transfers.length,1);
+ await render('factory');await click('Запустить производственный сценарий');await click('Передать на контроль качества');
+ await fill('Акт контроля качества','QC-1');await click('Зафиксировать контроль · локально');
+ assert.equal(button('Зафиксировать отгрузку · локально').disabled,true);
+ await pay('600','LOCAL-2');await fill('Перевозчик','TEST carrier');await fill('Номер отправления','SHIP-1');await fill('Отгрузочный документ','PACK-1');await click('Зафиксировать отгрузку · локально');
+ await render('client');assert.match(document.body.textContent,/SHIP-1/);
+ await fill('Сообщение другой стороне','Please call before delivery');await click('Записать сообщение в заказ');
+ await render('factory');assert.match(document.body.textContent,/Please call before delivery/);
+ await fill('Подтверждение доставки','POD-1');await click('Зафиксировать доставку · локально');assert.equal(current().stage,'delivered');
+ await render('client');await click('Принять доставленный заказ');assert.equal(current().stage,'closed');
+ await render('factory');assert.match(document.body.textContent,/Принят клиентом/);assert.equal(current().productionRelease.allowed,false);
+ console.log('✓ DOM order lifecycle: client/factory, consent, claim vs record, amendment, explicit credit, QC, full balance, shipping, delivery, messages, acceptance and reload');
+ localStorage.removeItem(ORDER_STORAGE_KEY);await render('client');await click('Создать заказ из проекта');
+ await render('factory');await fill('Цена предложения, ₽','1000');await fill('Плановая дата готовности','2027-01-01');await fill('Состав предложения / изменения','First terms');await click('Подготовить предложение R1');
+ await render('client');await act(async()=>document.querySelector('.order-decision input').click());
+ const external=readOrderWorkspace(localStorage),old=current();
+ saveOrderCommand(localStorage,external,'ui-project',{id:'external-change',at:new Date().toISOString(),role:'factory',type:'offer',expectedVersion:old.version,
+  payload:{config:{...initialConfig(),width:300},priceKopecks:120000,advanceBps:5000,dueDate:'2027-01-01',note:'External replacement'}});
+ await act(async()=>window.dispatchEvent(new window.StorageEvent('storage',{key:ORDER_STORAGE_KEY})));
+ assert.equal(button('Согласовать R2').disabled,true);assert.equal(document.querySelector('.order-decision input').checked,false);
+ assert.match(document.body.textContent,/External replacement/);
+ console.log('✓ DOM cross-tab replacement: current revision refreshed and previous acceptance checkbox invalidated');
+ localStorage.setItem(ORDER_STORAGE_KEY,'{damaged');await render('client');
+ assert.match(document.querySelector('[role=alert]').textContent,/Запись заблокирована/);
+ assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent==='Создать заказ из проекта'),false);
+ console.log('✓ DOM damaged order journal: visible warning and no mutation controls');
+}finally{await act(async()=>root.unmount());await server.close();dom.window.close();}

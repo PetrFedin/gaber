@@ -30,6 +30,12 @@ export async function submitTechnologistReview({principal,projectId,revisionId,r
   principal.sessionExpiresAtMs<=nowMs)
   return {accepted:false,code:'UNAUTHORIZED_TECHNOLOGIST',
    productionRelease:{allowed:false}};
+ // A factory-scoped DB adapter may NEVER be used under another factory's
+ // session. Reject mismatch before the first SELECT or side effect.
+ if(repository.factoryId!==undefined&&
+   (!named(principal.factoryId)||principal.factoryId!==repository.factoryId))
+  return {accepted:false,code:'FACTORY_SCOPE_MISMATCH',
+   productionRelease:{allowed:false}};
  return repository.withSerializableTransaction(async tx=>{
   const revision=await tx.getRevisionForUpdate(projectId,revisionId);
   const evidenceEnvelopes=await tx.getEvidenceForRevision(projectId,revisionId);

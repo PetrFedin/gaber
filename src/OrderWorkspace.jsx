@@ -4,8 +4,8 @@ import {ORDER_STAGES,orderFinancials,orderEngineering} from './orderWorkflow.js'
 import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspace} from './orderStorage.js';
 import ConfigurationDetails from './ConfigurationDetails.jsx';
 
-const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.'};
-const LABELS={create:'Создан заказ',offer:'Предложение производства',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',message:'Сообщение'};
+const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
+const LABELS={create:'Создан заказ',offer:'Предложение производства',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
 const account=role=>role==='factory'?'Производство':'Клиент';
 function storage(){try{return globalThis.localStorage??null;}catch{return null;}}
 function amount(text){
@@ -41,7 +41,8 @@ export default function OrderWorkspace({projects,role,selectedProjectId=null}){
   <div className="order-heading"><div><span className="eyebrow">ЗАКАЗ И ИСПОЛНЕНИЕ</span>
    <h2>{role==='factory'?'Производство и отгрузка':'Мои заказы'}</h2>
    <p>Одна ревизия изделия, условия и история для двух кабинетов.</p></div>
-   <a className="button outline" href={role==='factory'?'#projects':'#factory'}>Открыть кабинет {role==='factory'?'клиента':'производства'}</a>
+   <div className="technical-actions"><a className="button outline" href="#operations">Операционный обзор</a>
+    <a className="button outline" href={role==='factory'?'#projects':'#factory'}>Открыть кабинет {role==='factory'?'клиента':'производства'}</a></div>
   </div>
   <p className="order-local-notice">Локальный сценарий без авторизации: кабинеты используют данные этого браузера. Оплаты, производство и доставка здесь не подтверждают реальные операции. Производственный допуск закрыт.</p>
   <div className="technical-actions">
@@ -76,6 +77,7 @@ function OrderDetail({row,role,send,onError}){
  const [price,setPrice]=useState(r?String(r.priceKopecks/100):''),[advance,setAdvance]=useState(r?String(r.advanceBps/100):'50');
  const [due,setDue]=useState(r?.dueDate??''),[width,setWidth]=useState(String((r?.config??s.sourceConfig).width));
  const [carrier,setCarrier]=useState(''),[tracking,setTracking]=useState(''),[agreed,setAgreed]=useState(false);
+ const [resolutionNote,setResolutionNote]=useState(''),[rejectNote,setRejectNote]=useState(''),[resolutionAgreed,setResolutionAgreed]=useState(false);
  const submit=(e,fn)=>{e.preventDefault();try{fn();}catch(error){onError(error.message);}};
  const paymentStage=['accepted','production','quality','ready'].includes(s.stage)&&s.acceptedRevisionId===r?.id;
  return <div className="order-dossier">
@@ -97,7 +99,13 @@ function OrderDetail({row,role,send,onError}){
    {s.changeNote&&<p className="inline-warning">Корректировка: {s.changeNote}</p>}
    {s.shipment&&<p>Отгрузка: {s.shipment.carrier} · {s.shipment.tracking}<br/>Документ: {s.shipment.reference}</p>}
    {s.delivery&&<p>Доставка: {s.delivery.reference}. {s.stage==='closed'?'Клиент принял заказ.':'Приёмка клиента не завершена.'}</p>}
-   {s.issue&&<p className="inline-warning" role="alert">Замечания клиента: {s.issue.note}. Заказ не закрыт.</p>}
+   {s.issue&&s.issue.status!=='resolved'&&<p className="inline-warning" role="alert">
+    Замечание: {s.issue.note}. {s.issue.status==='response_proposed'?'Ожидается ответ клиента.':'Ожидается ответ производства.'}</p>}
+   {!!s.issues?.length&&<details className="order-issue-history"><summary>История замечаний ({s.issues.length})</summary>
+    {s.issues.map(issue=><article key={issue.id}><strong>{issue.id} · {issue.status==='resolved'?'Решено':issue.status==='response_proposed'?'Предложено решение':'Открыто'}</strong>
+     <p>Замечание: {issue.note}</p>{issue.response&&<p>Ответ фабрики: {issue.response.note}</p>}
+     {issue.rejections.map((rejected,i)=><p key={i}>Отклонено клиентом: {rejected.note}</p>)}</article>)}
+   </details>}
    {s.revisions.length>1&&<details><summary>Предыдущие предложения ({s.revisions.length-1})</summary>
     {s.revisions.slice(0,-1).map(old=><p key={old.id}>{old.id} · {old.config.width} см · {money(old.priceKopecks/100)} · {old.dueDate}<br/>{old.note}</p>)}
    </details>}
@@ -145,6 +153,28 @@ function OrderDetail({row,role,send,onError}){
    {!factory&&['shipped','delivered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send('report_issue',{note:issueNote}))}>
     <label className="order-field">Замечания к заказу<textarea required maxLength={500} value={issueNote} onChange={e=>setIssueNote(e.target.value)}/></label><button className="button outline" type="submit">Сообщить о проблеме</button>
    </form>}
+   {factory&&s.stage==='disputed'&&s.issue?.status==='open'&&<form className="order-dispute-action"
+    onSubmit={e=>submit(e,()=>send('respond_issue',{note:resolutionNote}))}>
+    <h4>Ответить на замечание {s.issue.id}</h4>
+    <p>Предложенное действие не является подтверждённым актом ремонта.</p>
+    <label className="order-field">Предложение фабрики<textarea required maxLength={500}
+     value={resolutionNote} onChange={e=>setResolutionNote(e.target.value)}/></label>
+    <button className="button dark" type="submit">Предложить решение · локально</button>
+   </form>}
+   {!factory&&s.stage==='disputed'&&s.issue?.status==='response_proposed'&&<div className="order-dispute-action">
+    <h4>Решение фабрики по замечанию {s.issue.id}</h4><p>{s.issue.response?.note}</p>
+    <label className="order-resolution-check"><input type="checkbox" checked={resolutionAgreed}
+     onChange={e=>setResolutionAgreed(e.target.checked)}/>
+     Подтверждаю принятие решения в локальном сценарии</label>
+    <button type="button" className="button dark" disabled={!resolutionAgreed}
+     onClick={()=>send('confirm_resolution')}>Принять решение</button>
+    <form onSubmit={e=>submit(e,()=>send('reject_resolution',{note:rejectNote}))}>
+     <label className="order-field">Причина отказа<textarea required maxLength={500}
+      value={rejectNote} onChange={e=>setRejectNote(e.target.value)}/></label>
+     <button className="button outline" type="submit">Вернуть на доработку</button>
+    </form>
+   </div>}
+
   </div></div>
   <details className="order-payments"><summary>Платёжные записи и сообщения ({s.payments.length+s.paymentClaims.length})</summary>
    {[...s.payments,...s.paymentClaims].map((p,i)=><p key={i}>{p.revisionId} · {money(p.amountKopecks/100)} · {p.reference}<br/>{p.authority==='CLIENT_CLAIM'?'Сообщение клиента; в балансе не учтено':'Локальная запись; банк не подтвердил'}</p>)}

@@ -30,7 +30,8 @@ const TYPES={
  allocate_credit:['client',['fromRevisionId','amountKopecks']],
  start:['factory',[]],complete:['factory',[]],quality_pass:['factory',['reference']],
  ship:['factory',['carrier','tracking','reference']],deliver:['factory',['reference']],
- accept_delivery:['client',[]],report_issue:['client',['note']]
+ accept_delivery:['client',[]],report_issue:['client',['note']],
+ respond_issue:['factory',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
 };
 export function orderFinancials(state){
  const current=state.revisions.at(-1);
@@ -62,7 +63,7 @@ function apply(state,command){
   if(state||command.revisionId!==undefined||!id(p.projectId)||!text(p.name))fail('CREATE_INVALID');
   return {schemaVersion:ORDER_SCHEMA,projectId:p.projectId,name:p.name,sourceConfig:validConfig(p.config),version:1,
    stage:'requested',revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
-   shipment:null,delivery:null,quality:null,issue:null,createdAt:command.at,updatedAt:command.at,
+   shipment:null,delivery:null,quality:null,issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
    authority:'LOCAL_WORKFLOW_SIMULATION',productionRelease:{allowed:false}};
  }
  if(!state)fail('ORDER_MISSING');
@@ -118,7 +119,23 @@ function apply(state,command){
     if(s.stage!=='delivered')fail('ACCEPTANCE_BLOCKED');s.stage='closed';break;
    case 'report_issue':
     if(!['shipped','delivered'].includes(s.stage)||!text(p.note))fail('ISSUE_INVALID');
-    s.issue={note:p.note,at:command.at};s.stage='disputed';break;
+    s.issue={id:'I'+(s.issues.length+1),revisionId:current.id,note:p.note,
+      at:command.at,fromStage:s.stage,status:'open',response:null,rejections:[],resolvedAt:null};
+    s.issues.push(copy(s.issue));s.stage='disputed';break;
+   case 'respond_issue':
+    if(s.stage!=='disputed'||s.issue?.status!=='open'||!text(p.note))fail('ISSUE_RESPONSE_BLOCKED');
+    s.issue.status='response_proposed';s.issue.response={note:p.note,at:command.at};
+    s.issues[s.issues.length-1]=copy(s.issue);break;
+   case 'reject_resolution':
+    if(s.stage!=='disputed'||s.issue?.status!=='response_proposed'||!text(p.note))fail('ISSUE_REJECTION_BLOCKED');
+    s.issue.rejections.push({note:p.note,at:command.at,response:copy(s.issue.response)});
+    s.issue.status='open';s.issue.response=null;
+    s.issues[s.issues.length-1]=copy(s.issue);break;
+   case 'confirm_resolution':
+    if(s.stage!=='disputed'||s.issue?.status!=='response_proposed'||
+     !['shipped','delivered'].includes(s.issue.fromStage))fail('ISSUE_CONFIRMATION_BLOCKED');
+    s.issue.status='resolved';s.issue.resolvedAt=command.at;
+    s.stage=s.issue.fromStage;s.issues[s.issues.length-1]=copy(s.issue);break;
   }
  }
  s.version++;s.updatedAt=command.at;return s;

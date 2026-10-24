@@ -254,3 +254,109 @@ textarea:focus-visible,summary:focus-visible{
 .order-overview{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:24px 0;padding:10px 0;gap:18px 36px}
 .order-overview>div{display:flex;align-items:baseline;gap:12px;font-size:12px}.order-overview dd{margin:0;font-size:22px;font-variant-numeric:tabular-nums}
 @media(max-width:740px){.order-columns{grid-template-columns:1fr;gap:16px}.order-actions-panel{border-left:0;border-top:1px solid var(--line);padding:15px 0 0}.order-dossier{padding:18px 14px}.order-heading{gap:15px}.order-ledger>div{gap:10px}.order-ledger dt{max-width:65%}.order-stage{font-size:11px}}
+
+
+/* GABER v0.4.15: operational dossier, restrained editorial design.
+   Reuse atelier tokens, typographic scale and ruled ledger conventions. */
+.gaber-operations{padding-bottom:56px}
+.gaber-operations-warning{margin:24px 0;padding:16px 20px;border-left:2px solid #90765e;
+ background:#f6f3ec;color:#675c50;font-size:12px;line-height:1.7;max-width:96ch}
+.gaber-operations-toolbar{display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:16px;margin:20px 0 28px}
+.gaber-operations-segments{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--line)}
+.gaber-operations-segments button{padding:12px 16px;border-bottom:2px solid transparent;
+ color:var(--gaber-subtle);font-size:12px;min-height:44px}
+.gaber-operations-segments button.selected{color:var(--gaber-ink);border-bottom-color:var(--green);font-weight:600}
+.gaber-operations-segments button:hover{background:var(--gaber-quiet)}
+.gaber-operations-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+ padding:1px;background:var(--line);margin-bottom:34px}
+.gaber-operations-kpis article{display:flex;flex-direction:column;gap:9px;
+ background:#fffefa;padding:19px 20px;min-width:0}
+.gaber-operations-kpis small{font-size:11px;color:var(--gaber-subtle);line-height:1.5}
+.gaber-operations-kpis strong{font:500 30px/1.1 'Manrope',sans-serif;
+ font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.gaber-operations-kpis span{font-size:10px;line-height:1.5;color:var(--gaber-subtle)}
+.gaber-operations h2{font:400 clamp(21px,2.4vw,28px)/1.3 var(--serif);
+ margin:0 0 14px;letter-spacing:-.02em}
+.gaber-operations-columns{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin:28px 0}
+.gaber-operations-columns>section{min-width:0}
+.gaber-operations-stages>div,.gaber-operations-audit>div,.gaber-operations-finance dl>div{
+ display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+ padding:10px 0;border-bottom:1px solid var(--line);font-size:12px;line-height:1.6}
+.gaber-operations-stages strong,.gaber-operations-audit dd,.gaber-operations-finance dd{
+ margin:0;font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.gaber-operations-stages span,.gaber-operations-audit dt,.gaber-operations-finance dt{color:var(--gaber-subtle)}
+.gaber-operations-finance{padding:25px 0;border-top:1px solid var(--line)}
+.gaber-operations-finance dl{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.gaber-operations-finance>p,.gaber-operations-queue>p{
+ color:var(--gaber-subtle);font-size:11px;line-height:1.8;max-width:90ch;margin-top:16px}
+.gaber-operations-heading{display:flex;align-items:start;justify-content:space-between;
+ flex-wrap:wrap;gap:15px;margin-bottom:16px}
+.gaber-operations-heading small,.gaber-operations-heading p{color:var(--gaber-subtle);font-size:11px;line-height:1.6}
+.gaber-operations-heading label{font-size:11px;color:var(--gaber-subtle);display:flex;flex-direction:column;gap:7px}
+.gaber-operations-heading input{min-height:42px;padding:9px 12px;border:1px solid var(--line);
+ border-radius:2px;background:#fffefa;font:inherit;min-width:210px}
+.gaber-operations-queue{border-top:1px solid var(--line);padding-top:27px}
+.gaber-operations-table{overflow-x:auto;border:1px solid var(--line)}
+.gaber-operations-table table{width:100%;border-collapse:collapse;font-size:12px}
+.gaber-operations-table th{padding:13px 14px;background:var(--gaber-quiet);
+ text-align:left;color:var(--gaber-subtle);font-size:10px;font-weight:600}
+.gaber-operations-table td{padding:15px 14px;border-top:1px solid var(--line);
+ vertical-align:top;line-height:1.5;overflow-wrap:anywhere}
+.gaber-operations-table td>strong{font-weight:600}
+.gaber-operations-table td small{display:block;font-size:10px;
+ color:var(--gaber-subtle);line-height:1.6;margin-top:3px}
+.gaber-operations-table .gaber-overdue{color:#88543c;font-weight:600}
+.order-dispute-action{border:1px solid var(--line);padding:18px 20px;margin-top:18px;
+ background:var(--gaber-quiet)}
+.order-dispute-action h4{margin:0 0 10px}
+.order-dispute-action p{font-size:12px;line-height:1.7}
+.order-dispute-action .order-field{margin-top:13px}
+.order-dispute-action .button{margin-top:10px}
+.order-resolution-check{display:flex;gap:9px;align-items:start;font-size:12px;
+ line-height:1.6;margin:14px 0}
+.order-resolution-check input{accent-color:var(--green);margin-top:4px}
+.order-issue-history article{border-bottom:1px solid var(--line);padding:14px 0}
+.order-issue-history article strong{font-size:12px;font-weight:600}
+.order-issue-history article p{font-size:12px;line-height:1.6;margin:7px 0}
+.gaber-operations :is(button,input,select,a):focus-visible,
+.order-dispute-action :is(button,textarea,input):focus-visible{
+ outline:2px solid var(--green);outline-offset:3px}
+@media(max-width:1020px){
+ .gaber-operations-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .gaber-operations-columns{gap:23px}
+}
+@media(max-width:650px){
+ .gaber-operations-kpis,.gaber-operations-columns,.gaber-operations-finance dl{
+  grid-template-columns:1fr}
+ .gaber-operations-toolbar{align-items:stretch}
+ .gaber-operations-segments{width:100%}
+ .gaber-operations-segments button{flex:1;min-width:0}
+ .gaber-operations-kpis article{padding:14px 16px}
+ .gaber-operations-table{margin:0 -10px}
+ .gaber-operations-table th,.gaber-operations-table td{padding:12px 9px}
+ .gaber-operations-heading input{min-width:0;width:100%}
+ .order-dispute-action{padding:16px}
+}
+
+
+/* Atelier-wide finish: avoid decorative demo gradients, rounded AI dashboard
+   cards and inconsistent controls while retaining material texture previews. */
+.hero-stage{background:#e9e6df}
+.hero-stage:before{background:#edeae3;box-shadow:none}
+.hero-stage:after{background:linear-gradient(transparent,#e7e1d650)}
+.stage-watermark{display:none}
+.advanced-field select,.advanced-field input:not([type=range]),
+.rates-table input,.formula-details,.macro-surface,.drawing-sheet,
+.technical-banner,.factory-orders,.order-detail,.catalog-admin>article{
+ border-radius:2px;
+}
+.collection-card:focus-visible,.project-preview:focus-visible{
+ outline:2px solid var(--green);outline-offset:3px
+}
+.mode-tag{background:transparent;border:1px solid var(--line);letter-spacing:.03em}
+.order-workspace,.gaber-operations{color:var(--gaber-ink)}
+@media(max-width:760px){
+ .header nav.mobile-open{flex-wrap:wrap;gap:3px 14px}
+ .header nav.mobile-open a{flex:1 1 30%;min-width:100px}
+}

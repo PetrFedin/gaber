@@ -2,10 +2,9 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {readOrderWorkspace,ORDER_STORAGE_KEY} from './orderStorage.js';
 import {analyzeOrderPortfolio,localOperationalDate} from './orderAnalytics.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
+import {orderMoney} from './orderMoney.js';
 
-const moneyExact=value=>value===null?'Не подтверждено':
- new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',
-  minimumFractionDigits:2,maximumFractionDigits:2}).format(value/100);
+const moneyExact=value=>value===null?'Не подтверждено':orderMoney(value);
 const fmt=n=>new Intl.NumberFormat('ru-RU').format(n);
 const box=(label,value,note)=><article key={label}>
   <small>{label}</small><strong>{fmt(value)}</strong><span>{note}</span>
@@ -49,7 +48,7 @@ export default function OperationsPage({projects}){
      onClick={()=>setPerspective('partner')}>Обзор партнёра · агрегаты</button>
    </div>
    <button type="button" className="button outline"
-    onClick={()=>{setWorkspace(readOrderWorkspace(store));setAsOf(new Date().toISOString().slice(0,10));}}>
+    onClick={()=>{setWorkspace(readOrderWorkspace(store));setAsOf(localOperationalDate());}}>
     Обновить журнал</button>
   </div>
   {data.status!=='ready'?<div className="inline-warning" role="alert">

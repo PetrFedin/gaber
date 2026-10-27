@@ -1,8 +1,9 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {money,dimensions} from './domain.js';
+import {dimensions} from './domain.js';
 import {ORDER_STAGES,orderFinancials,orderEngineering} from './orderWorkflow.js';
 import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspace} from './orderStorage.js';
 import ConfigurationDetails from './ConfigurationDetails.jsx';
+import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
 const LABELS={create:'Создан заказ',offer:'Предложение производства',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
@@ -88,11 +89,11 @@ function OrderDetail({row,role,send,onError}){
    <ConfigurationDetails config={r?.config??s.sourceConfig}/>
    <p>{factory?`Связь с инженерной моделью: ${engineering.integrityOk?'цифровые ссылки согласованы':'есть ошибки связей'} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`:'Комплектация предложения связана с инженерным составом. Производственное подтверждение конструкции ещё не получено.'}</p>
    {r&&<><dl className="order-ledger">
-    <div><dt>Цена предложения</dt><dd>{money(r.priceKopecks/100)}</dd></div>
-    <div><dt>Аванс · {r.advanceBps/100}%</dt><dd>{money(f.advanceKopecks/100)}</dd></div>
-    <div><dt>Локально учтено · {r.id}</dt><dd>{money(f.currentKopecks/100)}</dd></div>
-    <div><dt>Осталось до аванса</dt><dd>{money(f.advanceDueKopecks/100)}</dd></div>
-    <div><dt>Остаток до полного расчёта</dt><dd>{money(f.balanceKopecks/100)}</dd></div>
+    <div><dt>Цена предложения</dt><dd>{orderMoney(r.priceKopecks)}</dd></div>
+    <div><dt>Аванс · {r.advanceBps/100}%</dt><dd>{orderMoney(f.advanceKopecks)}</dd></div>
+    <div><dt>Локально учтено · {r.id}</dt><dd>{orderMoney(f.currentKopecks)}</dd></div>
+    <div><dt>Осталось до аванса</dt><dd>{orderMoney(f.advanceDueKopecks)}</dd></div>
+    <div><dt>Остаток до полного расчёта</dt><dd>{orderMoney(f.balanceKopecks)}</dd></div>
     <div><dt>Плановая готовность</dt><dd>{r.dueDate}</dd></div>
     <div><dt>Подтверждение клиентом</dt><dd>{s.acceptedRevisionId===r.id?r.id:'Требуется'}</dd></div>
    </dl><p>{r.note}</p></>}
@@ -107,7 +108,7 @@ function OrderDetail({row,role,send,onError}){
      {issue.rejections.map((rejected,i)=><p key={i}>Отклонено клиентом: {rejected.note}</p>)}</article>)}
    </details>}
    {s.revisions.length>1&&<details><summary>Предыдущие предложения ({s.revisions.length-1})</summary>
-    {s.revisions.slice(0,-1).map(old=><p key={old.id}>{old.id} · {old.config.width} см · {money(old.priceKopecks/100)} · {old.dueDate}<br/>{old.note}</p>)}
+    {s.revisions.slice(0,-1).map(old=><p key={old.id}>{old.id} · {old.config.width} см · {orderMoney(old.priceKopecks)} · {old.dueDate}<br/>{old.note}</p>)}
    </details>}
   </div><div className="order-actions-panel">
    <h4>{factory?'Действия производства':'Решения клиента'}</h4>
@@ -132,8 +133,8 @@ function OrderDetail({row,role,send,onError}){
     <button className="button outline" type="submit">Запросить корректировку</button>
    </form>}
    {f.priorCredits.length>0&&<div><h4>Средства предыдущих ревизий · локальные записи</h4>
-    {f.priorCredits.map(credit=><div className="order-credit" key={credit.revisionId}><p>{credit.revisionId}: {money(credit.amountKopecks/100)}. Автоматически не зачтены.</p>
-     {!factory&&s.stage==='accepted'&&f.balanceKopecks>0&&<button className="button outline" onClick={()=>send('allocate_credit',{fromRevisionId:credit.revisionId,amountKopecks:Math.min(credit.amountKopecks,f.balanceKopecks)})}>Перенести {money(Math.min(credit.amountKopecks,f.balanceKopecks)/100)} на {r.id}</button>}</div>)}
+    {f.priorCredits.map(credit=><div className="order-credit" key={credit.revisionId}><p>{credit.revisionId}: {orderMoney(credit.amountKopecks)}. Автоматически не зачтены.</p>
+     {!factory&&s.stage==='accepted'&&f.balanceKopecks>0&&<button className="button outline" onClick={()=>send('allocate_credit',{fromRevisionId:credit.revisionId,amountKopecks:Math.min(credit.amountKopecks,f.balanceKopecks)})}>Перенести {orderMoney(Math.min(credit.amountKopecks,f.balanceKopecks))} на {r.id}</button>}</div>)}
    </div>}
    {paymentStage&&<form onSubmit={e=>submit(e,()=>send(factory?'record_payment':'report_payment',{amountKopecks:amount(payment),reference:paymentRef}))}>
     <p>{factory?'Локальная запись для проверки сценария. Банковское подтверждение отсутствует.':'Сообщение об оплате не меняет учтённый баланс и не разрешает запуск.'}</p>
@@ -146,7 +147,7 @@ function OrderDetail({row,role,send,onError}){
    {factory&&['quality','ready','shipped'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send(s.stage==='quality'?'quality_pass':s.stage==='ready'?'ship':'deliver',s.stage==='ready'?{carrier,tracking,reference}:{reference}))}>
     {s.stage==='ready'&&<><label className="order-field">Перевозчик<input required maxLength={500} value={carrier} onChange={e=>setCarrier(e.target.value)}/></label><label className="order-field">Номер отправления<input required maxLength={500} value={tracking} onChange={e=>setTracking(e.target.value)}/></label></>}
     <label className="order-field">{s.stage==='quality'?'Акт контроля качества':s.stage==='ready'?'Отгрузочный документ':'Подтверждение доставки'}<input required maxLength={500} value={reference} onChange={e=>setReference(e.target.value)}/></label>
-    {s.stage==='ready'&&f.balanceKopecks>0&&<p>Отгрузка заблокирована: остался полный расчёт {money(f.balanceKopecks/100)}.</p>}
+    {s.stage==='ready'&&f.balanceKopecks>0&&<p>Отгрузка заблокирована: остался полный расчёт {orderMoney(f.balanceKopecks)}.</p>}
     <button className="button dark" type="submit" disabled={s.stage==='ready'&&f.balanceKopecks>0}>{s.stage==='quality'?'Зафиксировать контроль · локально':s.stage==='ready'?'Зафиксировать отгрузку · локально':'Зафиксировать доставку · локально'}</button>
    </form>}
    {!factory&&s.stage==='delivered'&&<button className="button dark" onClick={()=>send('accept_delivery')}>Принять доставленный заказ</button>}
@@ -177,7 +178,7 @@ function OrderDetail({row,role,send,onError}){
 
   </div></div>
   <details className="order-payments"><summary>Платёжные записи и сообщения ({s.payments.length+s.paymentClaims.length})</summary>
-   {[...s.payments,...s.paymentClaims].map((p,i)=><p key={i}>{p.revisionId} · {money(p.amountKopecks/100)} · {p.reference}<br/>{p.authority==='CLIENT_CLAIM'?'Сообщение клиента; в балансе не учтено':'Локальная запись; банк не подтвердил'}</p>)}
+   {[...s.payments,...s.paymentClaims].map((p,i)=><p key={i}>{p.revisionId} · {orderMoney(p.amountKopecks)} · {p.reference}<br/>{p.authority==='CLIENT_CLAIM'?'Сообщение клиента; в балансе не учтено':'Локальная запись; банк не подтвердил'}</p>)}
   </details>
   <div className="order-conversation"><h4>Обсуждение заказа</h4>
    {s.messages.map((m,i)=><p key={i}><strong>{account(m.role)} · {m.revisionId??'Заявка'}</strong><br/>{m.note}</p>)}

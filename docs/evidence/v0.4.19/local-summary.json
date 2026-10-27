@@ -1,0 +1,33 @@
+{
+  "version": "0.4.19",
+  "date": "2026-10-27",
+  "baselineSha": "709b717d5f50ce02185084c82182a8c2c2a56da7",
+  "baselineFilesVerified": 112,
+  "node": "24.22.1",
+  "npm": "11.9.0",
+  "installExitCode": 0,
+  "testExitCode": 0,
+  "nodeTests": {
+    "passed": 174,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ssrScenarios": 52,
+  "domScripts": 6,
+  "buildExitCode": 0,
+  "testedSourceGitBlobSha1": {
+    "package.json": "4eb13cf5ed5e4eb027176de39ddf89c27f9ec4f4",
+    "server/orderJournalService.js": "7bef262f2641a09684672c310f397cca0cd6727d",
+    "server/orderReadModel.js": "fcdabde698ef04d70c915269d4c3157234f0280b",
+    "src/orderMoney.js": "962a2e9cd54c92db73c9ca7cff0d06a66238b794",
+    "src/OperationsPage.jsx": "315ab830c6081a8d5d8aba30b18353bbdb0e957a",
+    "src/OrderWorkspace.jsx": "d0bbf0b1fe3e41e99597b80108f77e3e0bb003a8",
+    "tests/order-read-v0419.test.js": "510e4fcd5e261254986371e658f8200abfb409f5",
+    "tests/order-finance-ui.mjs": "64db8f5f66f95a3268f6bbaa47077060ba328c27"
+  },
+  "githubActionsGreen": false,
+  "livePostgresVerified": false,
+  "realSessionVerifier": false,
+  "browserVisualVerified": false,
+  "productionReleaseAllowed": false
+}

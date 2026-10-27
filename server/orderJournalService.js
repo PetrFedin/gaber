@@ -1,4 +1,6 @@
 import {createHash} from 'node:crypto';
+import {authorizeGaberAction} from './accessPolicy.js';
+import {projectOrderReadModel} from './orderReadModel.js';
 export const ORDER_JOURNAL_SCHEMA='gaber-server-order-journal/0.4.18';
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
 const deny=(code,more={})=>({accepted:false,code,...more,productionRelease:{allowed:false}});
@@ -37,7 +39,27 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
  if(typeof repository?.withOrderTransaction!=='function'||typeof admission!=='function'||
    typeof reducer?.replayOrder!=='function'||typeof reducer?.appendOrderCommand!=='function')
   throw TypeError('INVALID_JOURNAL_DEPENDENCIES');
- return {async execute({principal,request}){
+ return {async read({principal,request}){
+  if(!principal||principal.identitySource!=='server-session'||principal.authenticated!==true||
+    !id(principal.tenantId)||!id(principal.subject))return deny('NO_VERIFIED_SESSION');
+  if(!request||typeof request!=='object'||Array.isArray(request)||
+    Object.keys(request).some(k=>k!=='orderId')||!id(request.orderId))return deny('INVALID_ORDER_REQUEST');
+  // Snapshot server inputs before awaiting a connection/lock; callers cannot swap scope mid-read.
+  let actor;try{actor=JSON.parse(serialize(principal));}catch{return deny('INVALID_JSON_REQUEST');}
+  const scope={tenantId:actor.tenantId,orderId:request.orderId},now=clock();
+  return repository.withOrderTransaction(scope,async tx=>{
+   const resource=await tx.getResourceForUpdate();
+   if(!resource||resource.orderId!==scope.orderId)return deny('RESOURCE_NOT_AUTHORIZED');
+   const access=authorizeGaberAction({principal:actor,resource,action:'orders.read',nowMs:now});
+   if(!access.allowed)return deny(access.reason);
+   const head=await tx.getHeadForUpdate();
+   if(!head)return deny('ORDER_MISSING');
+   const {state}=verify(head,await tx.getEvents(),scope,reducer.replayOrder);
+   if(!state)return deny('ORDER_MISSING');
+   return {accepted:true,code:'ORDER_READ',order:projectOrderReadModel(state,access.role),
+    productionRelease:{allowed:false}};
+  });
+ },async execute({principal,request}){
   if(!principal||principal.identitySource!=='server-session'||principal.authenticated!==true||
     !id(principal.tenantId)||!id(principal.subject))return deny('NO_VERIFIED_SESSION');
   if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(k=>

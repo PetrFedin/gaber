@@ -1,47 +1,21 @@
-# GABER v0.4.19 — проверка аудита и первых исправлений
+# GABER v0.4.19 — atomic creation + HTTP order transport (Draft)
 
-Дата: 27.10.2026. Исходный SHA: `709b717d5f50ce02185084c82182a8c2c2a56da7`. Ветка: `feat/production-engineering-v04`, Draft PR #2. Производственный допуск HOLD.
+## Changes
+- `server/orderJournalService.js`: the first order head is created only **after** the local reducer accepts the initial command. This avoids persisting an empty head on a rejected `create` request. The existing tenant/order lock and CAS remain.
+- `server/orderHttpApi.js`: lightweight Node HTTP adapter, no new dependencies; server-resolved opaque session token, allowlisted order reads, path-bound order ID, rejection of client-supplied role and actor, version conflict HTTP 409, no success on uncertain DB errors.
+- `tests/order-http-api-v0419.test.js`: HTTP transport regression scenarios.
 
-## Метод и результат
+## Proven vs unproven
+- During development, a first locally executed HTTP variant passed **7/7 tests** in Node 22, using a test session source, mocked order repository and real loopback HTTP requests. The final source was re-authored and recorded in GitHub after a container reset, so the earlier 7/7 **must not** be treated as an exact-SHA pass. These new tests require independent rerun.
+- GitHub Actions previously failed before executing any steps, rather than demonstrating a test/code failure.
+- No live PostgreSQL migration, real auth provider, secure TLS deployment, actual bank confirmation, factory execution, or production authorization.
+- Parallel development added scoped order reads immediately before this commit. This patch preserves those changes, rather than resetting to an old HEAD.
 
-112 исходных файлов получены через GitHub API; байты каждого сверены с Git blob SHA-1. Node 24.22.1 / npm 11.9.0. Сначала исходная версия полностью прошла 166 Node-тестов, 52 SSR-сценария, пять DOM-скриптов и Vite build.
+## Acceptance gates
+1. Run `node --test tests/order-http-api-v0419.test.js tests/order-journal-v0418.test.js` and the full `npm ci && npm test && npm run build` on exact SHA.
+2. Obtain at least two real independent tenant accounts, six server role identities and a transaction-safe PostgreSQL 17 test instance.
+3. Test zero leaked order records, missing/expired sessions, duplicated writes and replay on two devices, concurrent create/modify, rollback and ambiguous COMMIT.
+4. Run browser checks at 375/768/1440 for client, factory, brand, partner and owner.
+5. Keep `productionRelease.allowed=false`; no real money, order acceptance or physical production sign-off claimed.
 
-После изменений:
-
-| Команда | Результат |
-|---|---|
-| `npm ci --prefer-offline --no-audit --no-fund` | PASS, 57 пакетов установлены; security audit пакетов этой командой не выполнялся |
-| `npm test` | PASS: 174/174 Node-тестов, 52 SSR-сценария и все шесть DOM-скриптов |
-| `npm run build` | PASS, Vite 7.3.7 |
-| `git diff --check` | PASS |
-
-Разность Node-тестов: **174 − 166 = 8** новых кейсов. Новый DOM-скрипт проверяет фактические денежные строки OrderWorkspace и сохранение местной календарной даты при refresh OperationsPage.
-
-Точные проверенные исходные blob-хеши и результаты сохранены в [evidence/v0.4.19/local-summary.json](evidence/v0.4.19/local-summary.json). Документ фиксирует локальную проверку; статус GitHub Actions проверяется отдельно на опубликованном SHA.
-
-## Новые проверки
-
-- Настоящие `appendOrderCommand`, `replayOrder` и `admitOrderCommand` включены в один сценарий сервиса: создание → КП → согласие → claim → локальная запись → сообщение → чтение.
-- Все шесть ролей: ограниченные DTO, назначенное членство, запреты чужих tenant/фабрик/клиентов/брендов/партнёров; истёкшая или неподходящая сессия не читает строки событий.
-- Подмена роли/tenant/флага платежей в запросе чтения отклоняется. Чтение отсутствующего заказа не создаёт head.
-- Подмена события блокирует чтение для каждой роли; изменения полученного DTO не меняют журнал.
-- Устаревшая версия, истёкшая сессия и попытка реального запуска отвергаются.
-- Форматирование целых копеек, включая `Number.MAX_SAFE_INTEGER`; отрицательные, дробные, NaN/Infinity отклоняются.
-- DOM: `200005` коп. → `2000,05 ₽`, аванс `100003` коп. → `1000,03 ₽`, остаток `100002` коп. → `1000,02 ₽`.
-- DOM: 27 октября 00:30 Москвы / 26 октября UTC — признак просрочки одинаков до и после обновления.
-
-## Границы проверки
-
-Транзакционный тестовый репозиторий и прежний mock Pool **не являются PostgreSQL**. RLS, прямой SQL, конкуренция на реальной БД, runtime grants и восстановление не испытаны. Новая read-функция — серверная библиотека; login, session verifier и HTTP API не реализованы. UI по-прежнему использует localStorage.
-
-`identitySource='server-session'` — контракт входа из доверенного middleware, не криптографическая аутентификация. Новые тесты проверяют политику на подготовленных principals, а не реальный вход шести пользователей.
-
-Chromium отсутствовал; попытка установки Playwright Chromium v1234 завершилась повреждённым/обрезанным ZIP. Визуальные снимки, физические viewport, WebGL, реальный browser E2E и независимое ревью не заявляются.
-
-Известный исходный [CI run 40530146479](https://github.com/PetrFedin/gaber/actions/runs/40530146479) завершился до шагов: `runner_id=0`, `runner_name=''`, `steps=[]`. Причина не установлена. Локальный PASS не закрывает [issue #3](https://github.com/PetrFedin/gaber/issues/3).
-
-Проверка истории GitHub compare: PR #1 head `b481a07faa09cbd34807b62004414491de2ae0d2` — предок исходного head PR #2; compare `ahead=66`, `behind=0`. Код PR #1 уже входит в инженерную историю; отдельная повторная интеграция не нужна. Сам PR #1 в этом этапе не закрывался.
-
-## Следующий рубеж
-
-[Актуальный аудит и план](audit-and-development-plan-v0.4.19.md): CI → изолированная PostgreSQL и RLS → настоящий verifier/API → общий заказ на независимых устройствах. Полная цена, реальное изготовление и инвестиционные показатели требуют отдельной документальной приёмки.
+**Status: Engineering Draft / PRODUCTION HOLD.**

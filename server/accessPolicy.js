@@ -3,7 +3,7 @@
  * Principal must come from verified authentication middleware; resource
  * must be loaded by an authoritative repository. This is NOT a login API.
  */
-export const GABER_ACCESS_SCHEMA='gaber-server-access-policy/0.4.15';
+export const GABER_ACCESS_SCHEMA='gaber-server-access-policy/0.4.16';
 export const GABER_ROLES=Object.freeze([
  'client','brand','partner','factory-operator','factory-technologist','owner'
 ]);
@@ -28,6 +28,8 @@ const RIGHTS=Object.freeze({
  'delivery.accept':['client'],
  'issues.report':['client'],
  'issues.respond':['factory-operator','owner'],
+ 'issues.reject':['client'],
+ 'issues.accept':['client'],
  'catalog.read':['client','brand','partner','factory-operator','factory-technologist','owner'],
  'catalog.manage':['brand','owner'],
  'analytics.own':['client','brand','partner'],

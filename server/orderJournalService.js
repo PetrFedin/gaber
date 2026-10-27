@@ -89,7 +89,8 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    const role=accepted[0].reducerRole;
    let head=await tx.getHeadForUpdate();
    if(!head&&type!=='create')return deny('ORDER_MISSING');
-   if(!head){if(expectedVersion!==0)return deny('INVALID_INITIAL_VERSION');await tx.ensureHead();head=await tx.getHeadForUpdate();}
+   const firstWrite=!head;
+   if(!head){if(expectedVersion!==0)return deny('INVALID_INITIAL_VERSION');head={version:0,headHash:null};}
    const rows=await tx.getEvents(),{events,state}=verify(head,rows,scope,reducer.replayOrder);
    const requestHash=sha(serialize({scope,requestId,expectedVersion,type,payload,
      revisionId:revisionId??null,actorId:actor.subject,role}));
@@ -109,6 +110,11 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(result.duplicate||result.state?.version!==head.version+1)throw Error('JOURNAL_REDUCER_MISMATCH');
    const row={seq:head.version+1,actorId:actor.subject,requestId,requestHash,previousHash:head.headHash,command};
    row.eventHash=hashEvent(row,scope);
+   if(firstWrite){
+    await tx.ensureHead();
+    const stored=await tx.getHeadForUpdate();
+    if(!stored||stored.version!==0||stored.headHash!==null)throw Error('INITIAL_HEAD_CONFLICT');
+   }
    await tx.appendEvent(row);
    if(await tx.advanceHead({expectedVersion:head.version,nextVersion:row.seq,headHash:row.eventHash})!==true)
     throw Error('ORDER_CAS_FAILURE');

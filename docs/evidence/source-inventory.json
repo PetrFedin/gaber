@@ -19,11 +19,15 @@
     },
     {
       "path": "README.md",
-      "sha": "0fd3a3f535b03a7a1a452bd486d1f441abf3d00d"
+      "sha": "77d0be94317f7bf2658095c4f40f2e187305f78c"
+    },
+    {
+      "path": "docs/CONSTRUCTOR-QUALITY.md",
+      "sha": "c667680186d45273b850d9e4c2d4227163aec75f"
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "6c86316f75036d3614d52a10de501bdbb19dfb25"
+      "sha": "5178f9829ae81c3645af8100a48a33949ef4bd7f"
     },
     {
       "path": "docs/architecture.md",
@@ -203,7 +207,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "d69c77f923b2015d7e29436db0897386813093f3"
+      "sha": "9e1889c6b24a1ff7cc95e0f0af9c1963ddc9b19d"
     },
     {
       "path": "src/ConfigurationDetails.jsx",
@@ -255,7 +259,7 @@
     },
     {
       "path": "src/Scene.jsx",
-      "sha": "fdf951f23d3b57a10414e2d34720ea8ebb02a588"
+      "sha": "693c34c367b32450b3aa38b37071844f71548546"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -334,6 +338,10 @@
       "sha": "a68aa63edf98c207b3340602a548d70a2f7fb12b"
     },
     {
+      "path": "src/previewLayout.js",
+      "sha": "e3414022d9a8a05713180c11b47532940b5f7e1c"
+    },
+    {
       "path": "src/softLayout.js",
       "sha": "98cbebc8dceb2904c712fc21ae703713e68284c0"
     },
@@ -352,6 +360,10 @@
     {
       "path": "src/traceability.js",
       "sha": "5fbc67f3c8da192c328dbaf6db037d648bbf351e"
+    },
+    {
+      "path": "src/visualDetailing.js",
+      "sha": "fc79a86f2ab39501eb46f43721e2b736fea092be"
     },
     {
       "path": "tests/access-policy-v0415.test.js",
@@ -470,6 +482,10 @@
       "sha": "efb37f521e0a8fe84354420f8178c6b576b27565"
     },
     {
+      "path": "tests/preview-layout.test.js",
+      "sha": "2661bf80d41e460bd7b9182db73781564fb9096f"
+    },
+    {
       "path": "tests/project-recovery.test.js",
       "sha": "a9bf83db23294310e68444e008ce2414309c0dc0"
     },
@@ -492,6 +508,10 @@
     {
       "path": "tests/traceability-v044.test.js",
       "sha": "a0d786556c389e6c25a0f2ccbe99a2df3658bacb"
+    },
+    {
+      "path": "tests/visual-detailing.test.js",
+      "sha": "02244c05f7acecdfae6f3cb14f2b27d71cd63524"
     },
     {
       "path": "vite.config.js",

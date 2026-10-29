@@ -18,7 +18,7 @@ test('seat upholstery preview is traceable to exact engineering stack and design
     }
   }
 });
-test('comfort, depth and back angle affect visual envelope; no visual seat for bed/headboard', () => {
+test('depth and back angle change preview; spring core preserves actual engineering stack envelope', () => {
   const c = initialConfig('sofa'), a = planSeatingPreview(c);
   const higher = planSeatingPreview({...c, seatHeight: 51});
   assert.ok(higher.seat.centerYM > a.seat.centerYM);
@@ -26,7 +26,12 @@ test('comfort, depth and back angle affect visual envelope; no visual seat for b
   assert.ok(deep.seat.depthM > a.seat.depthM);
   const tilted = planSeatingPreview({...c, backLeanDeg: 20});
   assert.ok(Math.abs(tilted.back.leanRad) > Math.abs(a.back.leanRad));
-  assert.ok(planSeatingPreview({...c, seatCore: 'pocket'}).seat.thicknessM > a.seat.thicknessM);
+  // Pocket Spring and foam variants both happen to be 140 mm in this concept.
+  // Test exact source linkage, not a fabricated expectation of an increased height.
+  const springConfig = {...c, seatCore: 'pocket'};
+  const spring = planSeatingPreview(springConfig);
+  assert.equal(spring.seat.thicknessM, getEngineeringModel(springConfig).geometry.seatStackMm / 1000);
+  assert.equal(spring.seat.topM, a.seat.topM);
   assert.equal(planSeatingPreview(initialConfig('bed')), null);
   assert.equal(planSeatingPreview(initialConfig('headboard')), null);
 });

@@ -483,7 +483,7 @@
     },
     {
       "path": "tests/preview-layout.test.js",
-      "sha": "2661bf80d41e460bd7b9182db73781564fb9096f"
+      "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
     },
     {
       "path": "tests/project-recovery.test.js",

@@ -3,6 +3,7 @@ import {dimensions} from './domain.js';
 import {ORDER_STAGES,orderFinancials,orderEngineering} from './orderWorkflow.js';
 import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspace} from './orderStorage.js';
 import ConfigurationDetails from './ConfigurationDetails.jsx';
+import ClientOfferAssurance from './ClientOfferAssurance.jsx';
 import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
@@ -97,14 +98,15 @@ function OrderDetail({row,role,send,onError}){
    <h4>{r?'Предложение '+r.id:spec?'ТЗ '+spec.id:'Исходная конфигурация'}</h4>
    <p>{Object.values(dimensions(spec?.config??r?.config??s.sourceConfig)).join(' × ')} см</p>
    <ConfigurationDetails config={spec?.config??r?.config??s.sourceConfig}/>
-   <p>{factory?`Связь с инженерной моделью: ${engineering.integrityOk?'цифровые ссылки согласованы':'есть ошибки связей'} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`:'Комплектация предложения связана с инженерным составом. Производственное подтверждение конструкции ещё не получено.'}</p>
+   <p>{factory?`Связь с инженерной моделью: ${engineering.integrityOk?'цифровые ссылки согласованы':'есть ошибки связей'} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`:'Комплектация предложения связана с инженерным составом.'}</p>
+   {client&&<ClientOfferAssurance state={s}/>}
    {r&&!factory&&<><dl className="order-ledger">
     <div><dt>Цена предложения</dt><dd>{orderMoney(r.priceKopecks)}</dd></div>
     <div><dt>Аванс · {r.advanceBps/100}%</dt><dd>{orderMoney(f.advanceKopecks)}</dd></div>
     <div><dt>Локально учтено · {r.id}</dt><dd>{orderMoney(f.currentKopecks)}</dd></div>
     <div><dt>Осталось до аванса</dt><dd>{orderMoney(f.advanceDueKopecks)}</dd></div>
     <div><dt>Остаток до полного расчёта</dt><dd>{orderMoney(f.balanceKopecks)}</dd></div>
-    <div><dt>Плановая готовность</dt><dd>{r.dueDate}</dd></div>
+    <div><dt>Проектная дата готовности · календарь не подтверждён</dt><dd>{r.dueDate}</dd></div>
     <div><dt>Подтверждение клиентом</dt><dd>{s.acceptedRevisionId===r.id?r.id:'Требуется'}</dd></div>
    </dl><p>{r.note}</p></>}
    {s.changeNote&&<p className="inline-warning">Корректировка: {s.changeNote}</p>}

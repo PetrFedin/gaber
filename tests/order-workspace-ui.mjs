@@ -58,6 +58,8 @@ try{
  assert.equal(state().specs[0].economics.platformCommissionKopecks,20000);
  await render('client');
  assert.doesNotMatch(document.body.textContent,/200,00\s*₽/);
+ assert.match(document.body.textContent,/Локальное подтверждение концепт-ТЗ ещё не получено/);
+ assert.doesNotMatch(document.body.textContent,/ACK-1/);
  assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent==='Согласовать R1'),false);
  await render('factory');
  assert.match(document.body.textContent,/Каркас, допуски/);
@@ -70,6 +72,16 @@ try{
  await render('partner');await click('Опубликовать предложение клиенту');
  assert.equal(state().stage,'offered');
  await render('client');
+ const assurance=document.querySelector('.client-offer-assurance');
+ assert.ok(assurance,'Client sees the exact offer acknowledgement');
+ assert.match(assurance.textContent,/Концепт-ТЗ подтверждено в локальном сценарии/);
+ assert.match(assurance.textContent,/ACK-1/);
+ assert.match(assurance.textContent,/R1/);
+ assert.match(assurance.textContent,/S1/);
+ assert.match(assurance.textContent,/не подтверждает реальную фабрику, мощности, календарную дату/);
+ assert.doesNotMatch(assurance.textContent,/Концепция подтверждена, выпуск CAD|1200|700|200/);
+ assert.match(document.body.textContent,/Проектная дата готовности · календарь не подтверждён/);
+ assert.doesNotMatch(document.body.textContent,/Производственное подтверждение конструкции ещё не получено/);
  assert.equal(button('Согласовать R1').disabled,true);
  await act(async()=>document.querySelector('.order-decision input').click());
  await click('Согласовать R1');assert.equal(state().acceptedRevisionId,'R1');

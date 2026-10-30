@@ -48,6 +48,7 @@ export function validate(c){
  if(isBed(c)&&c.mechanism!=='none')errors.push('Для кровати используется подъёмный узел хранения');
  if((isHead(c)||isBed(c)||c.category==='chairbed')&&c.seatCore==='pocket')errors.push('Pocket Spring сердечник пока предусмотрен только для дивана и обычного кресла');
  if(c.woodArms&&(c.arm==='none'||isBed(c)))errors.push('Деревянные вставки требуют подлокотников');
+ if(!isHead(c)&&!isBed(c)&&c.arm==='none'&&(c.charging||c.lamps))errors.push('Встроенные USB и светильники требуют подлокотника в демо-модели');
  if(c.mechanism==='recliner'&&(c.storage||c.layout!=='straight'))errors.push('Реклайнер несовместим с хранением и шезлонгом в демо-модели');
  return errors;
 }

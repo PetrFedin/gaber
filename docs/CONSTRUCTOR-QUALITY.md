@@ -18,6 +18,7 @@ The cross-role product and acceptance target is defined in [MVP Quality Contract
 | Cushion variants | Square/lumbar cushions plus true cylindrical bolster with cap trim, in the visual preview | Fabric drape, fill pressure and compressibility not physically modelled |
 | Preview quality | Existing studio can choose full/budget geometry quality; WebGL render only on changed scene/controls; local WebP project preview improved | GPU frame time, actual FPS and memory use have not been measured |
 | 3D visual export | `Scene.exportPreviewGLB()` uses Three.js `GLTFExporter`; studio UI offers **3D GLB**; output intentionally excludes room and production approval | Must be opened in separate glTF viewer and visually verified; **NOT** STEP/CAD/BOM/production document |
+| Indicative lead time | `src/leadTime.js` derives a working-day range from product family, labour hours and selected options; `ConfigurationDetails.jsx` shows the range, start event and stage breakdown | Demo norms only: no factory capacity calendar, supplier confirmation, delivery date, or production commitment |
 
 **Important distinction:** dimensions are the conceptual source-of-truth inputs in centimetres (`domain.js`), factory draft uses millimetres (`engineering.js`), and Three.js preview uses metres. Current display follows engineering stack height, but a rounded or organically deformed mesh and a rotated back panel are not exact manufactured surfaces. No claim of photorealism or production-ready CAD is made.
 
@@ -29,12 +30,12 @@ Run on the **same checked-out SHA**:
 nvm use
 npm ci
 npm run verify:source
-node --test tests/preview-layout.test.js tests/visual-detailing.test.js tests/upholstery-geometry.test.js
+node --test tests/preview-layout.test.js tests/visual-detailing.test.js tests/upholstery-geometry.test.js tests/lead-time.test.js
 npm test
 npm run build
 ```
 
-Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; identical cushion/detail transforms; shared-geometry safety; thin/wide/high-detail boundary envelopes; malformed-transform rejection; and fail-closed geometry inputs.
+Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; identical cushion/detail transforms; shared-geometry safety; thin/wide/high-detail boundary envelopes; malformed-transform rejection; fail-closed geometry inputs; and deterministic, bounded, fail-closed indicative lead-time ranges.
 
 ### Local targeted evidence for the upholstery increment
 
@@ -48,6 +49,14 @@ On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared
 - The repository copy fidelity check reproduced the original `Scene.jsx` Git blob SHA before applying the integration edits.
 
 This is targeted local evidence, **not** full repository CI, not full application browser E2E, not mobile/desktop acceptance, and not manufacturing approval.
+
+### Local targeted evidence for the indicative lead-time increment
+
+On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared Node 24 runtime:
+
+- `node --test tests/lead-time.test.js tests/domain.test.js tests/upholstery-geometry.test.js`: **20 tests passed, 0 failed**. This covered the new range formula, existing costing/domain regressions, and the upholstery suite.
+- The integrated `ConfigurationDetails.jsx` was bundled with esbuild and server-rendered for sofa, armchair, and headboard. Each render contained the working-day range, factory-acceptance start event, queue/material/production/QC breakdown, and the explicit unconfirmed-demo disclaimer.
+- A complete repository checkout was not available in the local harness, so full `npm ci`, source-inventory verification, complete `npm test`, production build, and real browser E2E remain unproven. The new UI check is server-render evidence, not browser acceptance.
 
 Visual acceptance (evidence required before merge): Chromium screenshots at **375/768/1440** for five category presets and two non-default dimensions; compare same material swatch on wide/narrow cushions, camera rotation and zoom, Pillow bolster vs square/lumbar, single/double/piping/none, full/draft quality, all three upholstery profiles, back lean 4° and 20°, GLB import on another glTF viewer and snapshot color/detail. Run WebGL + SVG fallback, keyboard and touch selection; check lost-context behavior and line/piping artifacts. Record exact SHA, browser version, device/GPU info, visual diffs, and uploaded output samples without any real client data.
 

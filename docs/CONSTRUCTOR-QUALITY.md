@@ -86,7 +86,7 @@ Additional performance acceptance to **measure, not assume**: frame duration and
 
 - [Three.js RoundedBoxGeometry](https://threejs.org/docs/pages/RoundedBoxGeometry.html) — rounded preview boxes and unit parameters.
 - [Three.js GLTFExporter](https://threejs.org/docs/pages/GLTFExporter.html) — glTF / GLB export API and limitations.
-- [three-mesh-bvh](https://github.com/gkjamerson/three-mesh-bvh) — optional raycast/collision acceleration; benchmark and audit dependencies before adoption.
+- [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) — optional raycast/collision acceleration; benchmark and audit dependencies before adoption.
 - [glTF Transform](https://gltf-transform.dev/) — candidate optimization and validation pipeline.
 - [Open Cascade Technology](https://dev.opencascade.org/) — candidate geometry kernel for separate engineering/CAD workstream.
 

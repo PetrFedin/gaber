@@ -12,9 +12,9 @@ The cross-role product and acceptance target is defined in [MVP Quality Contract
 | --- | --- | --- |
 | Visual seat stack | `src/previewLayout.js` derives top height, seat thickness, and base top from `getEngineeringModel()` in real units | Comfort, fatigue, ergonomics and compressed shape require measured foam data |
 | Parametric depth and backrest | Seat cushion depth uses `seatDepth`; back angle uses `backLeanDeg` in radians | No calibrated human ergonomics or approved CAD |
-| Organic upholstery form | `src/upholsteryGeometry.js` deforms rounded-box topology into deterministic tailored/soft/relaxed profiles, then restores the exact configured envelope; `Scene.jsx` applies it only to full-quality physical upholstery | No foam compression, fabric drape, measured comfort, approved CAD surface, or complete application screenshot matrix |
+| Organic upholstery form | `src/upholsteryGeometry.js` deforms rounded-box topology into deterministic tailored/soft/relaxed profiles, then restores the exact configured envelope; `Scene.jsx` applies it only to full-quality physical upholstery and conforms local-space seams/piping with the same transform | No foam compression, fabric drape, measured comfort, approved CAD surface, or complete application screenshot matrix |
 | Upholstery texture | `src/visualDetailing.js` rescales each side of rounded boxes, and cylindrical bolster ends, by physical dimensions and nominal material tile mm | Procedural canvas bump is NOT measured PBR and has no verified UV cutting grain |
-| Stitching and piping | Local-space double/single stitched paths and 3D tubular piping follow top/front upholstery surface | No pattern sewing tolerances, stitch density measured from samples, or physical fabric simulation |
+| Stitching and piping | Local-space double/single stitched paths and 3D tubular piping follow top/front upholstery surface; full-quality soft details inherit the cushion's exact deformation and normalization | No pattern sewing tolerances, stitch density measured from samples, or physical fabric simulation |
 | Cushion variants | Square/lumbar cushions plus true cylindrical bolster with cap trim, in the visual preview | Fabric drape, fill pressure and compressibility not physically modelled |
 | Preview quality | Existing studio can choose full/budget geometry quality; WebGL render only on changed scene/controls; local WebP project preview improved | GPU frame time, actual FPS and memory use have not been measured |
 | 3D visual export | `Scene.exportPreviewGLB()` uses Three.js `GLTFExporter`; studio UI offers **3D GLB**; output intentionally excludes room and production approval | Must be opened in separate glTF viewer and visually verified; **NOT** STEP/CAD/BOM/production document |
@@ -34,15 +34,17 @@ npm test
 npm run build
 ```
 
-Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; and fail-closed geometry inputs.
+Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; identical cushion/detail transforms; shared-geometry safety; thin/wide/high-detail boundary envelopes; malformed-transform rejection; and fail-closed geometry inputs.
 
 ### Local targeted evidence for the upholstery increment
 
 On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared Node 24 runtime:
 
-- `node --test tests/upholstery-geometry.test.js`: **3 tests passed** in the isolated Three.js harness.
+- `node --test tests/upholstery-geometry.test.js`: **5 tests passed** in the isolated Three.js harness, including exact seam/piping conformance, single processing of shared detail geometry, malformed-transform rejection, and a 48-case permanent boundary matrix.
+- An additional exploratory **360-case** matrix covered all profiles, both surfaces, three segment levels, four radii, and five dimension sets; all cases preserved finite centred envelopes and six material groups.
+- Per-vertex temporary arrays were removed from the deformation path. The optimized vertex output retained the exact pre-optimization SHA-256 hash, and a cold-start Chromium render had **zero mean pixel difference** from the conformed-piping reference.
 - The integrated `src/Scene.jsx` passed Vite's esbuild JSX parsing check.
-- An isolated Chromium/WebGL harness rendered tailored, soft, and relaxed cushions. Two render iterations were inspected; exposure and fill lighting were corrected after the first. The second render showed readable profiles without observed surface breaks or overexposed faces.
+- An isolated Chromium/WebGL harness rendered tailored, soft, and relaxed cushions. Two initial render iterations were inspected; exposure and fill lighting were corrected after the first. A subsequent render with conformed piping showed continuous detail alignment without observed surface breaks or floating piping.
 - The repository copy fidelity check reproduced the original `Scene.jsx` Git blob SHA before applying the integration edits.
 
 This is targeted local evidence, **not** full repository CI, not full application browser E2E, not mobile/desktop acceptance, and not manufacturing approval.

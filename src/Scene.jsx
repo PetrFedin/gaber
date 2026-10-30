@@ -8,7 +8,7 @@ import {getColor,getFabric,colors} from './domain.js';
 import {buildInspectionAssembly} from './EngineeringAssembly.js';
 import {planSeatingPreview} from './previewLayout.js';
 import {applyPhysicalBoxUv, makeUpholsteryTrim, createBolsterPillow} from './visualDetailing.js';
-import {createUpholsteredGeometry, upholsteryProfileFor} from './upholsteryGeometry.js';
+import {createUpholsteredGeometry, conformUpholsteryDetail, upholsteryProfileFor} from './upholsteryGeometry.js';
 
 function texture(kind){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#888';c.fillRect(0,0,256,256);
@@ -39,7 +39,7 @@ function furniture(config,simplified=false){
    const m=new THREE.Mesh(g,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;m.userData.part=part;group.add(m);return m;
  };
  const leg=(x,z)=>{if(config.legs==='none')return;const m=new THREE.Mesh(new THREE.CylinderGeometry(.027,.019,.155,16),wood);m.position.set(x,.09,z);m.castShadow=true;m.userData.part='legs';group.add(m);};
- const trim=(mesh,w,h,d,face='top',r=.06)=>{if(config.seam!=='none')mesh.add(makeUpholsteryTrim({widthM:w,heightM:h,depthM:d,face,mode:config.seam,radiusM:r,color:stitchColor,simplified}));};
+ const trim=(mesh,w,h,d,face='top',r=.06)=>{if(config.seam==='none')return;const detail=makeUpholsteryTrim({widthM:w,heightM:h,depthM:d,face,mode:config.seam,radiusM:r,color:stitchColor,simplified});if(mesh.geometry.userData.upholstery)conformUpholsteryDetail(detail,mesh.geometry);mesh.add(detail);};
  const w=config.width/100,depth=config.depth/100;
  if(config.category==='headboard'){
   const h=config.height/100,n=config.panels;

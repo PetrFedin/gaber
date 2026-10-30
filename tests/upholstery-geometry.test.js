@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { createUpholsteredGeometry, upholsteryProfileFor, UPHOLSTERY_GEOMETRY_SCHEMA } from '../src/upholsteryGeometry.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { createUpholsteredGeometry, conformUpholsteryDetail, upholsteryProfileFor, UPHOLSTERY_GEOMETRY_SCHEMA } from '../src/upholsteryGeometry.js';
 
 const envelope = (geometry) => {
   geometry.computeBoundingBox();
@@ -41,6 +42,59 @@ test('profiles and seat sag are deterministic and visibly change the mesh withou
   assert.notDeepEqual(Array.from(tailored.getAttribute('uv').array), []);
   assert.deepEqual(Array.from(tailored.getAttribute('uv').array), Array.from(relaxed.getAttribute('uv').array));
   tailored.dispose(); relaxed.dispose(); repeated.dispose();
+});
+
+test('seams and piping inherit the exact cushion transform and shared geometry deforms once', () => {
+  const input = { widthM: 0.82, heightM: 0.14, depthM: 0.68, radiusM: 0.06, segments: 6, profile: 'relaxed', surface: 'seat' };
+  const radius = Math.min(input.radiusM, input.widthM / 3, input.heightM / 3, input.depthM / 3);
+  const base = new RoundedBoxGeometry(input.widthM, input.heightM, input.depthM, input.segments, radius);
+  const source = createUpholsteredGeometry(input);
+  const original = base.getAttribute('position');
+  const expected = source.getAttribute('position');
+  const indices = [0, 17, 41];
+  const detailGeometry = new THREE.BufferGeometry();
+  detailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(indices.flatMap((index) => [
+    original.getX(index), original.getY(index), original.getZ(index)
+  ]), 3));
+  const detail = new THREE.Group();
+  detail.add(new THREE.Mesh(detailGeometry, new THREE.MeshBasicMaterial()));
+  detail.add(new THREE.Mesh(detailGeometry, new THREE.MeshBasicMaterial()));
+  conformUpholsteryDetail(detail, source);
+  const actual = detailGeometry.getAttribute('position');
+  indices.forEach((sourceIndex, detailIndex) => {
+    for (const axis of ['x', 'y', 'z']) {
+      const getter = `get${axis.toUpperCase()}`;
+      assert.ok(Math.abs(actual[getter](detailIndex) - expected[getter](sourceIndex)) < 1e-6);
+    }
+  });
+  assert.throws(() => conformUpholsteryDetail(detail, base), /INVALID_UPHOLSTERY_DETAIL_CONFORMANCE/);
+  source.userData.upholstery.normalization.centreM[0] = Number.NaN;
+  assert.throws(() => conformUpholsteryDetail(detail, source), /INVALID_UPHOLSTERY_DETAIL_CONFORMANCE/);
+  base.dispose(); source.dispose(); detailGeometry.dispose();
+});
+
+test('thin, wide and high-detail upholstery keeps finite centred envelopes at boundary sizes', () => {
+  for (const profile of ['tailored', 'soft', 'relaxed']) {
+    for (const surface of ['generic', 'seat']) {
+      for (const segments of [2, 12]) {
+        for (const radiusM of [0, 0.5]) {
+          for (const expected of [[0.05, 0.02, 0.03], [3.5, 0.08, 2.4]]) {
+            const geometry = createUpholsteredGeometry({
+              widthM: expected[0], heightM: expected[1], depthM: expected[2],
+              radiusM, segments, profile, surface
+            });
+            closeEnvelope(envelope(geometry), expected);
+            const centre = geometry.boundingBox.getCenter(new THREE.Vector3());
+            assert.ok(Math.abs(centre.x) + Math.abs(centre.y) + Math.abs(centre.z) < 1e-6);
+            for (const name of ['position', 'normal', 'uv']) {
+              assert.ok(geometry.getAttribute(name).array.every(Number.isFinite));
+            }
+            geometry.dispose();
+          }
+        }
+      }
+    }
+  }
 });
 
 test('existing design controls map to stable upholstery profiles and invalid input fails closed', () => {

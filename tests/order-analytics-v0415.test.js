@@ -9,15 +9,20 @@ function fixture(){
   const state=events.length?replayOrder(events):null;
   const command={id:'analytics-'+(++id),at:new Date(Date.parse('2026-10-24T10:00:00Z')+id*1000).toISOString(),
    role,type,payload,expectedVersion:events.length};
-  if(revision&&state?.revisions.length)command.revisionId=state.revisions.at(-1).id;
+  if(revision&&['confirm_spec','return_spec','offer'].includes(type)&&state?.specs?.length)command.revisionId=state.specs.at(-1).id;
+  else if(revision&&state?.revisions.length)command.revisionId=state.revisions.at(-1).id;
   events=appendOrderCommand(events,command).events;
  };
  const c=initialConfig();
  send('client','create',{projectId:'p-1',name:'Sofa',config:c},false);
- send('factory','offer',{config:c,priceKopecks:205005,advanceBps:4000,
-   dueDate:'2026-10-25',note:'Demo quote'},false);
+ send('partner','prepare_spec',{config:c,customerPriceKopecks:205005,
+  factoryCostKopecks:100000,platformCommissionKopecks:40000,logisticsKopecks:10000,
+  taxKopecks:5000,otherCostsKopecks:0,technicalNote:'Test CAD and BOM',advanceBps:4000,
+  dueDate:'2026-10-25',note:'Demo quote'},false);
+ send('factory','confirm_spec',{note:'Concept approved',reference:'FACTORY-R1'},true);
+ send('partner','offer',{note:'Client quote after factory review'},true);
  send('client','accept');
- send('factory','record_payment',{amountKopecks:82002,reference:'Local record'});
+ send('partner','record_payment',{amountKopecks:82002,reference:'Local record'});
  return {status:'ready',orders:[{id:'p-1',state:replayOrder(events)}]};
 }
 test('portfolio reconciles kopecks, due dates, linked projects and pending actors',()=>{
@@ -26,6 +31,8 @@ test('portfolio reconciles kopecks, due dates, linked projects and pending actor
  assert.equal(r.schemaVersion,ORDER_PORTFOLIO_SCHEMA);
  assert.equal(r.metrics.orders,1);assert.equal(r.metrics.overdue,1);
  assert.equal(r.metrics.awaitingFactory,1);
+ assert.equal(r.totals.plannedFactoryCostKopecks,100000);
+ assert.equal(r.totals.plannedPlatformCommissionKopecks,40000);
  assert.equal(r.metrics.unlinkedSubmittedProjects,1);
  assert.equal(r.metrics.financialReconciliationFailures,0);
  assert.equal(r.totals.offeredKopecks,205005);

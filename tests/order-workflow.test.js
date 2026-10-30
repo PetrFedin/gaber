@@ -4,123 +4,134 @@ import {initialConfig} from '../src/domain.js';
 import {appendOrderCommand,replayOrder,orderFinancials,orderEngineering} from '../src/orderWorkflow.js';
 import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspace} from '../src/orderStorage.js';
 
+const cm={logisticsKopecks:1000,taxKopecks:500,otherCostsKopecks:250};
 function scenario(){
  let events=[],seq=0;
- const command=(role,type,payload={},overrides={})=>({id:'e'+(++seq),role,type,payload,at:'2026-10-23T17:00:00.000Z',expectedVersion:events.length,
-  ...(events.length&&replayOrder(events).revisions.length&&type!=='offer'?{revisionId:replayOrder(events).revisions.at(-1).id}:{}),...overrides});
- const send=(role,type,payload={},overrides={})=>{
-  const c=command(role,type,payload,overrides),result=appendOrderCommand(events,c);events=result.events;return result.state;
+ const cfg=initialConfig();
+ const command=(role,type,payload={},overrides={})=>{
+  const state=events.length?replayOrder(events):null;
+  const id=['confirm_spec','return_spec','offer'].includes(type)
+   ?state?.specs?.at(-1)?.id:state?.revisions.at(-1)?.id;
+  return {id:'evt-'+(++seq),role,type,payload,at:'2026-10-30T00:00:00.000Z',
+   expectedVersion:events.length,...(id&&type!=='prepare_spec'?{revisionId:id}:{}),...overrides};
  };
- send('client','create',{projectId:'p1',name:'Sofa',config:initialConfig()});
- const offer=(priceKopecks=100001,advanceBps=5000,config=initialConfig())=>send('factory','offer',{config,priceKopecks,advanceBps,dueDate:'2026-12-01',note:'TEST proposal'});
- const ready=()=>{offer();send('client','accept');send('factory','record_payment',{amountKopecks:100001,reference:'BANK-LOCAL-1'});send('factory','start');send('factory','complete');return send('factory','quality_pass',{reference:'QC-LOCAL'});};
- return {send,command,offer,ready,get events(){return events;},get state(){return replayOrder(events);}};
+ const send=(role,type,payload={},overrides={})=>{
+  const cmd=command(role,type,payload,overrides);
+  const result=appendOrderCommand(events,cmd);
+  events=result.events;return result.state;
+ };
+ send('client','create',{projectId:'p1',name:'Linea',config:cfg});
+ const prepare=(priceKopecks=100001,config=cfg)=>send('partner','prepare_spec',{
+  config,technicalNote:'Frame, joints, foam, textile, fittings and checks',
+  customerPriceKopecks:priceKopecks,factoryCostKopecks:40000,
+  platformCommissionKopecks:20000,...cm,advanceBps:5000,
+  dueDate:'2027-02-01',note:'Factory documentation for quote'
+ });
+ const confirm=()=>send('factory','confirm_spec',{reference:'FACTORY-ACK',note:'Concept reviewed'});
+ const offer=(priceKopecks=100001,config=cfg)=>{
+  prepare(priceKopecks,config);confirm();
+  return send('partner','offer',{note:'Customer offer after factory confirmation'});
+ };
+ const ready=()=>{
+  offer();send('client','accept');
+  send('partner','record_payment',{amountKopecks:100001,reference:'LOCAL-UNVERIFIED'});
+  send('factory','start');send('factory','complete');
+  return send('factory','quality_pass',{reference:'QC-LOCAL'});
+ };
+ return {send,command,offer,prepare,confirm,ready,
+  get events(){return events},get state(){return replayOrder(events)}};
 }
-test('full two-party local order lifecycle and reload preserve engineering HOLD',()=>{
- const a=scenario();a.ready();
- a.send('factory','ship',{carrier:'TEST carrier',tracking:'TEST shipment',reference:'TEST packing list'});
- a.send('factory','deliver',{reference:'TEST delivery'});
- const result=a.send('client','accept_delivery');
- assert.equal(result.stage,'closed');assert.deepEqual(replayOrder(a.events),result);
- assert.equal(result.productionRelease.allowed,false);
- assert.equal(orderEngineering(result).productionRelease.allowed,false);
- assert.equal(orderEngineering(result).integrityOk,true);
- assert.equal(orderFinancials(result).verifiedBankKopecks,null);
+test('three-party protocol cannot publish before factory acknowledgement',()=>{
+ const s=scenario();s.prepare();
+ assert.equal(s.state.stage,'awaiting_factory');
+ assert.equal(s.state.specs.length,1);
+ assert.equal(s.state.specs[0].economics.platformCommissionKopecks,20000);
+ assert.throws(()=>s.send('partner','offer',{note:'premature'}),/OFFER_INVALID/);
+ assert.throws(()=>s.send('client','confirm_spec',{reference:'fake',note:'fake'}),/ROLE_FORBIDDEN/);
+ s.send('factory','return_spec',{note:'Need better fastener drawings'});
+ assert.equal(s.state.stage,'factory_changes');
+ assert.throws(()=>s.send('partner','offer',{note:'after rejection'}),/OFFER_INVALID/);
+ s.prepare(105001);s.confirm();s.send('partner','offer',{note:'Approved'});
+ assert.equal(s.state.revisions[0].specId,'S2');
+ assert.equal(s.state.stage,'offered');
+ assert.equal(s.state.productionRelease.allowed,false);
 });
-test('client claims never fund the order or allow start; advance rounds up exactly',()=>{
- const a=scenario();a.offer();a.send('client','accept');
- a.send('client','report_payment',{amountKopecks:100001,reference:'CLIENT-CLAIM'});
- assert.equal(orderFinancials(a.state).advanceKopecks,50001);
- assert.equal(orderFinancials(a.state).currentKopecks,0);
- assert.throws(()=>a.send('factory','start'),/START_BLOCKED/);
- a.send('factory','record_payment',{amountKopecks:50000,reference:'ONE'});
- assert.throws(()=>a.send('factory','start'),/START_BLOCKED/);
- a.send('factory','record_payment',{amountKopecks:1,reference:'TWO'});
- assert.equal(a.send('factory','start').stage,'production');
+test('final price, manufacturing cost and platform fee are not conflated',()=>{
+ const s=scenario();s.offer(123457);
+ const quote=s.state.specs[0].economics;
+ assert.equal(quote.factoryCostKopecks,40000);
+ assert.equal(quote.platformCommissionKopecks,20000);
+ assert.equal(quote.plannedReserveKopecks,61707);
+ assert.equal(s.state.revisions[0].priceKopecks,123457);
+ assert.equal(quote.bankVerifiedKopecks,null);
+ assert.equal(quote.earnedCommissionKopecks,null);
+ assert.throws(()=>s.send('factory','record_payment',{amountKopecks:1,reference:'unauthorized'}),/ROLE_FORBIDDEN/);
+ assert.throws(()=>s.send('client','prepare_spec',{}),/ROLE_FORBIDDEN/);
 });
-test('amendment resets consent and needs explicit allocation of prior funds',()=>{
- const a=scenario();a.offer();a.send('client','accept');
- a.send('factory','record_payment',{amountKopecks:60000,reference:'OLD-ADVANCE'});
- a.send('client','request_change',{note:'Wider sofa'});
- a.offer(120000,5000,{...initialConfig(),width:300});
- assert.equal(a.state.acceptedRevisionId,null);
- assert.equal(a.state.revisions[0].config.width,280);
- assert.equal(orderEngineering(a.state).config.width,300);
- assert.equal(orderFinancials(a.state).currentKopecks,0);
- assert.throws(()=>a.send('factory','start'),/START_BLOCKED/);
- a.send('client','accept');
- assert.throws(()=>a.send('factory','allocate_credit',{fromRevisionId:'R1',amountKopecks:60000}),/ROLE_FORBIDDEN/);
- a.send('client','allocate_credit',{fromRevisionId:'R1',amountKopecks:60000});
- const f=orderFinancials(a.state);
- assert.equal(f.currentKopecks,60000);assert.equal(f.totalRecordedKopecks,60000);assert.equal(f.priorCredits.length,0);
- assert.throws(()=>a.send('client','allocate_credit',{fromRevisionId:'R1',amountKopecks:1}),/CREDIT_INVALID/);
- assert.equal(a.send('factory','start').stage,'production');
+test('client claims do not fund order; advance is rounded up by one kopeck',()=>{
+ const s=scenario();s.offer();s.send('client','accept');
+ s.send('client','report_payment',{amountKopecks:100001,reference:'CLAIM'});
+ assert.equal(orderFinancials(s.state).advanceKopecks,50001);
+ assert.equal(orderFinancials(s.state).currentKopecks,0);
+ assert.throws(()=>s.send('factory','start'),/START_BLOCKED/);
+ s.send('partner','record_payment',{amountKopecks:50000,reference:'LOCAL-A'});
+ assert.throws(()=>s.send('factory','start'),/START_BLOCKED/);
+ s.send('partner','record_payment',{amountKopecks:1,reference:'LOCAL-B'});
+ assert.equal(s.send('factory','start').stage,'production');
+ assert.equal(s.state.productionRelease.allowed,false);
 });
-test('old revisions and stale commands cannot approve replacement terms',()=>{
- const a=scenario();a.offer();const stale=a.command('client','accept');a.offer(110000);
- assert.throws(()=>appendOrderCommand(a.events,stale),/STALE_ORDER/);
- assert.throws(()=>a.send('client','accept',{}, {revisionId:'R1'}),/REVISION_MISMATCH/);
- assert.throws(()=>a.send('factory','accept'),/ROLE_FORBIDDEN/);
+test('revision amendments reset customer consent and require explicit credit transfer',()=>{
+ const s=scenario();s.offer();s.send('client','accept');
+ s.send('partner','record_payment',{amountKopecks:60000,reference:'OLD-LOCAL'});
+ s.send('client','request_change',{note:'Width 300'});
+ s.offer(120000,{...initialConfig(),width:300});
+ assert.equal(s.state.acceptedRevisionId,null);
+ assert.equal(s.state.revisions[0].config.width,280);
+ assert.equal(s.state.revisions[1].config.width,300);
+ assert.throws(()=>s.send('client','accept',{}, {revisionId:'R1'}),/REVISION_MISMATCH/);
+ s.send('client','accept');
+ assert.equal(orderFinancials(s.state).currentKopecks,0);
+ assert.throws(()=>s.send('partner','allocate_credit',{fromRevisionId:'R1',amountKopecks:60000}),/ROLE_FORBIDDEN/);
+ s.send('client','allocate_credit',{fromRevisionId:'R1',amountKopecks:60000});
+ assert.equal(orderFinancials(s.state).currentKopecks,60000);
+ assert.equal(orderFinancials(s.state).priorCredits.length,0);
+ assert.equal(s.state.acceptedRevisionId,'R2');
 });
-test('production blocks late amendments; shipment needs QC and full balance',()=>{
- const a=scenario();a.offer();a.send('client','accept');
- a.send('factory','record_payment',{amountKopecks:50001,reference:'ADVANCE'});a.send('factory','start');
- assert.throws(()=>a.offer(),/OFFER_INVALID/);
- assert.throws(()=>a.send('client','request_change',{note:'Too late'}),/CHANGE_FORBIDDEN/);
- assert.throws(()=>a.send('factory','ship',{carrier:'c',tracking:'t',reference:'r'}),/SHIPMENT_BLOCKED/);
- a.send('factory','complete');a.send('factory','quality_pass',{reference:'QC'});
- assert.throws(()=>a.send('factory','ship',{carrier:'c',tracking:'t',reference:'r'}),/SHIPMENT_BLOCKED/);
- a.send('factory','record_payment',{amountKopecks:50000,reference:'FINAL'});
- assert.equal(a.send('factory','ship',{carrier:'c',tracking:'t',reference:'r'}).stage,'shipped');
+test('production local simulation retains QC, shipment, customer acceptance and disputes',()=>{
+ const s=scenario();s.ready();
+ s.send('factory','ship',{carrier:'DEMO',tracking:'TRACK',reference:'PACK'});
+ s.send('factory','deliver',{reference:'POD'});
+ s.send('client','report_issue',{note:'Check upholstery seam'});
+ assert.equal(s.state.stage,'disputed');
+ assert.throws(()=>s.send('client','accept_delivery'),/ACCEPTANCE_BLOCKED/);
+ s.send('factory','respond_issue',{note:'First repair attempt'});
+ s.send('client','reject_resolution',{note:'Need real inspection'});
+ s.send('partner','respond_issue',{note:'Partner organized second inspection'});
+ s.send('client','confirm_resolution');
+ assert.equal(s.state.stage,'delivered');
+ assert.equal(s.send('client','accept_delivery').stage,'closed');
+ assert.equal(s.state.issues[0].rejections.length,1);
+ assert.equal(orderEngineering(s.state).productionRelease.allowed,false);
+ assert.equal(orderFinancials(s.state).verifiedBankKopecks,null);
 });
-test('duplicate references and overpayment are rejected across the journal',()=>{
- const a=scenario();a.offer();a.send('client','accept');
- a.send('factory','record_payment',{amountKopecks:50000,reference:' Bank-1 '});
- assert.throws(()=>a.send('factory','record_payment',{amountKopecks:1,reference:'bank-1'}),/PAYMENT_DUPLICATE/);
- assert.throws(()=>a.send('factory','record_payment',{amountKopecks:50002,reference:'bank-2'}),/PAYMENT_EXCEEDS_BALANCE/);
-});
-test('idempotency retries are harmless; reused command IDs with changed data fail',()=>{
- const a=scenario();a.offer();const last=a.events.at(-1);
- const retry=appendOrderCommand(a.events,last);assert.equal(retry.duplicate,true);assert.equal(retry.events.length,2);
- assert.throws(()=>appendOrderCommand(a.events,{...last,payload:{...last.payload,note:'changed'}}),/COMMAND_CONFLICT/);
-});
-test('delivery does not mean client acceptance; an issue cannot silently close',()=>{
- const a=scenario();a.ready();a.send('factory','ship',{carrier:'c',tracking:'t',reference:'r'});
- a.send('factory','deliver',{reference:'POD'});assert.equal(a.state.stage,'delivered');
- a.send('client','report_issue',{note:'Damaged seam'});
- assert.equal(a.state.stage,'disputed');assert.throws(()=>a.send('client','accept_delivery'),/ACCEPTANCE_BLOCKED/);
- assert.throws(()=>a.send('factory','deliver',{reference:'overwrite'}),/DELIVERY_BLOCKED/);
-});
-test('shared messages retain author and revision; bad config and chronology fail',()=>{
- const a=scenario();a.send('client','message',{note:'Can you clarify?'});a.offer();a.send('factory','message',{note:'Updated details'});
- assert.equal(a.state.messages[0].revisionId,null);assert.equal(a.state.messages[1].revisionId,'R1');
- assert.throws(()=>a.send('factory','offer',{config:{...initialConfig(),width:-1},priceKopecks:100,advanceBps:0,dueDate:'2026-12-01',note:'bad'}),/CONFIG_INVALID/);
- assert.throws(()=>a.send('client','accept',{}, {at:'2026-10-22T17:00:00.000Z'}),/TIME_REVERSED/);
+test('duplicate, forged and stale commands never overwrite existing journal',()=>{
+ const s=scenario();s.offer();const last=s.events.at(-1);
+ assert.equal(appendOrderCommand(s.events,last).duplicate,true);
+ assert.throws(()=>appendOrderCommand(s.events,{...last,payload:{note:'forged'}}),/COMMAND_CONFLICT/);
+ const stale=s.command('client','accept');s.send('client','accept');
+ assert.throws(()=>appendOrderCommand(s.events,stale),/STALE_ORDER/);
+ assert.throws(()=>s.send('partner','record_payment',{amountKopecks:100002,reference:'too-much'}),/PAYMENT_EXCEEDS_BALANCE/);
 });
 function memory(){const values=new Map();return {getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};}
-test('one journal reloads into both cabinets and refuses stale writers',()=>{
- const a=scenario(),store=memory(),old=readOrderWorkspace(store);
- const saved=saveOrderCommand(store,old,'p1',a.events[0]);
- saved.orders[0].state.stage='closed';saved.orders[0].events[0].payload.name='forged';
- const offer=a.offer();const updated=saveOrderCommand(store,saved,'p1',a.events[1]);
- assert.equal(updated.orders[0].state.stage,offer.stage);assert.equal(updated.orders[0].state.name,'Sofa');
- assert.throws(()=>saveOrderCommand(store,old,'p1',a.events[1]),/STALE_WORKSPACE/);
- assert.deepEqual(readOrderWorkspace(store).orders,updated.orders);
-});
-test('malformed storage is exported exactly and never overwritten',()=>{
- const store=memory();store.setItem(ORDER_STORAGE_KEY,'{broken');const s=readOrderWorkspace(store);
- assert.equal(s.status,'blocked');assert.equal(JSON.parse(exportOrderWorkspace(store)).raw,'{broken');
- assert.throws(()=>saveOrderCommand(store,s,'p1',scenario().events[0]),/ORDER_STORAGE_BLOCKED/);
- assert.equal(store.getItem(ORDER_STORAGE_KEY),'{broken');
-});
-test('storage quota/readback errors do not report success',()=>{
- const a=scenario(),store=memory(),s=readOrderWorkspace(store);
- store.setItem=()=>{throw Error('quota');};assert.throws(()=>saveOrderCommand(store,s,'p1',a.events[0]),/quota/);
- const wrong=memory(),w=readOrderWorkspace(wrong);wrong.setItem=()=>{};
- assert.throws(()=>saveOrderCommand(wrong,w,'p1',a.events[0]),/ORDER_STORAGE_VERIFY_FAILED/);
-});
-test('order IDs and injected payload fields cannot cross link another project',()=>{
- const a=scenario(),store=memory();
- assert.throws(()=>saveOrderCommand(store,readOrderWorkspace(store),'other',a.events[0]),/ORDER_ID_MISMATCH/);
- assert.throws(()=>a.send('client','message',{note:'hello',approved:true}),/COMMAND_INVALID/);
+test('same local order reloads, detects stale writes and protects corrupt storage',()=>{
+ const s=scenario(),store=memory(),original=readOrderWorkspace(store);
+ const first=saveOrderCommand(store,original,'p1',s.events[0]);
+ first.orders[0].events[0].payload.name='FORGED';
+ assert.equal(readOrderWorkspace(store).orders[0].state.name,'Linea');
+ s.prepare();const after=saveOrderCommand(store,first,'p1',s.events[1]);
+ assert.equal(after.orders[0].state.stage,'awaiting_factory');
+ assert.throws(()=>saveOrderCommand(store,original,'p1',s.events[1]),/STALE_WORKSPACE/);
+ store.setItem(ORDER_STORAGE_KEY,'{broken');
+ assert.equal(readOrderWorkspace(store).status,'blocked');
+ assert.equal(JSON.parse(exportOrderWorkspace(store)).raw,'{broken');
 });

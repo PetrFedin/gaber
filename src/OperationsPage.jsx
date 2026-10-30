@@ -13,7 +13,7 @@ function browserStorage(){try{return globalThis.localStorage??null;}catch{return
 export default function OperationsPage({projects}){
  const [store]=useState(browserStorage);
  const [workspace,setWorkspace]=useState(()=>readOrderWorkspace(store));
- const [perspective,setPerspective]=useState('owner');
+ const partnerOperator=true;
  const [asOf,setAsOf]=useState(()=>localOperationalDate());
  const [query,setQuery]=useState('');
  useEffect(()=>{
@@ -25,7 +25,7 @@ export default function OperationsPage({projects}){
  },[store]);
  const data=useMemo(()=>analyzeOrderPortfolio(workspace,projects,asOf),
   [workspace,projects,asOf]);
- const owner=perspective==='owner';
+ const owner=partnerOperator;
  const listed=data.status==='ready'?data.rows.filter(row=>
   (row.name+' '+row.id+' '+row.stageLabel).toLowerCase().includes(query.toLowerCase())):[];
  return <main className="page gaber-operations" aria-label="Локальная аналитика процессов GABER">
@@ -36,17 +36,11 @@ export default function OperationsPage({projects}){
    Отображаются только сведения журнала этого браузера.</p>
   </div><a className="button outline" href="#factory">Перейти к заказам</a></div>
   <p className="gaber-operations-warning" role="note">
-   Это локальный демонстрационный обзор, а не вход владельца или партнёра.
+   Это локальный демонстрационный кабинет партнёра — оператора платформы.
    Переключение вида не предоставляет серверных полномочий. Данные не передаются
    между устройствами; платежи, изготовление и доставка не подтверждены независимыми системами.
   </p>
   <div className="gaber-operations-toolbar">
-   <div className="gaber-operations-segments" role="group" aria-label="Режимы демонстрационного обзора">
-    <button type="button" aria-pressed={owner} className={owner?'selected':''}
-     onClick={()=>setPerspective('owner')}>Обзор владельца · локально</button>
-    <button type="button" aria-pressed={!owner} className={!owner?'selected':''}
-     onClick={()=>setPerspective('partner')}>Обзор партнёра · агрегаты</button>
-   </div>
    <button type="button" className="button outline"
     onClick={()=>{setWorkspace(readOrderWorkspace(store));setAsOf(localOperationalDate());}}>
     Обновить журнал</button>
@@ -59,7 +53,8 @@ export default function OperationsPage({projects}){
     {box('Заказы',data.metrics.orders,'Всего записей')}
     {box('Открытые',data.metrics.open,'Включая локальные сценарии исполнения')}
     {box('Ждут клиента',data.metrics.awaitingClient,'Согласование, оплата или приёмка')}
-    {box('Ждут производство',data.metrics.awaitingFactory,'Предложение, контроль или документы')}
+    {box('Ждут фабрику',data.metrics.awaitingFactory,'Подтверждение ТЗ, контроль, документы')}
+    {box('Ждут партнёра',data.metrics.awaitingPartner,'Расчёт, публикация цены, согласование оплат')}
     {box('Замечания',data.metrics.disputed,'Незавершённые споры')}
     {box('Просрочка срока',data.metrics.overdue,'По плановой дате текущего предложения')}
     {box('Ревизии',data.metrics.versions,'Все исторические предложения')}
@@ -94,11 +89,14 @@ export default function OperationsPage({projects}){
       <dd>{moneyExact(data.totals.unallocatedPriorCreditKopecks)}</dd></div>
      <div><dt>Заявлено клиентами об оплате</dt>
       <dd>{moneyExact(data.totals.claimedByClientKopecks)}</dd></div>
+     <div><dt>Плановая стоимость изготовления фабрикой</dt><dd>{moneyExact(data.totals.plannedFactoryCostKopecks)}</dd></div>
+     <div><dt>Плановая комиссия Габер</dt><dd>{moneyExact(data.totals.plannedPlatformCommissionKopecks)}</dd></div>
+     <div><dt>Плановый резерв на уровне предложений</dt><dd>{moneyExact(data.totals.plannedReserveKopecks)}</dd></div>
      <div><dt>Подтверждённые банком поступления</dt><dd>Нет данных</dd></div>
      <div><dt>Подтверждённая выручка / фактическая маржа</dt><dd>Нет данных</dd></div>
     </dl>
     <p>Заявленные и локально учтённые суммы не являются денежными поступлениями.
-     Этот блок нельзя использовать для бухгалтерского учёта или отчётности инвесторам как фактические продажи.</p>
+     Партнёр управляет себестоимостью фабрики и комиссией Габер в карточке сделки. Фактические поступления должны подтверждаться банком. Демо-данные не использовать для отчётности.</p>
    </section>}
    {owner&&<section className="gaber-operations-queue">
     <div className="gaber-operations-heading"><div><h2>Очередь действий</h2>
@@ -114,7 +112,7 @@ export default function OperationsPage({projects}){
        <td>{row.stageLabel}
         {row.openIssue&&<small>Открыто замечание</small>}
         {!row.engineeringIntegrityOk&&<small>Ошибка инженерной связности</small>}</td>
-       <td><strong>{row.actionOwner==='client'?'Клиент':row.actionOwner==='factory'?'Производство':'—'}</strong>
+       <td><strong>{row.actionOwner==='client'?'Клиент':row.actionOwner==='factory'?'Фабрика':row.actionOwner==='partner'?'Партнёр GABER':'—'}</strong>
         <small>{row.nextAction}</small></td>
        <td>{row.dueDate??'—'}{row.overdue&&<small className="gaber-overdue">Плановая дата прошла</small>}</td>
       </tr>)}</tbody></table></div>}

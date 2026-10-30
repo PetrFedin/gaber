@@ -9,12 +9,15 @@ const sumKopecks=values=>{
 };
 function decision(state,finance){
  switch(state.stage){
-  case 'requested':return ['factory','Подготовить первое предложение'];
+  case 'requested':return ['partner','Подготовить ТЗ, себестоимость и комиссию'];
+  case 'awaiting_factory':return ['factory','Проверить и подтвердить техническое задание'];
+  case 'factory_confirmed':return ['partner','Опубликовать согласованное фабрикой предложение клиенту'];
+  case 'factory_changes':return ['partner','Исправить ТЗ по замечаниям фабрики'];
   case 'offered':return ['client','Согласовать предложение или запросить изменение'];
-  case 'change_requested':return ['factory','Подготовить новую ревизию предложения'];
+  case 'change_requested':return ['partner','Обновить ТЗ, расчёт и согласование фабрики'];
   case 'accepted':return finance.advanceDueKopecks>0
-   ?['client','Сверить аванс; банковского подтверждения нет']
-   :['factory','Проверить возможность следующего локального этапа'];
+   ?['partner','Сверить заявленный аванс с банком; подтверждения нет']
+   :['factory','Проверить готовность к следующему локальному этапу'];
   case 'production':return ['factory','Уточнить готовность, этапы производства и документы'];
   case 'quality':return ['factory','Зафиксировать результат контроля качества'];
   case 'ready':return finance.balanceKopecks>0
@@ -41,14 +44,14 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
    productionRelease:{allowed:false}};
  if(!Array.isArray(projects))throw new TypeError('INVALID_PROJECT_LIST');
  const byStage=Object.fromEntries(Object.keys(ORDER_STAGES).map(k=>[k,0]));
- const rows=[],unlinkedProjectIds=[],seen=new Set(),claimed=[],recorded=[],offered=[],credits=[];
+ const rows=[],unlinkedProjectIds=[],seen=new Set(),claimed=[],recorded=[],offered=[],credits=[],factoryCosts=[],commissions=[],reserves=[];
  let revisionCount=0,issueCount=0,messageCount=0,integrityFailures=0,reconciliationFailures=0;
  for(const record of workspace.orders){
   const s=record.state,finance=orderFinancials(s),engineering=orderEngineering(s);
   if(seen.has(record.id)||s.projectId!==record.id||!(s.stage in byStage))
    throw new TypeError('INVALID_ORDER_PORTFOLIO');
   seen.add(record.id);byStage[s.stage]++;
-  const revision=s.revisions.at(-1),[actionOwner,nextAction]=decision(s,finance);
+  const revision=s.revisions.at(-1),spec=s.specs?.at(-1),[actionOwner,nextAction]=decision(s,finance);
   const overdue=!!revision&&ACTIVE_DUE_STAGES.has(s.stage)&&revision.dueDate<today;
   const priority=s.stage==='disputed'||!engineering.integrityOk||overdue?'critical':
    actionOwner!=='none'?'attention':'complete';
@@ -69,6 +72,7 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
   messageCount+=s.messages.length;
   issueCount+=(s.issues?.length??(s.issue?1:0));
   offered.push(finance.priceKopecks);recorded.push(finance.currentKopecks);
+  if(spec?.economics){factoryCosts.push(spec.economics.factoryCostKopecks);commissions.push(spec.economics.platformCommissionKopecks);reserves.push(spec.economics.plannedReserveKopecks);}
   claimed.push(...s.paymentClaims.map(p=>p.amountKopecks));
   credits.push(...finance.priorCredits.map(p=>p.amountKopecks));
   rows.push(row);
@@ -86,13 +90,17 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
   claimedByClientKopecks:sumKopecks(claimed),
   unallocatedPriorCreditKopecks:sumKopecks(credits),
   bankVerifiedKopecks:null,actualRevenueKopecks:null,
-  approvedProductionCostKopecks:null};
+  approvedProductionCostKopecks:null,
+  plannedFactoryCostKopecks:sumKopecks(factoryCosts),
+  plannedPlatformCommissionKopecks:sumKopecks(commissions),
+  plannedReserveKopecks:sumKopecks(reserves)};
  const unsafeMoney=Object.entries(totals).some(([k,v])=>v===null&&!['bankVerifiedKopecks','actualRevenueKopecks','approvedProductionCostKopecks'].includes(k));
  return {schemaVersion:ORDER_PORTFOLIO_SCHEMA,status:unsafeMoney?'invalid-money':'ready',
   source:'LOCAL_WORKFLOW_SIMULATION',byStage,rows,
   metrics:{orders:rows.length,open:rows.length-byStage.closed,
    awaitingClient:rows.filter(r=>r.actionOwner==='client').length,
    awaitingFactory:rows.filter(r=>r.actionOwner==='factory').length,
+   awaitingPartner:rows.filter(r=>r.actionOwner==='partner').length,
    overdue:rows.filter(r=>r.overdue).length,disputed:byStage.disputed,
    versions:revisionCount,messages:messageCount,issues:issueCount,
    engineeringIntegrityFailures:integrityFailures,

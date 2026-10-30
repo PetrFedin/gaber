@@ -56,7 +56,7 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(!head)return deny('ORDER_MISSING');
    const {state}=verify(head,await tx.getEvents(),scope,reducer.replayOrder);
    if(!state)return deny('ORDER_MISSING');
-   return {accepted:true,code:'ORDER_READ',order:projectOrderReadModel(state,access.role,actor),
+   return {accepted:true,code:'ORDER_READ',order:projectOrderReadModel(state,access.role),
     productionRelease:{allowed:false}};
   });
  },async execute({principal,request}){
@@ -83,14 +83,11 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    const resource=await tx.getResourceForUpdate();
    if(!resource||resource.source!=='server-repository'||resource.tenantId!==scope.tenantId||
      resource.orderId!==orderId)return deny('RESOURCE_NOT_AUTHORIZED');
-   const candidateRoles=type==='message'?['client','factory','brand','partner','owner']:['client','factory'];
+   const candidateRoles=['client','factory','partner'];
    const possible=candidateRoles.map(role=>admission({principal:actor,resource,command:{type,role,payload},nowMs:now}));
    const accepted=possible.filter(x=>x?.allowed);
    if(accepted.length!==1)return deny(accepted.length?'AMBIGUOUS_ROLE':possible[0]?.code??'ROLE_FORBIDDEN');
    const role=accepted[0].reducerRole;
-   // A partner thread is bound to server-verified partner membership.
-   if(type==='message'&&role==='partner'&&payload.partnerId!==actor.partnerId)
-    return deny('PARTNER_THREAD_NOT_ASSIGNED');
    let head=await tx.getHeadForUpdate();
    if(!head&&type!=='create')return deny('ORDER_MISSING');
    const firstWrite=!head;

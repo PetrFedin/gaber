@@ -1,78 +1,76 @@
 /**
- * GABER server-only permission contract.
- * Principal must come from verified authentication middleware; resource
- * must be loaded by an authoritative repository. This is NOT a login API.
+ * GABER has EXACTLY THREE server roles: customer, factory, platform partner.
+ * The partner is the operator of this tenant and sees all of its assigned
+ * deals; it is NOT a per-order external partner/messenger. Server sessions
+ * and resource tenant/factory/customer membership must be independently verified.
  */
-export const GABER_ACCESS_SCHEMA='gaber-server-access-policy/0.4.16';
-export const GABER_ROLES=Object.freeze([
- 'client','brand','partner','factory-operator','factory-technologist','owner'
+export const GABER_ACCESS_SCHEMA='gaber-server-three-role-policy/1';
+export const GABER_ROLES=Object.freeze(['client','factory','partner']);
+const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
+const WRITE_MFA=new Set([
+ 'partner.spec.prepare','offers.write','payments.record_unverified',
+ 'factory.spec.confirm','factory.spec.return','factory.technical_review',
+ 'qc.record','shipments.record','issues.respond','catalog.manage'
 ]);
-const id=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(x);
-const WRITE_MFA=new Set(['offers.write','payments.record_unverified','qc.record',
- 'shipments.record','issues.respond','catalog.manage','factory.technical_review']);
-const NEVER_WITHOUT_EXTERNAL_AUTHORITY=new Set([
- 'payments.verify_bank','production.start','factory.production_release','shipments.confirm_carrier'
+const EXTERNAL_AUTHORITY=new Set([
+ 'payments.verify_bank','production.start','factory.production_release',
+ 'shipments.confirm_carrier','payments.charge','payments.refund'
 ]);
 const RIGHTS=Object.freeze({
- 'orders.read':['client','brand','partner','factory-operator','factory-technologist','owner'],
+ 'orders.read':['client','factory','partner'],
  'orders.create':['client'],
- 'orders.message':['client','brand','partner','factory-operator','owner'],
- 'offers.write':['brand','factory-operator','owner'],
+ 'orders.message':['client','factory','partner'],
+ 'partner.spec.prepare':['partner'],
+ 'factory.spec.confirm':['factory'],
+ 'factory.spec.return':['factory'],
+ 'offers.write':['partner'],
  'offers.accept':['client'],
  'changes.request':['client'],
  'payments.report':['client'],
- 'payments.record_unverified':['factory-operator','owner'],
- 'payments.read':['client','factory-operator','owner'],
- 'qc.record':['factory-operator','factory-technologist','owner'],
- 'shipments.record':['factory-operator','owner'],
+ 'payments.record_unverified':['partner'],
+ 'payments.read':['client','partner'],
+ 'finance.internal.read':['partner'],
+ 'finance.factory.read':['factory','partner'],
+ 'qc.record':['factory'],
+ 'shipments.record':['factory'],
  'delivery.accept':['client'],
  'issues.report':['client'],
- 'issues.respond':['factory-operator','owner'],
+ 'issues.respond':['factory','partner'],
  'issues.reject':['client'],
  'issues.accept':['client'],
- 'catalog.read':['client','brand','partner','factory-operator','factory-technologist','owner'],
- 'catalog.manage':['brand','owner'],
- 'analytics.own':['client','brand','partner'],
- 'analytics.factory':['factory-operator','factory-technologist','owner'],
- 'analytics.tenant':['owner'],
- 'factory.technical_review':['factory-technologist','owner']
+ 'catalog.read':['client','factory','partner'],
+ 'catalog.manage':['partner'],
+ 'analytics.own':['client'],
+ 'analytics.factory':['factory'],
+ 'analytics.tenant':['partner'],
+ 'factory.technical_review':['factory']
 });
-const deny=(reason)=>({allowed:false,reason,scope:null,productionRelease:{allowed:false}});
+const deny=reason=>({allowed:false,reason,scope:null,productionRelease:{allowed:false}});
 export function authorizeGaberAction({principal,resource,action,nowMs}){
  if(!principal||principal.identitySource!=='server-session'||
-   principal.authenticated!==true||!id(principal.subject)||!id(principal.tenantId)||
-   !Number.isSafeInteger(principal.sessionExpiresAtMs)||
-   !Number.isSafeInteger(nowMs)||nowMs<=0||principal.sessionExpiresAtMs<=nowMs||
-   !Array.isArray(principal.roles)||!principal.roles.length||
-   principal.roles.some(role=>!GABER_ROLES.includes(role)))
-  return deny('NO_VERIFIED_SESSION');
+    principal.authenticated!==true||!id(principal.subject)||!id(principal.tenantId)||
+    !Number.isSafeInteger(principal.sessionExpiresAtMs)||
+    !Number.isSafeInteger(nowMs)||nowMs<=0||principal.sessionExpiresAtMs<=nowMs||
+    !Array.isArray(principal.roles)||principal.roles.length!==1||
+    !GABER_ROLES.includes(principal.roles[0]))return deny('NO_VERIFIED_SESSION');
  if(!resource||resource.source!=='server-repository'||!id(resource.tenantId)||
-    !id(resource.orderId)&&!id(resource.catalogId)&&!id(resource.analyticsScopeId))
+   ![resource.orderId,resource.catalogId,resource.analyticsScopeId].some(id))
   return deny('NO_AUTHORITATIVE_RESOURCE');
  if(principal.tenantId!==resource.tenantId)return deny('TENANT_SCOPE_MISMATCH');
- if(NEVER_WITHOUT_EXTERNAL_AUTHORITY.has(action))return deny('EXTERNAL_AUTHORITY_REQUIRED');
+ if(EXTERNAL_AUTHORITY.has(action))return deny('EXTERNAL_AUTHORITY_REQUIRED');
  if(!Object.hasOwn(RIGHTS,action))return deny('ACTION_UNKNOWN');
- const accepted=principal.roles.filter(role=>RIGHTS[action].includes(role));
- if(!accepted.length)return deny('ROLE_FORBIDDEN');
+ const role=principal.roles[0];
+ if(!RIGHTS[action].includes(role))return deny('ROLE_FORBIDDEN');
  if(WRITE_MFA.has(action)&&principal.mfaVerified!==true)return deny('MFA_REQUIRED');
- const matched=accepted.find(role=>{
-  switch(role){
-   case 'owner':return true;
-   case 'client':return id(principal.clientId)&&principal.clientId===resource.clientId;
-   case 'brand':return id(principal.brandId)&&principal.brandId===resource.brandId;
-   case 'partner':return id(principal.partnerId)&&Array.isArray(resource.partnerIds)&&
-     resource.partnerIds.includes(principal.partnerId);
-   case 'factory-operator':
-   case 'factory-technologist':return id(principal.factoryId)&&principal.factoryId===resource.factoryId;
-   default:return false;
-  }
- });
- if(!matched)return deny('RESOURCE_MEMBERSHIP_DENIED');
- // Owners receive tenant aggregate; partners and brands only explicit
- // resource membership. This policy MUST be checked on every API query.
- const scope=matched==='owner'?'tenant':matched.startsWith('factory-')?'factory':
-  matched==='client'?'own-order':matched==='brand'?'brand-assigned':'partner-assigned';
- return {allowed:true,reason:'AUTHORIZED_CONTRACT_ONLY',role:matched,scope,
-  tenantId:principal.tenantId,resourceId:resource.orderId??resource.catalogId??resource.analyticsScopeId,
-  productionRelease:{allowed:false}};
+ // Partner is the platform operator; it has TENANT-wide scope, not a user-supplied
+ // partnerId. Client and factory are restricted to the current order membership.
+ if(role==='client'&&(!id(principal.clientId)||principal.clientId!==resource.clientId))
+  return deny('RESOURCE_MEMBERSHIP_DENIED');
+ if(role==='factory'&&(!id(principal.factoryId)||principal.factoryId!==resource.factoryId))
+  return deny('RESOURCE_MEMBERSHIP_DENIED');
+ return {allowed:true,reason:'AUTHORIZED_CONTRACT_ONLY',role,
+   scope:role==='partner'?'tenant':role==='factory'?'assigned-factory':'own-order',
+   tenantId:principal.tenantId,
+   resourceId:resource.orderId??resource.catalogId??resource.analyticsScopeId,
+   productionRelease:{allowed:false}};
 }

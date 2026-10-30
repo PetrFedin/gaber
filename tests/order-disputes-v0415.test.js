@@ -9,15 +9,21 @@ function scenario(){
   const state=events.length?replayOrder(events):null;
   const command={id:'dispute-'+(++seq),at:new Date(initial+seq*1000).toISOString(),
    role,type,payload,expectedVersion:events.length};
-  if(revision&&state?.revisions.length)command.revisionId=state.revisions.at(-1).id;
+  if(revision&&['confirm_spec','return_spec','offer'].includes(type)&&state?.specs?.length)command.revisionId=state.specs.at(-1).id;
+  else if(revision&&state?.revisions.length)command.revisionId=state.revisions.at(-1).id;
   const result=appendOrderCommand(events,command);events=result.events;return result.state;
  }
  const config=initialConfig();
  send('client','create',{projectId:'p1',name:'Linea sofa',config},false);
- send('factory','offer',{config,priceKopecks:100001,advanceBps:5000,
-   dueDate:'2026-12-01',note:'Test offer'},false);
+ send('partner','prepare_spec',{config,customerPriceKopecks:100001,
+  factoryCostKopecks:50000,platformCommissionKopecks:15000,
+  logisticsKopecks:1500,taxKopecks:500,otherCostsKopecks:0,
+  technicalNote:'Factory draft, joint and stitching checks',
+  advanceBps:5000,dueDate:'2026-12-01',note:'Test offer'},false);
+ send('factory','confirm_spec',{reference:'FACTORY-ACK',note:'Accepted concept'});
+ send('partner','offer',{note:'Published after factory check'});
  send('client','accept');
- send('factory','record_payment',{amountKopecks:100001,reference:'LOCAL-DEMO-001'});
+ send('partner','record_payment',{amountKopecks:100001,reference:'LOCAL-DEMO-001'});
  send('factory','start');send('factory','complete');
  send('factory','quality_pass',{reference:'QC-DEMO'});
  send('factory','ship',{carrier:'DEMO',tracking:'SHIP-01',reference:'PACK-01'});
@@ -67,8 +73,10 @@ test('open issues cannot silently close, ship or change commercial revision',()=
  s.send('client','report_issue',{note:'Missing parts'});
  assert.throws(()=>s.send('client','accept_delivery'),/ACCEPTANCE_BLOCKED/);
  assert.throws(()=>s.send('factory','ship',{carrier:'X',tracking:'Y',reference:'Z'}),/SHIPMENT_BLOCKED/);
- assert.throws(()=>s.send('factory','offer',{config:initialConfig(),priceKopecks:200000,
-   advanceBps:5000,dueDate:'2026-12-01',note:'Invalid'},false),/OFFER_INVALID/);
+ assert.throws(()=>s.send('partner','prepare_spec',{config:initialConfig(),
+  customerPriceKopecks:200000,factoryCostKopecks:50000,platformCommissionKopecks:10000,
+  logisticsKopecks:1000,taxKopecks:0,otherCostsKopecks:0,
+  advanceBps:5000,dueDate:'2026-12-01',technicalNote:'Late revision',note:'Invalid'},false),/SPEC_INVALID/);
  assert.equal(s.state.stage,'disputed');
  assert.equal(s.state.productionRelease.allowed,false);
 });

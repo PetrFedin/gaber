@@ -7,7 +7,7 @@ const secret='server-review-key-longer-than-thirty-two';
 const now=Date.parse('2026-10-23T00:00:00Z'),H=c=>c.repeat(64);
 const revision={projectId:'GABER-001',revisionId:'R-001',
  state:'frozen-for-technical-review',configHash:H('a'),bomHash:H('b'),costHash:H('c')};
-const principal={subject:'technologist-01',roles:['factory-technologist'],mfaVerified:true,
+const principal={subject:'technologist-01',roles:['factory'],mfaVerified:true,
  authenticated:true,identitySource:'server-session',sessionExpiresAtMs:now+3600000,
  tenantId:'T1',factoryId:'Factory_A'};
 const signed=()=>REQUIRED_FACTORY_EVIDENCE.map((kind,i)=>sealFactoryEvidence({

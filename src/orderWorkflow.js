@@ -1,9 +1,10 @@
 import {normalize,validate} from './domain.js';
 import {factoryConfigKey} from './factoryDraftStorage.js';
 import {createManufacturingPackage} from './manufacturing.js';
+import {calculatePartnerEconomics} from './partnerEconomics.js';
 
-export const ORDER_SCHEMA='gaber-local-order/1';
-export const ORDER_STAGES={requested:'Заявка',offered:'Предложение',accepted:'Согласовано',change_requested:'Корректировка',production:'В работе',quality:'Контроль качества',ready:'Готов к отгрузке',shipped:'Отгружен',delivered:'Доставлен',disputed:'Замечания',closed:'Принят клиентом'};
+export const ORDER_SCHEMA='gaber-order-three-roles/2';
+export const ORDER_STAGES={requested:'Заявка',awaiting_factory:'ТЗ на подтверждении фабрики',factory_confirmed:'Фабрика подтвердила ТЗ',factory_changes:'Фабрика запросила изменения',offered:'Предложение',accepted:'Согласовано',change_requested:'Корректировка',production:'В работе',quality:'Контроль качества',ready:'Готов к отгрузке',shipped:'Отгружен',delivered:'Доставлен',disputed:'Замечания',closed:'Принят клиентом'};
 const fail=code=>{throw Error(code);};
 const text=x=>typeof x==='string'&&x.trim().length>0&&x.length<=500;
 const id=x=>typeof x==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(x);
@@ -15,23 +16,30 @@ const same=(a,b)=>factoryConfigKey(a)===factoryConfigKey(b);
 const only=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(k=>keys.includes(k));
 const BEFORE_WORK=['requested','offered','accepted','change_requested'];
 export function orderEngineering(state){
- const revision=state.revisions.at(-1),config=revision?.config??state.sourceConfig;
+ const revision=state.revisions.at(-1),spec=state.specs?.at(-1);
+ const config=(['awaiting_factory','factory_confirmed','factory_changes'].includes(state.stage)?spec?.config:null)??revision?.config??state.sourceConfig;
  const pkg=createManufacturingPackage(config);
  return {revisionId:revision?.id??null,config:copy(config),integrityOk:pkg.integrity.ok,
   blockers:[...pkg.productionRelease.blockers],routingCount:pkg.routing.length,
   productionRelease:{allowed:false}};
 }
 const TYPES={
- create:['client',['projectId','name','config']],message:['both',['note','partnerId']],
- offer:['factory',['config','priceKopecks','advanceBps','dueDate','note']],
+ create:['client',['projectId','name','config']],
+ message:['both',['note']],
+ prepare_spec:['partner',['config','technicalNote','customerPriceKopecks',
+  'factoryCostKopecks','platformCommissionKopecks','logisticsKopecks',
+  'taxKopecks','otherCostsKopecks','advanceBps','dueDate','note']],
+ confirm_spec:['factory',['reference','note']],
+ return_spec:['factory',['note']],
+ offer:['partner',['note']],
  accept:['client',[]],request_change:['client',['note']],
  report_payment:['client',['amountKopecks','reference']],
- record_payment:['factory',['amountKopecks','reference']],
+ record_payment:['partner',['amountKopecks','reference']],
  allocate_credit:['client',['fromRevisionId','amountKopecks']],
  start:['factory',[]],complete:['factory',[]],quality_pass:['factory',['reference']],
  ship:['factory',['carrier','tracking','reference']],deliver:['factory',['reference']],
  accept_delivery:['client',[]],report_issue:['client',['note']],
- respond_issue:['factory',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
+ respond_issue:['both',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
 };
 export function orderFinancials(state){
  const current=state.revisions.at(-1);
@@ -55,9 +63,8 @@ function validConfig(config){
 function apply(state,command){
  if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion'])||!id(command.id)||!timestamp(command.at)||
   !Number.isSafeInteger(command.expectedVersion)||!TYPES[command.type]||!only(command.payload,TYPES[command.type][1]))fail('COMMAND_INVALID');
- const messageRole=command.type==='message'&&['client','factory','brand','partner','owner'].includes(command.role);
- if(!(['client','factory'].includes(command.role)||messageRole)||
-    (TYPES[command.type][0]!=='both'&&TYPES[command.type][0]!==command.role))
+ if(!['client','factory','partner'].includes(command.role)||
+   (TYPES[command.type][0]!=='both'&&TYPES[command.type][0]!==command.role))
   fail('ROLE_FORBIDDEN');
  if(command.expectedVersion!==(state?.version??0))fail('STALE_ORDER');
  if(state&&command.at<state.updatedAt)fail('TIME_REVERSED');
@@ -65,24 +72,57 @@ function apply(state,command){
  if(command.type==='create'){
   if(state||command.revisionId!==undefined||!id(p.projectId)||!text(p.name))fail('CREATE_INVALID');
   return {schemaVersion:ORDER_SCHEMA,projectId:p.projectId,name:p.name,sourceConfig:validConfig(p.config),version:1,
-   stage:'requested',revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
+   stage:'requested',specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
    shipment:null,delivery:null,quality:null,issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
    authority:'LOCAL_WORKFLOW_SIMULATION',productionRelease:{allowed:false}};
  }
  if(!state)fail('ORDER_MISSING');
  const s=copy(state),current=s.revisions.at(-1);
  if(command.type==='message'){
-  if((command.revisionId??null)!==(current?.id??null)||!text(p.note)||
-     (p.partnerId!==undefined&&!id(p.partnerId))||
-     (command.role==='partner'&&!id(p.partnerId)))fail('MESSAGE_INVALID');
-  s.messages.push({role:command.role,note:p.note,partnerId:p.partnerId??null,
-   revisionId:current?.id??null,at:command.at});
- }else if(command.type==='offer'){
-  if(!BEFORE_WORK.includes(s.stage)||command.revisionId!==undefined||!kopecks(p.priceKopecks)||
-   !Number.isInteger(p.advanceBps)||p.advanceBps<0||p.advanceBps>10000||!day(p.dueDate)||p.dueDate<command.at.slice(0,10)||!text(p.note))fail('OFFER_INVALID');
+  if((command.revisionId??null)!==(current?.id??null)||!text(p.note))fail('MESSAGE_INVALID');
+  s.messages.push({role:command.role,note:p.note,revisionId:current?.id??null,at:command.at});
+ }else if(command.type==='prepare_spec'){
+  if(!['requested','change_requested','factory_changes','offered'].includes(s.stage)||
+     command.revisionId!==undefined||!text(p.technicalNote)||!text(p.note)||
+     !Number.isInteger(p.advanceBps)||p.advanceBps<0||p.advanceBps>10000||
+     !day(p.dueDate)||p.dueDate<command.at.slice(0,10))fail('SPEC_INVALID');
   const config=validConfig(p.config);
-  s.revisions.push({id:'R'+(s.revisions.length+1),config,priceKopecks:p.priceKopecks,advanceBps:p.advanceBps,dueDate:p.dueDate,note:p.note,offeredAt:command.at});
-  s.acceptedRevisionId=null;s.stage='offered';s.changeNote=null;
+  let economics;
+  try{economics=calculatePartnerEconomics({
+   customerPriceKopecks:p.customerPriceKopecks,
+   factoryCostKopecks:p.factoryCostKopecks,
+   platformCommissionKopecks:p.platformCommissionKopecks,
+   logisticsKopecks:p.logisticsKopecks,
+   taxKopecks:p.taxKopecks,otherCostsKopecks:p.otherCostsKopecks
+  });}catch{fail('SPEC_ECONOMICS_INVALID');}
+  const pkg=createManufacturingPackage(config);
+  if(!pkg?.integrity?.ok)fail('SPEC_ENGINEERING_INVALID');
+  const spec={id:'S'+(s.specs.length+1),config,economics,technicalNote:p.technicalNote,
+   note:p.note,advanceBps:p.advanceBps,dueDate:p.dueDate,status:'awaiting_factory',
+   factoryDecision:null,preparedAt:command.at,
+   technicalAuthority:'CONCEPT_TZ_UNAPPROVED'};
+  s.specs.push(spec);s.pendingSpecId=spec.id;s.acceptedRevisionId=null;
+  s.stage='awaiting_factory';s.changeNote=null;
+ }else if(command.type==='confirm_spec'||command.type==='return_spec'){
+  const spec=s.specs.at(-1);
+  if(s.stage!=='awaiting_factory'||!spec||s.pendingSpecId!==spec.id||
+     command.revisionId!==spec.id||!text(p.note)||
+     (command.type==='confirm_spec'&&!text(p.reference)))fail('FACTORY_SPEC_INVALID');
+  spec.factoryDecision={status:command.type==='confirm_spec'?'confirmed_concept_only':'changes_requested',
+   note:p.note,reference:command.type==='confirm_spec'?p.reference:null,at:command.at};
+  spec.status=command.type==='confirm_spec'?'factory_confirmed':'factory_changes';
+  s.stage=spec.status;
+ }else if(command.type==='offer'){
+  const spec=s.specs.at(-1);
+  if(s.stage!=='factory_confirmed'||!spec||spec.id!==s.pendingSpecId||
+     command.revisionId!==spec.id||spec.factoryDecision?.status!=='confirmed_concept_only'||
+     !text(p.note))fail('OFFER_INVALID');
+  const nextRevision='R'+(s.revisions.length+1);
+  s.revisions.push({id:nextRevision,specId:spec.id,config:copy(spec.config),
+   priceKopecks:spec.economics.customerPriceKopecks,advanceBps:spec.advanceBps,
+   dueDate:spec.dueDate,note:p.note,offeredAt:command.at});
+  spec.status='published_to_client';s.acceptedRevisionId=null;
+  s.stage='offered';s.changeNote=null;
  }else{
   if(!current||command.revisionId!==current.id)fail('REVISION_MISMATCH');
   const f=orderFinancials(s);

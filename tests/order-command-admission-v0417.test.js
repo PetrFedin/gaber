@@ -2,48 +2,48 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {admitOrderCommand} from '../server/orderCommandAdmission.js';
 const now=10000;
-const resource={source:'server-repository',orderId:'O1',tenantId:'T1',
- clientId:'C1',brandId:'B1',factoryId:'F1',partnerIds:['P1']};
+const resource={source:'server-repository',orderId:'O1',tenantId:'T1',clientId:'C1',factoryId:'F1'};
 const base={identitySource:'server-session',authenticated:true,tenantId:'T1',
- subject:'U1',roles:['client'],clientId:'C1',mfaVerified:true,sessionExpiresAtMs:30000};
-const check=(principal,role,type,r=resource)=>admitOrderCommand({
- principal,resource:r,command:{role,type},nowMs:now});
-test('client only accepts own order and cannot impersonate factory',()=>{
- assert.equal(check(base,'client','accept').allowed,true);
- assert.equal(check(base,'factory','offer').allowed,false);
- assert.equal(check({...base,clientId:'C2'},'client','accept').allowed,false);
+ subject:'U1',roles:['client'],clientId:'C1',factoryId:'F1',mfaVerified:true,sessionExpiresAtMs:30000};
+const check=(role,type,commandRole=role,patch={},payload={})=>admitOrderCommand({
+ principal:{...base,roles:[role],...patch},resource,
+ command:{role:commandRole,type,payload},nowMs:now});
+test('only partner prepares terms and publishes a factory-confirmed offer',()=>{
+ assert.equal(check('partner','prepare_spec').allowed,true);
+ assert.equal(check('partner','offer').allowed,true);
+ assert.equal(check('client','prepare_spec').allowed,false);
+ assert.equal(check('factory','prepare_spec').allowed,false);
+ assert.equal(check('factory','offer').allowed,false);
+ assert.equal(check('partner','offer','factory').allowed,false);
 });
-test('factory offer needs assigned factory and MFA',()=>{
- const p={...base,roles:['factory-operator'],factoryId:'F1'};
- assert.equal(check(p,'factory','offer').allowed,true);
- assert.equal(check({...p,mfaVerified:false},'factory','offer').allowed,false);
- assert.equal(check({...p,factoryId:'F2'},'factory','offer').allowed,false);
+test('only factory confirms or returns TЗ and only client accepts',()=>{
+ assert.equal(check('factory','confirm_spec').allowed,true);
+ assert.equal(check('factory','return_spec').allowed,true);
+ assert.equal(check('partner','confirm_spec').allowed,false);
+ assert.equal(check('client','confirm_spec').allowed,false);
+ assert.equal(check('client','accept').allowed,true);
+ assert.equal(check('partner','accept').allowed,false);
 });
-test('brand may message public order conversation but cannot open private partner thread',()=>{
- const brand={...base,roles:['brand'],brandId:'B1'};
- const send=payload=>admitOrderCommand({principal:brand,resource,
-  command:{role:'brand',type:'message',payload},nowMs:now});
- assert.equal(send({note:'Shared proposal details'}).allowed,true);
- assert.equal(send({note:'Private partner note',partnerId:'P1'}).code,'PARTNER_THREAD_NOT_AVAILABLE');
+test('partner alone records unverified money; bank and real production stay closed',()=>{
+ assert.equal(check('partner','record_payment').allowed,true);
+ assert.equal(check('factory','record_payment').allowed,false);
+ assert.equal(check('client','report_payment').allowed,true);
+ for(const type of ['start','complete','deliver']){
+  assert.equal(check('factory',type).allowed,false);
+ }
+ assert.equal(check('partner','record_payment','partner',{mfaVerified:false}).allowed,false);
 });
-test('bank and production facts cannot be inferred from local commands',()=>{
- for(const type of ['start','complete','deliver'])
-  assert.equal(check({...base,roles:['owner']},'factory',type).allowed,false);
- assert.equal(check(base,'client','confirm_resolution').productionRelease.allowed,false);
+test('all three roles may message; legacy per-partner threads and roles are blocked',()=>{
+ for(const role of ['client','partner','factory'])
+  assert.equal(check(role,'message').allowed,true,role);
+ assert.equal(check('partner','message','partner',{}, {partnerId:'P1',note:'Old thread'}).code,'LEGACY_PRIVATE_THREAD_REMOVED');
+ assert.equal(check('owner','message').allowed,false);
+ assert.equal(check('brand','message').allowed,false);
 });
-test('partner messages require server-verified membership and an exact private thread',()=>{
- const partner={...base,roles:['partner'],partnerId:'P1'};
- const request=payload=>admitOrderCommand({principal:partner,resource,
-  command:{type:'message',role:'partner',payload},nowMs:now});
- assert.equal(request({note:'Assigned thread',partnerId:'P1'}).allowed,true);
- assert.equal(request({note:'Public message'}).code,'PARTNER_THREAD_NOT_ASSIGNED');
- assert.equal(request({note:'Wrong thread',partnerId:'P2'}).code,'PARTNER_THREAD_NOT_ASSIGNED');
- assert.equal(check(partner,'factory','message').allowed,false);
- assert.equal(check(partner,'client','message').allowed,false);
-});
-test('cross-tenant, expired, forged perspective and unknown commands fail closed',()=>{
- assert.equal(check(base,'client','accept',{...resource,tenantId:'T2'}).allowed,false);
- assert.equal(check({...base,sessionExpiresAtMs:now},'client','accept').allowed,false);
- assert.equal(check(base,'factory','accept').allowed,false);
- assert.equal(check(base,'client','made-up').allowed,false);
+test('cross-tenant, wrong factory/customer, expired, spoofed and unknown blocked',()=>{
+ assert.equal(check('client','accept','client',{clientId:'OTHER'}).allowed,false);
+ assert.equal(check('factory','confirm_spec','factory',{factoryId:'OTHER'}).allowed,false);
+ assert.equal(check('partner','offer','partner',{tenantId:'T2'}).allowed,false);
+ assert.equal(check('client','accept','client',{sessionExpiresAtMs:now}).allowed,false);
+ assert.equal(check('client','made-up').allowed,false);
 });

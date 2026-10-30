@@ -7,7 +7,7 @@ import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
 const LABELS={create:'Создан заказ',offer:'Предложение производства',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
-const account=role=>role==='factory'?'Производство':'Клиент';
+const account=role=>({client:'Клиент',factory:'Фабрика',partner:'Партнёр GABER'}[role]??'Неизвестная роль');
 function storage(){try{return globalThis.localStorage??null;}catch{return null;}}
 function amount(text){
  if(!/^\d{1,10}([.,]\d{1,2})?$/.test(text.trim()))throw Error('Введите сумму в рублях, не более двух знаков после запятой.');
@@ -33,17 +33,20 @@ export default function OrderWorkspace({projects,role,selectedProjectId=null}){
  const send=(type,payload={},revision=true)=>{
   try{
    const command={id:crypto.randomUUID(),at:new Date().toISOString(),role,type,payload,expectedVersion:row?.state.version??0};
-   if(revision&&row?.state.revisions.length)command.revisionId=row.state.revisions.at(-1).id;
+   if(revision){
+    if(['confirm_spec','return_spec','offer'].includes(type)&&row?.state.specs?.length)
+     command.revisionId=row.state.specs.at(-1).id;
+    else if(row?.state.revisions.length)command.revisionId=row.state.revisions.at(-1).id;
+   }
    const next=saveOrderCommand(store,workspace,selectedId,command);
    setWorkspace(next);setMessage('Сохранено в общем локальном журнале заказа.');
   }catch(error){setMessage(ERRORS[error.message]||'Действие не выполнено: '+error.message);}
  };
- return <section id="gaber-order-workspace" className="page order-workspace" aria-label={role==='factory'?'Кабинет производства · заказы':'Кабинет клиента · заказы'}>
+ return <section id="gaber-order-workspace" className="page order-workspace" aria-label={role==='factory'?'Кабинет фабрики · заказы':role==='partner'?'Кабинет партнёра GABER · заказы':'Кабинет клиента · заказы'}>
   <div className="order-heading"><div><span className="eyebrow">ЗАКАЗ И ИСПОЛНЕНИЕ</span>
-   <h2>{role==='factory'?'Производство и отгрузка':'Мои заказы'}</h2>
-   <p>Одна ревизия изделия, условия и история для двух кабинетов.</p></div>
-   <div className="technical-actions"><a className="button outline" href="#operations">Операционный обзор</a>
-    <a className="button outline" href={role==='factory'?'#projects':'#factory'}>Открыть кабинет {role==='factory'?'клиента':'производства'}</a></div>
+   <h2>{role==='factory'?'Фабрика · производство':role==='partner'?'Партнёр GABER · сделки и ТЗ':'Мои заказы'}</h2>
+   <p>Клиент создаёт запрос, партнёр рассчитывает экономику и ТЗ, фабрика подтверждает возможность изготовления.</p></div>
+   <div className="technical-actions"><a className="button outline" href="#partner">Партнёр</a><a className="button outline" href="#projects">Клиент</a><a className="button outline" href="#factory">Фабрика</a></div>
   </div>
   <p className="order-local-notice">Локальный сценарий без авторизации: кабинеты используют данные этого браузера. Оплаты, производство и доставка здесь не подтверждают реальные операции. Производственный допуск закрыт.</p>
   <div className="technical-actions">
@@ -71,12 +74,19 @@ export default function OrderWorkspace({projects,role,selectedProjectId=null}){
  </section>;
 }
 function OrderDetail({row,role,send,onError}){
- const s=row.state,r=s.revisions.at(-1),f=orderFinancials(s),factory=role==='factory';
+ const s=row.state,r=s.revisions.at(-1),spec=s.specs?.at(-1),f=orderFinancials(s),factory=role==='factory',partner=role==='partner',client=role==='client';
  const engineering=useMemo(()=>orderEngineering(s),[r?.config,s.sourceConfig]);
  const [note,setNote]=useState(''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
  const [changeNote,setChangeNote]=useState(''),[issueNote,setIssueNote]=useState(''),[messageText,setMessageText]=useState(''),[paymentRef,setPaymentRef]=useState('');
- const [price,setPrice]=useState(r?String(r.priceKopecks/100):''),[advance,setAdvance]=useState(r?String(r.advanceBps/100):'50');
- const [due,setDue]=useState(r?.dueDate??''),[width,setWidth]=useState(String((r?.config??s.sourceConfig).width));
+ const [price,setPrice]=useState(spec?String(spec.economics.customerPriceKopecks/100):r?String(r.priceKopecks/100):'');
+ const [factoryCost,setFactoryCost]=useState(spec?String(spec.economics.factoryCostKopecks/100):'');
+ const [commission,setCommission]=useState(spec?String(spec.economics.platformCommissionKopecks/100):'');
+ const [logistics,setLogistics]=useState(spec?String(spec.economics.logisticsKopecks/100):'0');
+ const [taxes,setTaxes]=useState(spec?String(spec.economics.taxKopecks/100):'0');
+ const [otherCosts,setOtherCosts]=useState(spec?String(spec.economics.otherCostsKopecks/100):'0');
+ const [technicalNote,setTechnicalNote]=useState(spec?.technicalNote??'');
+ const [advance,setAdvance]=useState(spec?String(spec.advanceBps/100):r?String(r.advanceBps/100):'50');
+ const [due,setDue]=useState(spec?.dueDate??r?.dueDate??''),[width,setWidth]=useState(String((spec?.config??r?.config??s.sourceConfig).width));
  const [carrier,setCarrier]=useState(''),[tracking,setTracking]=useState(''),[agreed,setAgreed]=useState(false);
  const [resolutionNote,setResolutionNote]=useState(''),[rejectNote,setRejectNote]=useState(''),[resolutionAgreed,setResolutionAgreed]=useState(false);
  const submit=(e,fn)=>{e.preventDefault();try{fn();}catch(error){onError(error.message);}};
@@ -84,11 +94,11 @@ function OrderDetail({row,role,send,onError}){
  return <div className="order-dossier">
   <div className="order-heading"><h3>{s.name}</h3><span className="order-stage">{ORDER_STAGES[s.stage]} · версия журнала {s.version}</span></div>
   <div className="order-columns"><div>
-   <h4>{r?'Предложение '+r.id:'Исходная конфигурация'}</h4>
-   <p>{Object.values(dimensions(r?.config??s.sourceConfig)).join(' × ')} см</p>
-   <ConfigurationDetails config={r?.config??s.sourceConfig}/>
+   <h4>{r?'Предложение '+r.id:spec?'ТЗ '+spec.id:'Исходная конфигурация'}</h4>
+   <p>{Object.values(dimensions(spec?.config??r?.config??s.sourceConfig)).join(' × ')} см</p>
+   <ConfigurationDetails config={spec?.config??r?.config??s.sourceConfig}/>
    <p>{factory?`Связь с инженерной моделью: ${engineering.integrityOk?'цифровые ссылки согласованы':'есть ошибки связей'} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`:'Комплектация предложения связана с инженерным составом. Производственное подтверждение конструкции ещё не получено.'}</p>
-   {r&&<><dl className="order-ledger">
+   {r&&!factory&&<><dl className="order-ledger">
     <div><dt>Цена предложения</dt><dd>{orderMoney(r.priceKopecks)}</dd></div>
     <div><dt>Аванс · {r.advanceBps/100}%</dt><dd>{orderMoney(f.advanceKopecks)}</dd></div>
     <div><dt>Локально учтено · {r.id}</dt><dd>{orderMoney(f.currentKopecks)}</dd></div>
@@ -111,36 +121,64 @@ function OrderDetail({row,role,send,onError}){
     {s.revisions.slice(0,-1).map(old=><p key={old.id}>{old.id} · {old.config.width} см · {orderMoney(old.priceKopecks)} · {old.dueDate}<br/>{old.note}</p>)}
    </details>}
   </div><div className="order-actions-panel">
-   <h4>{factory?'Действия производства':'Решения клиента'}</h4>
-   {factory&&['requested','offered','accepted','change_requested'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>{
+   <h4>{factory?'Решения фабрики':partner?'Сделка, себестоимость и ТЗ':'Решения клиента'}</h4>
+   {partner&&['requested','change_requested','factory_changes','offered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>{
     if(!/^\d{1,3}([.,]\d{1,2})?$/.test(advance))throw Error('Проверьте процент аванса.');
-    send('offer',{config:{...(r?.config??s.sourceConfig),width:Number(width)},priceKopecks:amount(price),advanceBps:amount(advance),dueDate:due,note},false);
+    send('prepare_spec',{config:{...(spec?.config??r?.config??s.sourceConfig),width:Number(width)},
+     technicalNote,customerPriceKopecks:amount(price),factoryCostKopecks:amount(factoryCost),
+     platformCommissionKopecks:amount(commission),logisticsKopecks:amount(logistics),
+     taxKopecks:amount(taxes),otherCostsKopecks:amount(otherCosts),
+     advanceBps:amount(advance),dueDate:due,note},false);
    })}>
-    <p>Новое предложение отменяет прежнее согласование. Все предыдущие ревизии и платёжные записи сохраняются.</p>
+    <p>Партнёр Габер рассчитывает себестоимость и комиссию, готовит ТЗ и передаёт его фабрике. Клиентская цена публикуется после ответа фабрики.</p>
     <label className="order-field">Ширина изделия, см<input required type="number" value={width} onChange={e=>setWidth(e.target.value)}/></label>
-    <label className="order-field">Цена предложения, ₽<input required inputMode="decimal" value={price} onChange={e=>setPrice(e.target.value)}/></label>
+    <label className="order-field">Цена клиенту, ₽<input required inputMode="decimal" value={price} onChange={e=>setPrice(e.target.value)}/></label>
+    <label className="order-field">Себестоимость фабрики, ₽<input required inputMode="decimal" value={factoryCost} onChange={e=>setFactoryCost(e.target.value)}/></label>
+    <label className="order-field">Комиссия Габер, ₽<input required inputMode="decimal" value={commission} onChange={e=>setCommission(e.target.value)}/></label>
+    <label className="order-field">Логистика, ₽<input required inputMode="decimal" value={logistics} onChange={e=>setLogistics(e.target.value)}/></label>
+    <label className="order-field">Налоги, ₽<input required inputMode="decimal" value={taxes} onChange={e=>setTaxes(e.target.value)}/></label>
+    <label className="order-field">Прочие расходы, ₽<input required inputMode="decimal" value={otherCosts} onChange={e=>setOtherCosts(e.target.value)}/></label>
     <label className="order-field">Аванс, %<input required inputMode="decimal" value={advance} onChange={e=>setAdvance(e.target.value)}/></label>
     <label className="order-field">Плановая дата готовности<input required type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
-    <label className="order-field">Состав предложения / изменения<textarea required maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label>
-    <button className="button dark" type="submit">{r?'Выпустить новую ревизию':'Подготовить предложение R1'}</button>
+    <label className="order-field">Техническое задание фабрике<textarea required maxLength={500} value={technicalNote} onChange={e=>setTechnicalNote(e.target.value)}/></label>
+    <label className="order-field">Описание предложения<textarea required maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label>
+    <button className="button dark" type="submit">Отправить ТЗ фабрике на подтверждение</button>
    </form>}
-   {!factory&&s.stage==='offered'&&<div className="order-decision">
+   {spec&&<div className="order-technical-task"><h4>ТЗ {spec.id} · {spec.status}</h4>
+     {(factory||partner)&&<><p>{spec.technicalNote}</p><p>Стоимость изготовления: {orderMoney(spec.economics.factoryCostKopecks)}</p>
+      {spec.factoryDecision&&<p>Ответ фабрики: {spec.factoryDecision.note}{spec.factoryDecision.reference?' · '+spec.factoryDecision.reference:''}</p>}</>}
+     {partner&&<dl className="order-ledger">
+      <div><dt>Цена клиенту</dt><dd>{orderMoney(spec.economics.customerPriceKopecks)}</dd></div>
+      <div><dt>Плановая комиссия Габер</dt><dd>{orderMoney(spec.economics.platformCommissionKopecks)}</dd></div>
+      <div><dt>Логистика / налоги / прочие</dt><dd>{orderMoney(spec.economics.logisticsKopecks+spec.economics.taxKopecks+spec.economics.otherCostsKopecks)}</dd></div>
+      <div><dt>Плановый резерв</dt><dd>{orderMoney(spec.economics.plannedReserveKopecks)}</dd></div>
+     </dl>}
+     {factory&&s.stage==='awaiting_factory'&&<form onSubmit={e=>submit(e,()=>send('confirm_spec',{reference,note}))}>
+      <p>Проверьте конструкцию, материалы, сроки и стоимость. Это подтверждение проектного ТЗ, не запуск изготовления.</p>
+      <label className="order-field">Документ подтверждения фабрики<input required maxLength={500} value={reference} onChange={e=>setReference(e.target.value)}/></label>
+      <label className="order-field">Комментарий фабрики<textarea required maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label>
+      <button className="button dark" type="submit">Подтвердить ТЗ · локально</button>
+      <button className="button outline" type="button" onClick={()=>send('return_spec',{note:note||'Требуются уточнения ТЗ'})}>Вернуть ТЗ на доработку</button>
+     </form>}
+     {partner&&s.stage==='factory_confirmed'&&<button className="button dark" onClick={()=>send('offer',{note:spec.note})}>Опубликовать предложение клиенту</button>}
+   </div>}
+   {client&&s.stage==='offered'&&<div className="order-decision">
     <label><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/> Проверены комплектация, цена, аванс и срок предложения {r.id}</label>
     <button className="button dark" disabled={!agreed} onClick={()=>send('accept')}>Согласовать {r.id}</button>
    </div>}
-   {!factory&&['offered','accepted','change_requested'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send('request_change',{note:changeNote}))}>
+   {client&&['offered','accepted','change_requested'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send('request_change',{note:changeNote}))}>
     <label className="order-field">Что необходимо скорректировать<textarea required maxLength={500} value={changeNote} onChange={e=>setChangeNote(e.target.value)}/></label>
     <button className="button outline" type="submit">Запросить корректировку</button>
    </form>}
    {f.priorCredits.length>0&&<div><h4>Средства предыдущих ревизий · локальные записи</h4>
     {f.priorCredits.map(credit=><div className="order-credit" key={credit.revisionId}><p>{credit.revisionId}: {orderMoney(credit.amountKopecks)}. Автоматически не зачтены.</p>
-     {!factory&&s.stage==='accepted'&&f.balanceKopecks>0&&<button className="button outline" onClick={()=>send('allocate_credit',{fromRevisionId:credit.revisionId,amountKopecks:Math.min(credit.amountKopecks,f.balanceKopecks)})}>Перенести {orderMoney(Math.min(credit.amountKopecks,f.balanceKopecks))} на {r.id}</button>}</div>)}
+     {client&&s.stage==='accepted'&&f.balanceKopecks>0&&<button className="button outline" onClick={()=>send('allocate_credit',{fromRevisionId:credit.revisionId,amountKopecks:Math.min(credit.amountKopecks,f.balanceKopecks)})}>Перенести {orderMoney(Math.min(credit.amountKopecks,f.balanceKopecks))} на {r.id}</button>}</div>)}
    </div>}
-   {paymentStage&&<form onSubmit={e=>submit(e,()=>send(factory?'record_payment':'report_payment',{amountKopecks:amount(payment),reference:paymentRef}))}>
-    <p>{factory?'Локальная запись для проверки сценария. Банковское подтверждение отсутствует.':'Сообщение об оплате не меняет учтённый баланс и не разрешает запуск.'}</p>
+   {paymentStage&&(partner||client)&&<form onSubmit={e=>submit(e,()=>send(partner?'record_payment':'report_payment',{amountKopecks:amount(payment),reference:paymentRef}))}>
+    <p>{partner?'Локальная запись партнёра не является банковским подтверждением.':'Сообщение об оплате не меняет учтённый баланс и не разрешает запуск.'}</p>
     <label className="order-field">Сумма, ₽<input required inputMode="decimal" value={payment} onChange={e=>setPayment(e.target.value)}/></label>
     <label className="order-field">Номер / ссылка на платёжный документ<input required maxLength={500} value={paymentRef} onChange={e=>setPaymentRef(e.target.value)}/></label>
-    <button className="button outline" type="submit">{factory?'Добавить локальную запись оплаты':'Сообщить об оплате'}</button>
+    <button className="button outline" type="submit">{partner?'Добавить локальную запись оплаты':'Сообщить об оплате'}</button>
    </form>}
    {factory&&s.stage==='accepted'&&<><p>{f.advanceDueKopecks?'Сценарий запуска заблокирован до учёта аванса.':'Согласование и аванс позволяют проверить следующий этап локально.'}</p><button className="button dark" disabled={f.advanceDueKopecks>0} onClick={()=>send('start')}>Запустить производственный сценарий</button></>}
    {factory&&s.stage==='production'&&<button className="button dark" onClick={()=>send('complete')}>Передать на контроль качества</button>}
@@ -150,8 +188,8 @@ function OrderDetail({row,role,send,onError}){
     {s.stage==='ready'&&f.balanceKopecks>0&&<p>Отгрузка заблокирована: остался полный расчёт {orderMoney(f.balanceKopecks)}.</p>}
     <button className="button dark" type="submit" disabled={s.stage==='ready'&&f.balanceKopecks>0}>{s.stage==='quality'?'Зафиксировать контроль · локально':s.stage==='ready'?'Зафиксировать отгрузку · локально':'Зафиксировать доставку · локально'}</button>
    </form>}
-   {!factory&&s.stage==='delivered'&&<button className="button dark" onClick={()=>send('accept_delivery')}>Принять доставленный заказ</button>}
-   {!factory&&['shipped','delivered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send('report_issue',{note:issueNote}))}>
+   {client&&s.stage==='delivered'&&<button className="button dark" onClick={()=>send('accept_delivery')}>Принять доставленный заказ</button>}
+   {client&&['shipped','delivered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>send('report_issue',{note:issueNote}))}>
     <label className="order-field">Замечания к заказу<textarea required maxLength={500} value={issueNote} onChange={e=>setIssueNote(e.target.value)}/></label><button className="button outline" type="submit">Сообщить о проблеме</button>
    </form>}
    {factory&&s.stage==='disputed'&&s.issue?.status==='open'&&<form className="order-dispute-action"
@@ -162,7 +200,7 @@ function OrderDetail({row,role,send,onError}){
      value={resolutionNote} onChange={e=>setResolutionNote(e.target.value)}/></label>
     <button className="button dark" type="submit">Предложить решение · локально</button>
    </form>}
-   {!factory&&s.stage==='disputed'&&s.issue?.status==='response_proposed'&&<div className="order-dispute-action">
+   {client&&s.stage==='disputed'&&s.issue?.status==='response_proposed'&&<div className="order-dispute-action">
     <h4>Решение фабрики по замечанию {s.issue.id}</h4><p>{s.issue.response?.note}</p>
     <label className="order-resolution-check"><input type="checkbox" checked={resolutionAgreed}
      onChange={e=>setResolutionAgreed(e.target.checked)}/>

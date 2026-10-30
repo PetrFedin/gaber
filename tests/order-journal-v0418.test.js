@@ -6,11 +6,11 @@ const now=Date.parse('2026-10-27T12:00:00Z'),resource={source:'server-repository
  orderId:'O1',clientId:'C1',factoryId:'F1'};
 const client={identitySource:'server-session',authenticated:true,subject:'U1',tenantId:'T1',
  clientId:'C1',roles:['client'],sessionExpiresAtMs:now+60000};
-const factory={...client,subject:'U2',roles:['factory-operator'],factoryId:'F1',mfaVerified:true};
+const partner={...client,subject:'U2',roles:['partner'],mfaVerified:true};
 const admission=({principal,resource,command})=>{
  const role=principal.roles.includes('client')&&principal.clientId===resource.clientId?'client':
-  principal.roles.includes('factory-operator')&&principal.factoryId===resource.factoryId?'factory':null;
- const typeRole=command.type==='create'||command.type==='accept'?'client':'factory';
+  principal.roles.includes('partner')?'partner':null;
+ const typeRole=command.type==='create'||command.type==='accept'?'client':'partner';
  return role&&role===command.role&&role===typeRole?
   {allowed:true,reducerRole:role}:{allowed:false,code:'ROLE_FORBIDDEN'};
 };
@@ -20,7 +20,7 @@ const reducer={
   if(e.type==='create'){if(state||!e.payload.name)throw Error('CREATE_INVALID');
    state={version:1,projectId:e.payload.projectId,stage:'requested',updatedAt:e.at};}
   else{if(!state)throw Error('ORDER_MISSING');state.version++;
-   state.stage=e.type==='offer'?'offered':e.type==='accept'?'accepted':state.stage;
+   state.stage=e.type==='prepare_spec'?'awaiting_factory':e.type==='accept'?'accepted':state.stage;
    state.updatedAt=e.at;}}
   return state;
  },
@@ -56,8 +56,8 @@ test('append and replay, hash chain, role attribution',async()=>{
  const {service,repository}=setup();
  const a=await service.execute({principal:client,request});
  assert.equal(a.code,'ORDER_EVENT_COMMITTED');
- const b=await service.execute({principal:factory,request:{orderId:'O1',requestId:'R2',
-  type:'offer',expectedVersion:1,payload:{priceKopecks:12345}}});
+ const b=await service.execute({principal:partner,request:{orderId:'O1',requestId:'R2',
+  type:'prepare_spec',expectedVersion:1,payload:{priceKopecks:12345}}});
  assert.equal(b.version,2);assert.equal(b.productionRelease.allowed,false);
  const rows=repository.map.get('T1|O1').rows;
  assert.equal(rows.length,2);assert.equal(rows[1].previousHash,rows[0].eventHash);
@@ -82,14 +82,14 @@ test('idempotent retries preserve event and changed content conflicts',async()=>
 test('tampering blocks new events',async()=>{
  const {service,repository}=setup();await service.execute({principal:client,request});
  repository.map.get('T1|O1').rows[0].command.payload.name='Forged';
- await assert.rejects(service.execute({principal:factory,request:{orderId:'O1',
-  requestId:'R2',type:'offer',payload:{},expectedVersion:1}}),/JOURNAL_INTEGRITY_FAILURE/);
+ await assert.rejects(service.execute({principal:partner,request:{orderId:'O1',
+  requestId:'R2',type:'prepare_spec',payload:{},expectedVersion:1}}),/JOURNAL_INTEGRITY_FAILURE/);
 });
 test('unauthorized tenants, external production, forged actor fields fail closed',async()=>{
  const {service,repository}=setup();
  assert.equal((await service.execute({principal:{...client,tenantId:'T2'},request})).code,'RESOURCE_NOT_AUTHORIZED');
  assert.equal((await service.execute({principal:client,request:{...request,role:'factory'}})).code,'INVALID_ORDER_REQUEST');
- assert.equal((await service.execute({principal:factory,
+ assert.equal((await service.execute({principal:partner,
   request:{...request,type:'start'}})).code,'EXTERNAL_AUTHORITY_REQUIRED');
  assert.equal(repository.map.size,0);
 });

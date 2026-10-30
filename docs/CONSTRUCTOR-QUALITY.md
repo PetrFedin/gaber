@@ -4,19 +4,22 @@
 Source branch: `feat/production-engineering-v04`.
 Status: **SOURCE CHANGE / CI BLOCKED / BROWSER QA PENDING / PRODUCTION HOLD**.
 
+The cross-role product and acceptance target is defined in [MVP Quality Contract](./MVP-QUALITY-CONTRACT.md).
+
 ## What changes in this quality pass
 
 | Area | Implemented in source | What is not yet proven |
 | --- | --- | --- |
 | Visual seat stack | `src/previewLayout.js` derives top height, seat thickness, and base top from `getEngineeringModel()` in real units | Comfort, fatigue, ergonomics and compressed shape require measured foam data |
 | Parametric depth and backrest | Seat cushion depth uses `seatDepth`; back angle uses `backLeanDeg` in radians | No calibrated human ergonomics or approved CAD |
+| Organic upholstery form | `src/upholsteryGeometry.js` deforms rounded-box topology into deterministic tailored/soft/relaxed profiles, then restores the exact configured envelope; `Scene.jsx` applies it only to full-quality physical upholstery | No foam compression, fabric drape, measured comfort, approved CAD surface, or complete application screenshot matrix |
 | Upholstery texture | `src/visualDetailing.js` rescales each side of rounded boxes, and cylindrical bolster ends, by physical dimensions and nominal material tile mm | Procedural canvas bump is NOT measured PBR and has no verified UV cutting grain |
 | Stitching and piping | Local-space double/single stitched paths and 3D tubular piping follow top/front upholstery surface | No pattern sewing tolerances, stitch density measured from samples, or physical fabric simulation |
 | Cushion variants | Square/lumbar cushions plus true cylindrical bolster with cap trim, in the visual preview | Fabric drape, fill pressure and compressibility not physically modelled |
 | Preview quality | Existing studio can choose full/budget geometry quality; WebGL render only on changed scene/controls; local WebP project preview improved | GPU frame time, actual FPS and memory use have not been measured |
 | 3D visual export | `Scene.exportPreviewGLB()` uses Three.js `GLTFExporter`; studio UI offers **3D GLB**; output intentionally excludes room and production approval | Must be opened in separate glTF viewer and visually verified; **NOT** STEP/CAD/BOM/production document |
 
-**Important distinction:** dimensions are the conceptual source-of-truth inputs in centimetres (`domain.js`), factory draft uses millimetres (`engineering.js`), and Three.js preview uses metres. Current display follows engineering stack height, but a rounded mesh or rotated back panel is not an exact manufactured surface. No claim of photorealism or production-ready CAD is made.
+**Important distinction:** dimensions are the conceptual source-of-truth inputs in centimetres (`domain.js`), factory draft uses millimetres (`engineering.js`), and Three.js preview uses metres. Current display follows engineering stack height, but a rounded or organically deformed mesh and a rotated back panel are not exact manufactured surfaces. No claim of photorealism or production-ready CAD is made.
 
 ## Regression and release gates
 
@@ -26,14 +29,25 @@ Run on the **same checked-out SHA**:
 nvm use
 npm ci
 npm run verify:source
-node --test tests/preview-layout.test.js tests/visual-detailing.test.js
+node --test tests/preview-layout.test.js tests/visual-detailing.test.js tests/upholstery-geometry.test.js
 npm test
 npm run build
 ```
 
-New tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups. These are tests **written**, not proven to have passed on a real CI runner.
+Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; and fail-closed geometry inputs.
 
-Visual acceptance (evidence required before merge): Chromium screenshots at **375/768/1440** for five category presets and two non-default dimensions; compare same material swatch on wide/narrow cushions, camera rotation and zoom, Pillow bolster vs square/lumbar, single/double/piping/none, full/draft quality, back lean 4° and 20°, GLB import on another glTF viewer and snapshot color/detail. Run WebGL + SVG fallback, keyboard and touch selection; check lost-context behavior and line/piping artifacts. Record exact SHA, browser version, device/GPU info, visual diffs, and uploaded output samples without any real client data.
+### Local targeted evidence for the upholstery increment
+
+On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared Node 24 runtime:
+
+- `node --test tests/upholstery-geometry.test.js`: **3 tests passed** in the isolated Three.js harness.
+- The integrated `src/Scene.jsx` passed Vite's esbuild JSX parsing check.
+- An isolated Chromium/WebGL harness rendered tailored, soft, and relaxed cushions. Two render iterations were inspected; exposure and fill lighting were corrected after the first. The second render showed readable profiles without observed surface breaks or overexposed faces.
+- The repository copy fidelity check reproduced the original `Scene.jsx` Git blob SHA before applying the integration edits.
+
+This is targeted local evidence, **not** full repository CI, not full application browser E2E, not mobile/desktop acceptance, and not manufacturing approval.
+
+Visual acceptance (evidence required before merge): Chromium screenshots at **375/768/1440** for five category presets and two non-default dimensions; compare same material swatch on wide/narrow cushions, camera rotation and zoom, Pillow bolster vs square/lumbar, single/double/piping/none, full/draft quality, all three upholstery profiles, back lean 4° and 20°, GLB import on another glTF viewer and snapshot color/detail. Run WebGL + SVG fallback, keyboard and touch selection; check lost-context behavior and line/piping artifacts. Record exact SHA, browser version, device/GPU info, visual diffs, and uploaded output samples without any real client data.
 
 Additional performance acceptance to **measure, not assume**: frame duration and GPU draw calls on a low-end mobile profile, memory after 30 material changes, stable controls, and no leaked geometries/materials/textures on rebuild or GLB export.
 

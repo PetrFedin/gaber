@@ -8,6 +8,7 @@ import {getColor,getFabric,colors} from './domain.js';
 import {buildInspectionAssembly} from './EngineeringAssembly.js';
 import {planSeatingPreview} from './previewLayout.js';
 import {applyPhysicalBoxUv, makeUpholsteryTrim, createBolsterPillow} from './visualDetailing.js';
+import {createUpholsteredGeometry, upholsteryProfileFor} from './upholsteryGeometry.js';
 
 function texture(kind){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#888';c.fillRect(0,0,256,256);
@@ -29,8 +30,11 @@ function furniture(config,simplified=false){
  const wood=new THREE.MeshStandardMaterial({color:config.legs==='wood'?'#785339':config.legs==='black'?'#343531':'#9c7b43',roughness:config.legs==='brass'?.3:.65,metalness:config.legs==='wood'?0:.65});
  const stitchColor='#'+new THREE.Color(col.hex).multiplyScalar(.64).getHexString();
  group.userData.materials.push(timber,wood);
+ const softProfile=upholsteryProfileFor(config);
  const box=(w,h,d,x,y,z,material=cloth,r=.08,part='seat')=>{
-  const g=new RoundedBoxGeometry(w,h,d,simplified?1:5,Math.min(config.shape==='linear'?.02:config.shape==='organic'?r*1.5:r,w/3,h/3,d/3));
+  const cornerRadius=Math.min(config.shape==='linear'?.02:config.shape==='organic'?r*1.5:r,w/3,h/3,d/3);
+  const soft=!simplified&&material?.isMeshPhysicalMaterial&&material!==darker;
+  const g=soft?createUpholsteredGeometry({widthM:w,heightM:h,depthM:d,radiusM:cornerRadius,segments:6,profile:softProfile,surface:part==='seat'?'seat':'generic'}):new RoundedBoxGeometry(w,h,d,simplified?1:5,cornerRadius);
   if(material?.isMeshPhysicalMaterial)applyPhysicalBoxUv(g,{widthM:w,heightM:h,depthM:d,tileMm:fab.scale});
    const m=new THREE.Mesh(g,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;m.userData.part=part;group.add(m);return m;
  };

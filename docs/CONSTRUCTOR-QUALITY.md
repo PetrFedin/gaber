@@ -20,6 +20,7 @@ The cross-role product and acceptance target is defined in [MVP Quality Contract
 | 3D visual export | `Scene.exportPreviewGLB()` uses Three.js `GLTFExporter`; studio UI offers **3D GLB**; output intentionally excludes room and production approval | Must be opened in separate glTF viewer and visually verified; **NOT** STEP/CAD/BOM/production document |
 | Indicative lead time | `src/leadTime.js` derives a working-day range from product family, labour hours and selected options; `ConfigurationDetails.jsx` shows the range, start event and stage breakdown | Demo norms only: no factory capacity calendar, supplier confirmation, delivery date, or production commitment |
 | Cross-role production schedule | `src/productionSchedule.js` derives contiguous working-day stages, gates, contingency and option-aware work packages from the same lead-time result; the shared configuration card exposes it in client, partner and factory order views | No calendar dates, reserved capacity, supplier availability, operation-level durations, MES integration or production release |
+| Client offer assurance | `src/clientOffer.js` binds a client-safe acknowledgement projection to the exact offered revision; `ClientOfferAssurance.jsx` shows its local concept-TZ status, reference and record date without factory notes or deal economics, and labels the due date as an unconfirmed project date | Local simulation only: no verified factory identity, capacity, calendar commitment, bank confirmation or production release |
 
 **Important distinction:** dimensions are the conceptual source-of-truth inputs in centimetres (`domain.js`), factory draft uses millimetres (`engineering.js`), and Three.js preview uses metres. Current display follows engineering stack height, but a rounded or organically deformed mesh and a rotated back panel are not exact manufactured surfaces. No claim of photorealism or production-ready CAD is made.
 
@@ -31,12 +32,12 @@ Run on the **same checked-out SHA**:
 nvm use
 npm ci
 npm run verify:source
-node --test tests/preview-layout.test.js tests/visual-detailing.test.js tests/upholstery-geometry.test.js tests/lead-time.test.js tests/production-schedule.test.js
+node --test tests/preview-layout.test.js tests/visual-detailing.test.js tests/upholstery-geometry.test.js tests/lead-time.test.js tests/production-schedule.test.js tests/client-offer.test.js
 npm test
 npm run build
 ```
 
-Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; identical cushion/detail transforms; shared-geometry safety; thin/wide/high-detail boundary envelopes; malformed-transform rejection; fail-closed geometry inputs; deterministic, bounded, fail-closed indicative lead-time ranges; and schedule/lead-time reconciliation, contiguous stages, option-aware work packages, null operation durations and fail-closed schedule inputs.
+Tests cover: factory-derived seat heights for sofa, chair and chair-bed; seat depth and tilt input effects; UV dimensions per face; geometry bounds of trim; double seams vs piping; cylindrical bolster UV and groups; deterministic upholstery profiles; finite position/normal/UV attributes; six material groups; exact configured envelopes; identical cushion/detail transforms; shared-geometry safety; thin/wide/high-detail boundary envelopes; malformed-transform rejection; fail-closed geometry inputs; deterministic, bounded, fail-closed indicative lead-time ranges; schedule/lead-time reconciliation, contiguous stages, option-aware work packages, null operation durations and fail-closed schedule inputs; and exact-revision client acknowledgement projection, pending/fail-closed states and exclusion of factory notes and economics.
 
 ### Local targeted evidence for the upholstery increment
 
@@ -67,6 +68,16 @@ On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared
 - The integrated `ConfigurationDetails.jsx` was bundled with esbuild and server-rendered for sofa, armchair, and headboard. Each render contained the same visible range in the summary and schedule, contiguous stage days, work packages, the unconfirmed capacity/calendar disclosure and the explicit no-production-release statement.
 - Source inspection confirmed that `OrderWorkspace.jsx` renders this shared card for client, partner and factory order roles. This establishes the integration path, not real role-based browser acceptance.
 - A complete repository checkout was not available in the local harness, so full `npm ci`, source-inventory verification, complete `npm test`, production build, and real browser E2E remain unproven. The UI check is server-render evidence, not browser or factory acceptance.
+
+### Local targeted evidence for the client offer-assurance increment
+
+On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared Node 24 runtime:
+
+- `node --test tests/client-offer.test.js tests/production-schedule.test.js tests/lead-time.test.js tests/domain.test.js tests/upholstery-geometry.test.js`: **28 tests passed, 0 failed**. The new cases cover exact revision/spec binding, pending and incomplete acknowledgements, malformed-state rejection, and the absence of factory notes and economics from the client-safe projection.
+- The integrated `ClientOfferAssurance.jsx` was bundled with esbuild and server-rendered. The confirmation reference was visible while the internal factory note and factory cost were absent.
+- The existing `tests/order-workspace-ui.mjs` three-role DOM scenario passed with additional assertions for pending/confirmed client status, the exact acknowledgement reference, the unconfirmed project-date label, and no stale contradictory message. The local harness used the real order UI/workflow/storage/pricing modules but stand-ins for the unavailable manufacturing package and factory configuration-key dependency; this is targeted DOM evidence, not full application or manufacturing integration.
+- Local Node 20 compatibility required jsdom 26 and a navigator shim in the test harness only; repository dependencies and declared runtime were not changed.
+- Copy-fidelity checks reproduced the original `OrderWorkspace.jsx` and `tests/order-workspace-ui.mjs` Git blob SHAs before editing. Full checkout, clean `npm ci`, complete source verification, complete `npm test`, production build, real browser E2E and factory acceptance remain unproven.
 
 Visual acceptance (evidence required before merge): Chromium screenshots at **375/768/1440** for five category presets and two non-default dimensions; compare same material swatch on wide/narrow cushions, camera rotation and zoom, Pillow bolster vs square/lumbar, single/double/piping/none, full/draft quality, all three upholstery profiles, back lean 4° and 20°, GLB import on another glTF viewer and snapshot color/detail. Run WebGL + SVG fallback, keyboard and touch selection; check lost-context behavior and line/piping artifacts. Record exact SHA, browser version, device/GPU info, visual diffs, and uploaded output samples without any real client data.
 

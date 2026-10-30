@@ -79,7 +79,10 @@ try{
  await click('Добавить локальную запись оплаты');
  assert.equal(state().payments.length,1);
  assert.equal(state().productionRelease.allowed,false);
- await render('factory');await click('Запустить производственный сценарий');
+ await render('factory');
+ assert.equal(document.querySelector('.order-payments'),null,'Factory cannot inspect client payment claims or operator money ledger');
+ assert.doesNotMatch(document.body.textContent,/Комиссия Габер|LOCAL-NOT-BANK/);
+ await click('Запустить производственный сценарий');
  assert.equal(state().stage,'production');
  await click('Передать на контроль качества');
  await fill('Акт контроля качества','QC-CONCEPT');

@@ -215,9 +215,9 @@ function OrderDetail({row,role,send,onError}){
    </div>}
 
   </div></div>
-  <details className="order-payments"><summary>Платёжные записи и сообщения ({s.payments.length+s.paymentClaims.length})</summary>
+  {!factory&&<details className="order-payments"><summary>Платёжные записи и сообщения ({s.payments.length+s.paymentClaims.length})</summary>
    {[...s.payments,...s.paymentClaims].map((p,i)=><p key={i}>{p.revisionId} · {orderMoney(p.amountKopecks)} · {p.reference}<br/>{p.authority==='CLIENT_CLAIM'?'Сообщение клиента; в балансе не учтено':'Локальная запись; банк не подтвердил'}</p>)}
-  </details>
+  </details>}
   <div className="order-conversation"><h4>Обсуждение заказа</h4>
    {s.messages.map((m,i)=><p key={i}><strong>{account(m.role)} · {m.revisionId??'Заявка'}</strong><br/>{m.note}</p>)}
    <form onSubmit={e=>submit(e,()=>send('message',{note:messageText}))}><label className="order-field">Сообщение другой стороне<textarea required maxLength={500} value={messageText} onChange={e=>setMessageText(e.target.value)}/></label><button className="button outline" type="submit">Записать сообщение в заказ</button></form>

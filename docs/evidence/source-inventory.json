@@ -267,7 +267,7 @@
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "66ad4e59de7d1bcd8104d7f70a0f02018b8b421e"
+      "sha": "c5bbabfdc493a7962213e6d2d69bcb991810aff0"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -495,7 +495,7 @@
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "f4d351bdfe3ee71eda5e0837e4d10b501ae65063"
+      "sha": "72b99181eafb3085019ebc89b357098b0fc511ec"
     },
     {
       "path": "tests/partner-economics.test.js",

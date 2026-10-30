@@ -2,7 +2,7 @@
 
 **Engineering change in existing PR #2; no new release or production approval.**
 Source branch: `feat/production-engineering-v04`.
-Status: **SOURCE CHANGE / CI BLOCKED / BROWSER QA PENDING / PRODUCTION HOLD**.
+Status: **SOURCE CHANGE / FULL CI PENDING / TARGETED BROWSER QA PASSED / PRODUCTION HOLD**.
 
 The cross-role product and acceptance target is defined in [MVP Quality Contract](./MVP-QUALITY-CONTRACT.md).
 
@@ -21,6 +21,9 @@ The cross-role product and acceptance target is defined in [MVP Quality Contract
 | Indicative lead time | `src/leadTime.js` derives a working-day range from product family, labour hours and selected options; `ConfigurationDetails.jsx` shows the range, start event and stage breakdown | Demo norms only: no factory capacity calendar, supplier confirmation, delivery date, or production commitment |
 | Cross-role production schedule | `src/productionSchedule.js` derives contiguous working-day stages, gates, contingency and option-aware work packages from the same lead-time result; the shared configuration card exposes it in client, partner and factory order views | No calendar dates, reserved capacity, supplier availability, operation-level durations, MES integration or production release |
 | Client offer assurance | `src/clientOffer.js` binds a client-safe acknowledgement projection to the exact offered revision; `ClientOfferAssurance.jsx` shows its local concept-TZ status, reference and record date without factory notes or deal economics, and labels the due date as an unconfirmed project date | Local simulation only: no verified factory identity, capacity, calendar commitment, bank confirmation or production release |
+| 360° and reversible exploded view | `Scene.jsx` adds explicit auto-rotation, assembled/inspection/exterior modes, a 0–100% separation control and pointer selection; `assemblyExplosion.js` applies bounded transforms from saved local origins without rebuilding geometry for every slider update | Visual explanation only: no assembly kinematics, collision solver, approved assembly sequence or manufacturing CAD |
+| Configuration-aware part guide | `designGuidance.js` and `DesignExperience.jsx` describe the actually selected seat, back, arms, legs, pillows, frame, filling and support; both a labelled select and raycast selection are available | Descriptions are generated from concept inputs, not supplier certificates, measured construction or factory approval |
+| Gentle design advisories | Proportion, cushion depth, moving covers, plinth clearance, panel width, leather/soft-form and integrated-electrics rules explain the risk and next step; arm-free seating now clears and disables stranded USB/lights | Advisories are not a structural calculation, ergonomic certification or substitute for factory review; hard validation remains separate |
 
 **Important distinction:** dimensions are the conceptual source-of-truth inputs in centimetres (`domain.js`), factory draft uses millimetres (`engineering.js`), and Three.js preview uses metres. Current display follows engineering stack height, but a rounded or organically deformed mesh and a rotated back panel are not exact manufactured surfaces. No claim of photorealism or production-ready CAD is made.
 
@@ -78,6 +81,16 @@ On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared
 - The existing `tests/order-workspace-ui.mjs` three-role DOM scenario passed with additional assertions for pending/confirmed client status, the exact acknowledgement reference, the unconfirmed project-date label, and no stale contradictory message. The local harness used the real order UI/workflow/storage/pricing modules but stand-ins for the unavailable manufacturing package and factory configuration-key dependency; this is targeted DOM evidence, not full application or manufacturing integration.
 - Local Node 20 compatibility required jsdom 26 and a navigator shim in the test harness only; repository dependencies and declared runtime were not changed.
 - Copy-fidelity checks reproduced the original `OrderWorkspace.jsx` and `tests/order-workspace-ui.mjs` Git blob SHAs before editing. Full checkout, clean `npm ci`, complete source verification, complete `npm test`, production build, real browser E2E and factory acceptance remain unproven.
+
+### Local targeted evidence for 360°, exploded assembly and design guidance
+
+On 2026-10-30, using local Node.js 20.20.2 rather than the repository's declared Node 24 runtime:
+
+- `node --test tests/assembly-explosion.test.js tests/design-guidance.test.js tests/domain.test.js tests/upholstery-geometry.test.js tests/lead-time.test.js tests/production-schedule.test.js tests/client-offer.test.js`: **39 tests passed, 0 failed**. The new checks cover bounded reversible transforms, 50 cycles without transform drift, room/trim preservation, five-family part descriptions, dynamic configuration text, advisory thresholds and the arm-free electrics guard.
+- `tests/design-experience-ui.mjs` passed against the real React components: 360° start/stop, disassembly, 100% and intermediate slider states, assembly, exterior mode, dynamic seat-core description, detail close, USB/light reset and disabled states, and advisory rendering. The test is included in `npm test`.
+- A real Chromium/WebGL harness rendered the exterior and 100% inspection views. Normal pointer clicks operated the overlay controls; automatic rotation, direct raycast selection of the frame, select-based seat description and arm-free electrics reset were exercised. A 375×812 run had no horizontal overflow and no WebGL fallback. Desktop and mobile screenshots were visually inspected. The first visual pass exposed an active-button hover contrast defect; the hover rule was corrected and the active state was rechecked with a dark background and light text.
+- Browser console had no application errors in the final desktop/mobile runs. Three.js reported its existing shadow-map deprecation warning; this does not constitute a zero-warning performance audit.
+- The harness used locally reconstructed engineering dependencies for rendering; those dependencies are not part of this commit. Full checkout, clean `npm ci`, source-inventory verification, complete `npm test`, production build, the complete application shell, all five categories in browser, 768/1440 screenshot matrix, touch/keyboard/SVG/lost-context checks and factory acceptance remain unproven.
 
 Visual acceptance (evidence required before merge): Chromium screenshots at **375/768/1440** for five category presets and two non-default dimensions; compare same material swatch on wide/narrow cushions, camera rotation and zoom, Pillow bolster vs square/lumbar, single/double/piping/none, full/draft quality, all three upholstery profiles, back lean 4° and 20°, GLB import on another glTF viewer and snapshot color/detail. Run WebGL + SVG fallback, keyboard and touch selection; check lost-context behavior and line/piping artifacts. Record exact SHA, browser version, device/GPU info, visual diffs, and uploaded output samples without any real client data.
 

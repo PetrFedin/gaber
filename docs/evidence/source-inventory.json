@@ -19,15 +19,19 @@
     },
     {
       "path": "README.md",
-      "sha": "77d0be94317f7bf2658095c4f40f2e187305f78c"
+      "sha": "5644b2da7a119a1018c1b9d3837165d32b05bf9e"
     },
     {
       "path": "docs/CONSTRUCTOR-QUALITY.md",
       "sha": "c667680186d45273b850d9e4c2d4227163aec75f"
     },
     {
+      "path": "docs/E2E-ROLE-ACCEPTANCE.md",
+      "sha": "65712be8618ac2a082b6b30fb934b17c81f40dbc"
+    },
+    {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "5178f9829ae81c3645af8100a48a33949ef4bd7f"
+      "sha": "15baba1606a7bc2b9bc904e2b314ee4fbdc8b1a5"
     },
     {
       "path": "docs/architecture.md",
@@ -71,7 +75,7 @@
     },
     {
       "path": "docs/roadmap.md",
-      "sha": "a60692dcfe50a43c2f3109614bf45efd7bf3ddb6"
+      "sha": "7397baf8104a691e8ff58efc4274d5c5890791ab"
     },
     {
       "path": "docs/technical-specification-v1.md",
@@ -163,11 +167,11 @@
     },
     {
       "path": "server/factoryReviewPolicy.js",
-      "sha": "b0756405135778b3b663446811625a179098e9d5"
+      "sha": "8431d6dc1067d265e788f03d1fbae759aca831b2"
     },
     {
       "path": "server/factoryReviewService.js",
-      "sha": "d32e86d6e5fdc3bc83180c691d9f19608fb3b50b"
+      "sha": "5a28a0fb707902721cb3324ac7d73c7ef7fb5743"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -178,16 +182,20 @@
       "sha": "b6f2a97ef6a56cca7c533add60c3e9946c07d482"
     },
     {
+      "path": "server/migrations/003_scoped_order_messages_hold.sql",
+      "sha": "00aa76a3fe543f04552d18155ff10c7edcdeb1ef"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
-      "sha": "4b15aea8968a0ce0fbd855ed406c407e0e07d894"
+      "sha": "e25c402bb5fedff2835b3d188ace0df5c73f30a1"
     },
     {
       "path": "server/orderHttpApi.js",
-      "sha": "79373c29ccc01324c552dc8d6c6175b52b474ccb"
+      "sha": "ef8a6ca972619b82d1c0d4eb667fd6c37170caa1"
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "f5eb50617c564409fdd696a1fcb6ccd882251d00"
+      "sha": "f009011a987752c2542601ed66f0f92f8b7352f1"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -195,7 +203,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "fcdabde698ef04d70c915269d4c3157234f0280b"
+      "sha": "8efa48098367ac868db0c520836bb2b884c81314"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -335,7 +343,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "a68aa63edf98c207b3340602a548d70a2f7fb12b"
+      "sha": "428b66f5bc7e6d39349ba9b4772e6375b6a64a43"
     },
     {
       "path": "src/previewLayout.js",
@@ -415,11 +423,11 @@
     },
     {
       "path": "tests/factory-review-policy.test.js",
-      "sha": "71102d61c865f4315c325e9ae32c7e2a1142e53b"
+      "sha": "80f11590f391d6058033521555fa7f0c329cdeb1"
     },
     {
       "path": "tests/factory-review-service.test.js",
-      "sha": "fe4d7ccc9c6c89301cf439837328af8a6956d7fe"
+      "sha": "02cf42d8c716c1b747a176226abd708144c7c79c"
     },
     {
       "path": "tests/factory-revisions-v049.test.js",
@@ -447,7 +455,7 @@
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
-      "sha": "8d3cd42e91756052eb6bfacc68ad300774354c3b"
+      "sha": "e78fb75d391a54e4039b0ea1d14800bb48451d8a"
     },
     {
       "path": "tests/order-disputes-v0415.test.js",
@@ -459,7 +467,7 @@
     },
     {
       "path": "tests/order-http-api-v0419.test.js",
-      "sha": "1ec73325d3013559ddc2246afa4c714e20c561c0"
+      "sha": "1355ebad8d77dc8b4a7b209c6062908862a08b5b"
     },
     {
       "path": "tests/order-journal-v0418.test.js",
@@ -479,7 +487,7 @@
     },
     {
       "path": "tests/postgres-factory-repository.test.js",
-      "sha": "efb37f521e0a8fe84354420f8178c6b576b27565"
+      "sha": "4701c055c9ac2884c3b122cd2c4f3bbcbf8ec3db"
     },
     {
       "path": "tests/preview-layout.test.js",
@@ -496,6 +504,10 @@
     {
       "path": "tests/render-smoke.mjs",
       "sha": "b10ac3a7cab93459b57dba73cd5759322d91f5a7"
+    },
+    {
+      "path": "tests/role-interactions-e2e.test.js",
+      "sha": "799bde91ede729da537eca46f56542fbebb59211"
     },
     {
       "path": "tests/storage.test.js",

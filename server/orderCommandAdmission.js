@@ -42,11 +42,24 @@ export function admitOrderCommand({principal,resource,command,nowMs}){
  if(!authorization.allowed)return deny(authorization.reason);
  // Only the designated owner of the action may submit a journal event.
  // A factory/owner can be authorized for offers; owner acts on factory side.
- const inferred=authorization.role==='client'?'client':
-   ['factory-operator','factory-technologist','owner','brand'].includes(authorization.role)?'factory':null;
+ const inferred=command.type==='message'
+   ? authorization.role==='factory-operator'?'factory':authorization.role
+   : authorization.role==='client'?'client':
+     ['factory-operator','owner','brand'].includes(authorization.role)?'factory':null;
  if(requiredPerspective&&!inferred)return deny('PERSPECTIVE_NOT_SUPPORTED');
  if(requiredPerspective&&inferred!==requiredPerspective)return deny('PERSPECTIVE_MISMATCH');
  if(command.role!==inferred)return deny('UNTRUSTED_COMMAND_ROLE');
+ if(command.type==='message'){
+  const partnerId=command.payload?.partnerId;
+  if(partnerId!==undefined &&
+     (!Array.isArray(resource.partnerIds)||!resource.partnerIds.includes(partnerId)))
+    return deny('PARTNER_THREAD_NOT_ASSIGNED');
+  if(inferred==='partner' &&
+     (typeof partnerId!=='string'||partnerId!==principal.partnerId))
+    return deny('PARTNER_THREAD_NOT_ASSIGNED');
+  if(inferred==='brand'&&partnerId!==undefined)
+    return deny('PARTNER_THREAD_NOT_AVAILABLE');
+ }
  // The prototype reducer records these money and stages as LOCAL_UNVERIFIED.
  // Server must not accept them as real bank/production facts.
  return {allowed:true,code:'ELIGIBLE_FOR_SERVER_TRANSACTION',

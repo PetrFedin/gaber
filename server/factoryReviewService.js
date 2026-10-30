@@ -23,8 +23,9 @@ export async function submitTechnologistReview({principal,projectId,revisionId,r
  // Reject unauthorized requests before reading any factory data from DB.
  if(!principal||principal.identitySource!=='server-session'||
   principal.authenticated!==true||!named(principal.subject)||
+  !named(principal.tenantId)||!named(principal.factoryId)||
   !Array.isArray(principal.roles)||
-  !principal.roles.some(role=>role==='technologist'||role==='factory-admin')||
+  !principal.roles.some(role=>role==='factory-technologist'||role==='owner')||
   principal.mfaVerified!==true||!Number.isSafeInteger(nowMs)||
   !Number.isSafeInteger(principal.sessionExpiresAtMs)||
   principal.sessionExpiresAtMs<=nowMs)
@@ -32,8 +33,7 @@ export async function submitTechnologistReview({principal,projectId,revisionId,r
    productionRelease:{allowed:false}};
  // A factory-scoped DB adapter may NEVER be used under another factory's
  // session. Reject mismatch before the first SELECT or side effect.
- if(repository.factoryId!==undefined&&
-   (!named(principal.factoryId)||principal.factoryId!==repository.factoryId))
+ if(!named(repository.factoryId)||principal.factoryId!==repository.factoryId)
   return {accepted:false,code:'FACTORY_SCOPE_MISMATCH',
    productionRelease:{allowed:false}};
  return repository.withSerializableTransaction(async tx=>{

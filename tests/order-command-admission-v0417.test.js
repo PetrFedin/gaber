@@ -19,13 +19,25 @@ test('factory offer needs assigned factory and MFA',()=>{
  assert.equal(check({...p,mfaVerified:false},'factory','offer').allowed,false);
  assert.equal(check({...p,factoryId:'F2'},'factory','offer').allowed,false);
 });
+test('brand may message public order conversation but cannot open private partner thread',()=>{
+ const brand={...base,roles:['brand'],brandId:'B1'};
+ const send=payload=>admitOrderCommand({principal:brand,resource,
+  command:{role:'brand',type:'message',payload},nowMs:now});
+ assert.equal(send({note:'Shared proposal details'}).allowed,true);
+ assert.equal(send({note:'Private partner note',partnerId:'P1'}).code,'PARTNER_THREAD_NOT_AVAILABLE');
+});
 test('bank and production facts cannot be inferred from local commands',()=>{
  for(const type of ['start','complete','deliver'])
   assert.equal(check({...base,roles:['owner']},'factory',type).allowed,false);
  assert.equal(check(base,'client','confirm_resolution').productionRelease.allowed,false);
 });
-test('partner messaging is not admitted until a server-native role event is defined',()=>{
+test('partner messages require server-verified membership and an exact private thread',()=>{
  const partner={...base,roles:['partner'],partnerId:'P1'};
+ const request=payload=>admitOrderCommand({principal:partner,resource,
+  command:{type:'message',role:'partner',payload},nowMs:now});
+ assert.equal(request({note:'Assigned thread',partnerId:'P1'}).allowed,true);
+ assert.equal(request({note:'Public message'}).code,'PARTNER_THREAD_NOT_ASSIGNED');
+ assert.equal(request({note:'Wrong thread',partnerId:'P2'}).code,'PARTNER_THREAD_NOT_ASSIGNED');
  assert.equal(check(partner,'factory','message').allowed,false);
  assert.equal(check(partner,'client','message').allowed,false);
 });

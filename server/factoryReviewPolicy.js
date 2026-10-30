@@ -68,8 +68,9 @@ export function evaluateFactoryReview({revision,actor,evidenceEnvelopes,nowMs,se
   revision.state!=='frozen-for-technical-review')
   blockers.add('UNFROZEN_OR_INVALID_REVISION');
  if(!actor||actor.authenticated!==true||actor.identitySource!=='server-session'||
-  !named(actor.subject)||!Array.isArray(actor.roles)||
-  !actor.roles.some(x=>x==='technologist'||x==='factory-admin')||
+  !named(actor.subject)||!named(actor.tenantId)||!named(actor.factoryId)||
+  !Array.isArray(actor.roles)||
+  !actor.roles.some(x=>x==='factory-technologist'||x==='owner')||
   actor.mfaVerified!==true||!time(actor.sessionExpiresAtMs)||
   !time(nowMs)||actor.sessionExpiresAtMs<=nowMs)
   blockers.add('UNAUTHORIZED_TECHNOLOGIST');

@@ -95,7 +95,7 @@ test('v0.4.14: untrusted identifiers cannot reach database SQL',async()=>{
 test('v0.4.14: actor factory cannot borrow another factory scoped repository',async()=>{
  const pool=mockPool(),repository=createPostgresFactoryReviewRepository({pool,factoryId});
  const result=await submitTechnologistReview({
-  principal:{subject:'tech-1',roles:['technologist'],authenticated:true,
+  principal:{subject:'tech-1',roles:['factory-technologist'],tenantId:'T1',authenticated:true,
    identitySource:'server-session',mfaVerified:true,sessionExpiresAtMs:1000,
    factoryId:'Factory_B'},
   projectId,revisionId,requestId:'REQ-3',

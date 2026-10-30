@@ -7,8 +7,9 @@ const secret='server-review-key-longer-than-thirty-two';
 const now=Date.parse('2026-10-23T00:00:00Z'),H=c=>c.repeat(64);
 const revision={projectId:'GABER-001',revisionId:'R-001',
  state:'frozen-for-technical-review',configHash:H('a'),bomHash:H('b'),costHash:H('c')};
-const principal={subject:'technologist-01',roles:['technologist'],mfaVerified:true,
- authenticated:true,identitySource:'server-session',sessionExpiresAtMs:now+3600000};
+const principal={subject:'technologist-01',roles:['factory-technologist'],mfaVerified:true,
+ authenticated:true,identitySource:'server-session',sessionExpiresAtMs:now+3600000,
+ tenantId:'T1',factoryId:'Factory_A'};
 const signed=()=>REQUIRED_FACTORY_EVIDENCE.map((kind,i)=>sealFactoryEvidence({
  id:'ev-'+i,kind,projectId:revision.projectId,revisionId:revision.revisionId,
  configHash:revision.configHash,bomHash:revision.bomHash,costHash:revision.costHash,
@@ -17,7 +18,7 @@ const signed=()=>REQUIRED_FACTORY_EVIDENCE.map((kind,i)=>sealFactoryEvidence({
 },secret));
 function fakeRepository({documents=signed(),row=revision,fail=false}={}){
  const events=new Map();
- return {events,async withSerializableTransaction(work){
+ return {events,factoryId:'Factory_A',async withSerializableTransaction(work){
   let pending=null;
   const tx={
    getRevisionForUpdate:async()=>row,
@@ -80,6 +81,26 @@ test('missing supplier evidence, invalid MFA or changed cost revision never pers
 test('database failure is surfaced and never reported as accepted',async()=>{
  const repository=fakeRepository({fail:true});
  await assert.rejects(submitTechnologistReview(args(repository)),/DB_WRITE_FAILED/);
+ assert.equal(repository.events.size,0);
+});
+test('only unified server role and matching factory can conduct a technical review',async()=>{
+ const repository=fakeRepository();
+ for(const override of [
+  {roles:['technologist']},
+  {roles:['factory-admin']},
+  {roles:['factory-operator']},
+  {tenantId:null}
+ ]){
+  const result=await submitTechnologistReview(args(repository,{
+   principal:{...principal,...override}
+  }));
+  assert.equal(result.accepted,false);
+  assert.equal(repository.events.size,0);
+ }
+ const cross=await submitTechnologistReview(args(repository,{
+  principal:{...principal,factoryId:'Factory_B'}
+ }));
+ assert.equal(cross.code,'FACTORY_SCOPE_MISMATCH');
  assert.equal(repository.events.size,0);
 });
 test('bad IDs and missing transaction layer fail closed',async()=>{

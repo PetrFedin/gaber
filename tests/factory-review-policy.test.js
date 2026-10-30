@@ -11,7 +11,7 @@ const H=char=>char.repeat(64);
 const revision={projectId:'GABER-101',revisionId:'REV-003',
  state:'frozen-for-technical-review',configHash:H('a'),bomHash:H('b'),costHash:H('c')};
 const actor={subject:'tech-01',identitySource:'server-session',authenticated:true,
- roles:['technologist'],mfaVerified:true,sessionExpiresAtMs:now+3600000};
+ roles:['factory-technologist'],tenantId:'T1',factoryId:'Factory_A',mfaVerified:true,sessionExpiresAtMs:now+3600000};
 const record=(kind,index=0)=>({
  id:'EV-'+kind+'-'+index,kind,projectId:revision.projectId,revisionId:revision.revisionId,
  configHash:revision.configHash,bomHash:revision.bomHash,costHash:revision.costHash,
@@ -73,6 +73,9 @@ test('identity, MFA, role, session expiry and frozen revision are mandatory',()=
   {actor:{...actor,mfaVerified:false}},
   {actor:{...actor,identitySource:'browser-state'}},
   {actor:{...actor,roles:['client']}},
+  {actor:{...actor,roles:['technologist']}}, // legacy role is not part of the six-role model
+  {actor:{...actor,tenantId:'wrong tenant'}},
+  {actor:{...actor,factoryId:null}},
   {actor:{...actor,sessionExpiresAtMs:now}},
   {revision:{...revision,state:'draft'}}
  ];

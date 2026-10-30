@@ -22,7 +22,7 @@ export function orderEngineering(state){
   productionRelease:{allowed:false}};
 }
 const TYPES={
- create:['client',['projectId','name','config']],message:['both',['note']],
+ create:['client',['projectId','name','config']],message:['both',['note','partnerId']],
  offer:['factory',['config','priceKopecks','advanceBps','dueDate','note']],
  accept:['client',[]],request_change:['client',['note']],
  report_payment:['client',['amountKopecks','reference']],
@@ -55,7 +55,10 @@ function validConfig(config){
 function apply(state,command){
  if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion'])||!id(command.id)||!timestamp(command.at)||
   !Number.isSafeInteger(command.expectedVersion)||!TYPES[command.type]||!only(command.payload,TYPES[command.type][1]))fail('COMMAND_INVALID');
- if(!['client','factory'].includes(command.role)||(TYPES[command.type][0]!=='both'&&TYPES[command.type][0]!==command.role))fail('ROLE_FORBIDDEN');
+ const messageRole=command.type==='message'&&['client','factory','brand','partner','owner'].includes(command.role);
+ if(!(['client','factory'].includes(command.role)||messageRole)||
+    (TYPES[command.type][0]!=='both'&&TYPES[command.type][0]!==command.role))
+  fail('ROLE_FORBIDDEN');
  if(command.expectedVersion!==(state?.version??0))fail('STALE_ORDER');
  if(state&&command.at<state.updatedAt)fail('TIME_REVERSED');
  const p=command.payload;
@@ -69,8 +72,11 @@ function apply(state,command){
  if(!state)fail('ORDER_MISSING');
  const s=copy(state),current=s.revisions.at(-1);
  if(command.type==='message'){
-  if((command.revisionId??null)!==(current?.id??null)||!text(p.note))fail('MESSAGE_INVALID');
-  s.messages.push({role:command.role,note:p.note,revisionId:current?.id??null,at:command.at});
+  if((command.revisionId??null)!==(current?.id??null)||!text(p.note)||
+     (p.partnerId!==undefined&&!id(p.partnerId))||
+     (command.role==='partner'&&!id(p.partnerId)))fail('MESSAGE_INVALID');
+  s.messages.push({role:command.role,note:p.note,partnerId:p.partnerId??null,
+   revisionId:current?.id??null,at:command.at});
  }else if(command.type==='offer'){
   if(!BEFORE_WORK.includes(s.stage)||command.revisionId!==undefined||!kopecks(p.priceKopecks)||
    !Number.isInteger(p.advanceBps)||p.advanceBps<0||p.advanceBps>10000||!day(p.dueDate)||p.dueDate<command.at.slice(0,10)||!text(p.note))fail('OFFER_INVALID');

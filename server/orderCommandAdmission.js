@@ -1,4 +1,5 @@
 import {authorizeGaberAction} from './accessPolicy.js';
+import {canAccessOrderMessageChannel} from '../src/orderMessageChannels.js';
 
 export const GABER_COMMAND_POLICY='gaber-three-role-command-admission/1';
 const MAP=Object.freeze({
@@ -35,8 +36,12 @@ export function admitOrderCommand({principal,resource,command,nowMs}){
  if(!auth.allowed)return deny(auth.reason);
  if(perspective&&auth.role!==perspective)return deny('PERSPECTIVE_MISMATCH');
  if(command.role!==auth.role)return deny('UNTRUSTED_COMMAND_ROLE');
- if(command.type==='message'&&(command.payload?.partnerId!==undefined||
-   command.payload?.privateThread!==undefined))return deny('LEGACY_PRIVATE_THREAD_REMOVED');
+ if(command.type==='message'){
+  if(command.payload?.partnerId!==undefined||command.payload?.privateThread!==undefined)
+   return deny('LEGACY_PRIVATE_THREAD_REMOVED');
+  if(!canAccessOrderMessageChannel(auth.role,command.payload?.channel))
+   return deny('MESSAGE_CHANNEL_FORBIDDEN');
+ }
  return {allowed:true,code:'ELIGIBLE_FOR_SERVER_TRANSACTION',
    action,authorSubject:principal.subject,reducerRole:auth.role,
    tenantId:auth.tenantId,resourceId:auth.resourceId,

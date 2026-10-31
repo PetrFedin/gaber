@@ -5,11 +5,13 @@ import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspa
 import ConfigurationDetails from './ConfigurationDetails.jsx';
 import ClientOfferAssurance from './ClientOfferAssurance.jsx';
 import {getCurrentClientOffer} from './clientOffer.js';
+import {visibleOrderMessages,canAccessOrderMessageChannel} from './orderMessageChannels.js';
 import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
 const LABELS={create:'Создан заказ',prepare_spec:'ТЗ партнёра направлено фабрике',confirm_spec:'Фабрика подтвердила концепт-ТЗ',return_spec:'Фабрика вернула ТЗ на корректировку',offer:'Предложение Габер опубликовано',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
 const account=role=>({client:'Клиент',factory:'Фабрика',partner:'Партнёр GABER'}[role]??'Неизвестная роль');
+const CHANNEL_LABELS={shared:'Общий канал',client_partner:'Клиент ↔ Габер',factory_partner:'Фабрика ↔ Габер'};
 function storage(){try{return globalThis.localStorage??null;}catch{return null;}}
 function amount(text){
  if(!/^\d{1,10}([.,]\d{1,2})?$/.test(text.trim()))throw Error('Введите сумму в рублях, не более двух знаков после запятой.');
@@ -82,6 +84,7 @@ function OrderDetail({row,role,send,onError}){
  const engineering=useMemo(()=>orderEngineering(s),[r?.config,s.sourceConfig]);
  const [note,setNote]=useState(''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
  const [changeNote,setChangeNote]=useState(''),[issueNote,setIssueNote]=useState(''),[messageText,setMessageText]=useState(''),[paymentRef,setPaymentRef]=useState('');
+ const [messageChannel,setMessageChannel]=useState('client_partner');
  const [price,setPrice]=useState(spec?String(spec.economics.customerPriceKopecks/100):r?String(r.priceKopecks/100):'');
  const [factoryCost,setFactoryCost]=useState(spec?String(spec.economics.factoryCostKopecks/100):'');
  const [commission,setCommission]=useState(spec?String(spec.economics.platformCommissionKopecks/100):'');
@@ -95,6 +98,12 @@ function OrderDetail({row,role,send,onError}){
  const [resolutionNote,setResolutionNote]=useState(''),[rejectNote,setRejectNote]=useState(''),[resolutionAgreed,setResolutionAgreed]=useState(false);
  const submit=(e,fn)=>{e.preventDefault();try{fn();}catch(error){onError(error.message);}};
  const paymentStage=['accepted','production','quality','ready'].includes(s.stage)&&s.acceptedRevisionId===r?.id;
+ const visibleEvents=row.events.filter(event=>{
+  if(event.type==='message'&&!canAccessOrderMessageChannel(role,event.payload?.channel))return false;
+  if(role==='client'&&['prepare_spec','confirm_spec','return_spec','record_payment'].includes(event.type))return false;
+  if(role==='factory'&&event.type==='record_payment')return false;
+  return true;
+ });
  return <div className="order-dossier">
   <div className="order-heading"><h3>{s.name}</h3><span className="order-stage">{ORDER_STAGES[s.stage]} · версия журнала {s.version}</span></div>
   <div className="order-columns"><div>
@@ -225,11 +234,18 @@ function OrderDetail({row,role,send,onError}){
    {[...s.payments,...s.paymentClaims].map((p,i)=><p key={i}>{p.revisionId} · {orderMoney(p.amountKopecks)} · {p.reference}<br/>{p.authority==='CLIENT_CLAIM'?'Сообщение клиента; в балансе не учтено':'Локальная запись; банк не подтвердил'}</p>)}
   </details>}
   <div className="order-conversation"><h4>Обсуждение заказа</h4>
-   {s.messages.map((m,i)=><p key={i}><strong>{account(m.role)} · {m.revisionId??'Заявка'}</strong><br/>{m.note}</p>)}
-   <form onSubmit={e=>submit(e,()=>send('message',{note:messageText}))}><label className="order-field">Сообщение другой стороне<textarea required maxLength={500} value={messageText} onChange={e=>setMessageText(e.target.value)}/></label><button className="button outline" type="submit">Записать сообщение в заказ</button></form>
+   <p>Клиент и фабрика ведут отдельные диалоги с Габер. Общий канал видят все три стороны. Оператору доступна вся переписка своего заказа.</p>
+   {visibleOrderMessages(s.messages,role).map((m,i)=><p key={i}><strong>{account(m.role)} · {CHANNEL_LABELS[m.channel??'shared']??'Канал не определён'} · {m.revisionId??'Заявка'}</strong><br/>{m.note}</p>)}
+   <form onSubmit={e=>submit(e,()=>send('message',{note:messageText,channel:client?'client_partner':factory?'factory_partner':messageChannel}))}>
+    {partner&&<label className="order-field">Кому сообщение<select value={messageChannel} onChange={e=>setMessageChannel(e.target.value)}>
+     <option value="client_partner">Клиенту</option><option value="factory_partner">Фабрике</option><option value="shared">В общий канал</option>
+    </select></label>}
+    <label className="order-field">Сообщение другой стороне<textarea required maxLength={500} value={messageText} onChange={e=>setMessageText(e.target.value)}/></label>
+    <button className="button outline" type="submit">Записать сообщение в заказ</button>
+   </form>
   </div>
-  <details className="order-history"><summary>Общая история заказа ({row.events.length})</summary><ol>
-   {row.events.filter(event=>role==='partner'||!(role==='client'&&['prepare_spec','confirm_spec','return_spec','record_payment'].includes(event.type))&&!(role==='factory'&&event.type==='record_payment')).map(event=><li key={event.id}><strong>{LABELS[event.type]??event.type}</strong><span>{account(event.role)} · {event.revisionId??'—'} · {new Date(event.at).toLocaleString('ru-RU')}</span>{event.payload.note&&<p>{event.payload.note}</p>}</li>)}
+  <details className="order-history"><summary>История доступных событий ({visibleEvents.length})</summary><ol>
+   {visibleEvents.map(event=><li key={event.id}><strong>{LABELS[event.type]??event.type}</strong><span>{account(event.role)} · {event.revisionId??'—'} · {new Date(event.at).toLocaleString('ru-RU')}</span>{event.payload.note&&<p>{event.payload.note}</p>}</li>)}
   </ol></details>
  </div>;
 }

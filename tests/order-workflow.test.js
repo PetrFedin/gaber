@@ -135,3 +135,26 @@ test('same local order reloads, detects stale writes and protects corrupt storag
  assert.equal(readOrderWorkspace(store).status,'blocked');
  assert.equal(JSON.parse(exportOrderWorkspace(store)).raw,'{broken');
 });
+
+test('the immutable reducer rejects a forged bilateral channel even without HTTP admission',()=>{
+ const x=scenario();
+ x.send('client','message',{note:'Private client note',channel:'client_partner'});
+ x.send('factory','message',{note:'Private factory note',channel:'factory_partner'});
+ x.send('partner','message',{note:'Reply to client',channel:'client_partner'});
+ x.send('partner','message',{note:'Reply to factory',channel:'factory_partner'});
+ x.send('partner','message',{note:'Shared update',channel:'shared'});
+ assert.deepEqual(x.state.messages.map(m=>m.channel),[
+  'client_partner','factory_partner','client_partner','factory_partner','shared'
+ ]);
+ const before=x.events.length;
+ for(const [role,channel] of [
+  ['client','factory_partner'],['factory','client_partner'],
+  ['partner','unknown'],['client',null],['factory','client_factory']
+ ]){
+  assert.throws(()=>x.send(role,'message',{note:'Spoofed',channel}),/MESSAGE_CHANNEL_FORBIDDEN/);
+  assert.equal(x.events.length,before,'Blocked message must not create an event');
+ }
+ x.send('client','message',{note:'Legacy shared message'});
+ assert.equal(x.state.messages.at(-1).channel,'shared');
+ assert.equal(x.state.productionRelease.allowed,false);
+});

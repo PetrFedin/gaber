@@ -183,3 +183,37 @@ test('client-facing price and due date are revoked until S2 is published as R2',
  assert.equal(client.config.width,300);
  assert.equal(client.acceptedRevisionId,null,'Client must consent to R2 separately');
 });
+
+test('operator sees both bilateral dialogues; client and factory never receive the other private channel',async()=>{
+ const f=await seeded();
+ for(const [role,note,channel] of [
+  ['client','Customer private fabric request','client_partner'],
+  ['factory','Factory supplier cost issue','factory_partner'],
+  ['partner','Private reply to factory','factory_partner'],
+  ['partner','Private reply to customer','client_partner'],
+  ['partner','Three-way delivery update','shared']
+ ]){
+  const r=await f.send(role,'message',{note,channel},'R1');
+  assert.equal(r.accepted,true,JSON.stringify(r));
+ }
+ const client=(await f.read('client')).order;
+ const factory=(await f.read('factory')).order;
+ const partner=(await f.read('partner')).order;
+ assert.deepEqual(client.messages.map(x=>x.note),[
+  'Fabric test pending','Customer private fabric request',
+  'Private reply to customer','Three-way delivery update'
+ ]);
+ assert.deepEqual(factory.messages.map(x=>x.note),[
+  'Fabric test pending','Factory supplier cost issue',
+  'Private reply to factory','Three-way delivery update'
+ ]);
+ assert.deepEqual(partner.messages.map(x=>x.note),[
+  'Fabric test pending','Customer private fabric request',
+  'Factory supplier cost issue','Private reply to factory',
+  'Private reply to customer','Three-way delivery update'
+ ]);
+ assert.equal(JSON.stringify(client).includes('Factory supplier cost issue'),false);
+ assert.equal(JSON.stringify(factory).includes('Customer private fabric request'),false);
+ assert.equal(client.productionRelease.allowed,false);
+ assert.equal(factory.productionRelease.allowed,false);
+});

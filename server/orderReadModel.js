@@ -1,6 +1,7 @@
 import {orderFinancials} from '../src/orderWorkflow.js';
 import {createManufacturingPackage} from '../src/manufacturing.js';
 import {getCurrentClientOffer} from '../src/clientOffer.js';
+import {visibleOrderMessages} from '../src/orderMessageChannels.js';
 
 export const ORDER_READ_SCHEMA='gaber-server-order-three-roles/1';
 const clone=x=>structuredClone(x);
@@ -33,7 +34,7 @@ export function projectOrderReadModel(state,role){
   revisionId:current?.id??null,dueDate:current?.dueDate??null,
   authority:'SERVER_JOURNAL_UNVERIFIED_OPERATIONS',
   productionRelease:{allowed:false}};
- const messages=clone(state.messages),config=clone(current?.config??state.sourceConfig);
+ const messages=clone(visibleOrderMessages(state.messages,role)),config=clone(current?.config??state.sourceConfig);
  const task=factoryTask(state);
  if(role==='client'){
   // Repricing or a customer change immediately revokes the current payable

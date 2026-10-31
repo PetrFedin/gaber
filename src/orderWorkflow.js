@@ -2,6 +2,7 @@ import {normalize,validate} from './domain.js';
 import {factoryConfigKey} from './factoryDraftStorage.js';
 import {createManufacturingPackage} from './manufacturing.js';
 import {calculatePartnerEconomics} from './partnerEconomics.js';
+import {canAccessOrderMessageChannel,normalizeOrderMessageChannel} from './orderMessageChannels.js';
 
 export const ORDER_SCHEMA='gaber-order-three-roles/2';
 export const ORDER_STAGES={requested:'Заявка',awaiting_factory:'ТЗ на подтверждении фабрики',factory_confirmed:'Фабрика подтвердила ТЗ',factory_changes:'Фабрика запросила изменения',offered:'Предложение',accepted:'Согласовано',change_requested:'Корректировка',production:'В работе',quality:'Контроль качества',ready:'Готов к отгрузке',shipped:'Отгружен',delivered:'Доставлен',disputed:'Замечания',closed:'Принят клиентом'};
@@ -25,7 +26,7 @@ export function orderEngineering(state){
 }
 const TYPES={
  create:['client',['projectId','name','config']],
- message:['both',['note']],
+ message:['both',['note','channel']],
  prepare_spec:['partner',['config','technicalNote','customerPriceKopecks',
   'factoryCostKopecks','platformCommissionKopecks','logisticsKopecks',
   'taxKopecks','otherCostsKopecks','advanceBps','dueDate','note']],
@@ -79,8 +80,11 @@ function apply(state,command){
  if(!state)fail('ORDER_MISSING');
  const s=copy(state),current=s.revisions.at(-1);
  if(command.type==='message'){
+  const channel=normalizeOrderMessageChannel(p.channel);
   if((command.revisionId??null)!==(current?.id??null)||!text(p.note))fail('MESSAGE_INVALID');
-  s.messages.push({role:command.role,note:p.note,revisionId:current?.id??null,at:command.at});
+  if(channel===null||!canAccessOrderMessageChannel(command.role,channel))fail('MESSAGE_CHANNEL_FORBIDDEN');
+  s.messages.push({role:command.role,note:p.note,channel,
+   revisionId:current?.id??null,at:command.at});
  }else if(command.type==='prepare_spec'){
   if(!['requested','change_requested','factory_changes','offered'].includes(s.stage)||
      command.revisionId!==undefined||!text(p.technicalNote)||!text(p.note)||

@@ -47,3 +47,20 @@ test('cross-tenant, wrong factory/customer, expired, spoofed and unknown blocked
  assert.equal(check('client','accept','client',{sessionExpiresAtMs:now}).allowed,false);
  assert.equal(check('client','made-up').allowed,false);
 });
+
+test('server admission enforces private customer/factory channel membership',()=>{
+ const p=channel=>({note:'Test note',channel});
+ for(const role of ['client','factory','partner'])
+  assert.equal(check(role,'message',role,{},p('shared')).allowed,true);
+ assert.equal(check('client','message','client',{},p('client_partner')).allowed,true);
+ assert.equal(check('factory','message','factory',{},p('factory_partner')).allowed,true);
+ assert.equal(check('partner','message','partner',{},p('client_partner')).allowed,true);
+ assert.equal(check('partner','message','partner',{},p('factory_partner')).allowed,true);
+ assert.equal(check('client','message','client',{},p('factory_partner')).code,'MESSAGE_CHANNEL_FORBIDDEN');
+ assert.equal(check('factory','message','factory',{},p('client_partner')).code,'MESSAGE_CHANNEL_FORBIDDEN');
+ for(const channel of ['unknown','client_factory',null,0]){
+  assert.equal(check('partner','message','partner',{},p(channel)).code,'MESSAGE_CHANNEL_FORBIDDEN');
+ }
+ assert.equal(check('partner','message','client',{},p('client_partner')).code,'UNTRUSTED_COMMAND_ROLE');
+ assert.equal(check('factory','message','factory',{factoryId:'OTHER'},p('factory_partner')).allowed,false);
+});

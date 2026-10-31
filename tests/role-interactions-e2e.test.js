@@ -195,3 +195,47 @@ test('real loopback three-role HTTP hides old price during change, partner repri
   assert.equal((await f.request('partner')).data.order.economics.platformCommissionKopecks,30001);
  }finally{await f.close()}
 });
+
+test('loopback HTTP routes bilateral client/factory conversations only through partner',async()=>{
+ const f=await boot(),cfg=initialConfig();
+ try{
+  assert.equal((await post(f,'client',command('channel-create',0,'create',{
+   projectId:'ORDER1',name:'Channel test sofa',config:cfg
+  }))).status,201);
+  const events=[
+   ['client','client_partner','Client private request'],
+   ['factory','factory_partner','Factory internal quote'],
+   ['partner','factory_partner','Partner reply to factory'],
+   ['partner','client_partner','Partner reply to client'],
+   ['partner','shared','All-party production update']
+  ];
+  for(let i=0;i<events.length;i++){
+   const [actor,channel,note]=events[i];
+   assert.equal((await post(f,actor,command('channel-'+i,i+1,'message',{note,channel}))).status,201);
+  }
+  const client=(await f.request('client')).data.order;
+  const factory=(await f.request('factory')).data.order;
+  const partner=(await f.request('partner')).data.order;
+  assert.equal(client.version,6);assert.equal(factory.version,6);assert.equal(partner.version,6);
+  assert.deepEqual(client.messages.map(m=>m.note),[
+   'Client private request','Partner reply to client','All-party production update'
+  ]);
+  assert.deepEqual(factory.messages.map(m=>m.note),[
+   'Factory internal quote','Partner reply to factory','All-party production update'
+  ]);
+  assert.deepEqual(partner.messages.map(m=>m.note),events.map(v=>v[2]));
+  assert.equal(JSON.stringify(client).includes('Factory internal quote'),false);
+  assert.equal(JSON.stringify(factory).includes('Client private request'),false);
+  assert.equal((await post(f,'client',command('channel-forgery-c',6,'message',{
+   note:'Read factory notes',channel:'factory_partner'
+  }))).status,403);
+  assert.equal((await post(f,'factory',command('channel-forgery-f',6,'message',{
+   note:'Read customer notes',channel:'client_partner'
+  }))).status,403);
+  assert.equal((await post(f,'partner',command('channel-invalid',6,'message',{
+   note:'Unknown',channel:'private-admin'
+  }))).status,403);
+  assert.equal((await f.request('otherTenant')).status,404);
+  assert.equal((await f.request('partner')).data.order.version,6);
+ }finally{await f.close()}
+});

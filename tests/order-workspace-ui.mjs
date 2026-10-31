@@ -44,7 +44,12 @@ try{
  };
  await render('client');await click('Создать заказ из проекта');
  assert.equal(state().stage,'requested');
+ await fill('Сообщение другой стороне','PRIVATE-CLIENT-MESSAGE');
+ await click('Записать сообщение в заказ');
+ await render('factory');
+ assert.doesNotMatch(document.body.textContent,/PRIVATE-CLIENT-MESSAGE/);
  await render('partner');
+ assert.match(document.body.textContent,/PRIVATE-CLIENT-MESSAGE/);
  for(const [label,value] of [
   ['Цена клиенту, ₽','1200'],['Себестоимость фабрики, ₽','700'],
   ['Комиссия Габер, ₽','200'],['Логистика, ₽','50'],
@@ -69,7 +74,13 @@ try{
  await fill('Комментарий фабрики','Концепция подтверждена, выпуск CAD ещё требуется');
  await click('Подтвердить ТЗ · локально');
  assert.equal(state().stage,'factory_confirmed');
- await render('partner');await click('Опубликовать предложение клиенту');
+ await fill('Сообщение другой стороне','PRIVATE-FACTORY-MESSAGE');
+ await click('Записать сообщение в заказ');
+ await render('client');
+ assert.doesNotMatch(document.body.textContent,/PRIVATE-FACTORY-MESSAGE/);
+ await render('partner');
+ assert.match(document.body.textContent,/PRIVATE-FACTORY-MESSAGE/);
+ await click('Опубликовать предложение клиенту');
  assert.equal(state().stage,'offered');
  await render('client');
  const assurance=document.querySelector('.client-offer-assurance');
@@ -112,7 +123,7 @@ try{
  await render('client');await click('Принять доставленный заказ');
  assert.equal(state().stage,'closed');
  assert.equal(state().productionRelease.allowed,false);
- console.log('✓ three-role local DOM: client → partner pricing/TZ → factory consent → client offer/payment → factory QC/shipment → delivery HOLD');
+ console.log('✓ three-role local DOM: private bilateral conversations + partner visibility, pricing/TZ, factory consent, client offer/payment, QC/shipment, delivery HOLD');
  // A second local order proves that a customer-initiated change immediately
  // invalidates the old quote and factory acknowledgement in the client view.
  localStorage.removeItem(ORDER_STORAGE_KEY);

@@ -113,6 +113,57 @@ try{
  assert.equal(state().stage,'closed');
  assert.equal(state().productionRelease.allowed,false);
  console.log('✓ three-role local DOM: client → partner pricing/TZ → factory consent → client offer/payment → factory QC/shipment → delivery HOLD');
+ // A second local order proves that a customer-initiated change immediately
+ // invalidates the old quote and factory acknowledgement in the client view.
+ localStorage.removeItem(ORDER_STORAGE_KEY);
+ await render('client');await click('Создать заказ из проекта');
+ await render('partner');
+ for(const [label,value] of [
+  ['Цена клиенту, ₽','1200'],['Себестоимость фабрики, ₽','700'],
+  ['Комиссия Габер, ₽','200'],['Логистика, ₽','50'],
+  ['Налоги, ₽','50'],['Прочие расходы, ₽','0'],
+  ['Плановая дата готовности','2027-01-01'],
+  ['Техническое задание фабрике','Первичное ТЗ без утверждённого CAD'],
+  ['Описание предложения','Первоначальная цена']
+ ])await fill(label,value);
+ await click('Отправить ТЗ фабрике на подтверждение');
+ await render('factory');
+ await fill('Документ подтверждения фабрики','ACK-OLD');
+ await fill('Комментарий фабрики','Внутренний комментарий по старому ТЗ');
+ await click('Подтвердить ТЗ · локально');
+ await render('partner');await click('Опубликовать предложение клиенту');
+ await render('client');await act(async()=>document.querySelector('.order-decision input').click());
+ await click('Согласовать R1');
+ await fill('Что необходимо скорректировать','Ширина 300 см');
+ await click('Запросить корректировку');
+ assert.equal(state().stage,'change_requested');
+ assert.equal(state().acceptedRevisionId,null);
+ assert.match(document.body.textContent,/Прежнее предложение отозвано/);
+ assert.match(document.querySelector('.client-offer-assurance').textContent,/Локальное подтверждение концепт-ТЗ ещё не получено/);
+ assert.doesNotMatch(document.body.textContent,/ACK-OLD|Внутренний комментарий по старому ТЗ|Цена предложения|1200,00/);
+ assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent.includes('Скачать полный журнал')),false);
+ await render('partner');
+ assert.ok([...document.querySelectorAll('button')].some(b=>b.textContent.includes('Скачать полный журнал')));
+ await fill('Ширина изделия, см','300');
+ await fill('Цена клиенту, ₽','1300');
+ await click('Отправить ТЗ фабрике на подтверждение');
+ assert.equal(state().stage,'awaiting_factory');
+ await render('client');
+ assert.doesNotMatch(document.body.textContent,/1300,00|1200,00|Цена предложения|ACK-OLD/);
+ await render('factory');
+ assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent.includes('Скачать полный журнал')),false);
+ await fill('Документ подтверждения фабрики','ACK-NEW');
+ await fill('Комментарий фабрики','Новое ТЗ проверено');
+ await click('Подтвердить ТЗ · локально');
+ await render('client');
+ assert.doesNotMatch(document.body.textContent,/Цена предложения|ACK-NEW/);
+ await render('partner');await click('Опубликовать предложение клиенту');
+ await render('client');
+ assert.match(document.body.textContent,/1300,00/);
+ assert.match(document.querySelector('.client-offer-assurance').textContent,/ACK-NEW/);
+ assert.equal(button('Согласовать R2').disabled,true);
+ assert.equal(state().productionRelease.allowed,false);
+ console.log('✓ three-role quote lifecycle: stale R1 fully revoked, S2 factory-reviewed, only partner publishes R2');
  localStorage.setItem(ORDER_STORAGE_KEY,'{corrupt');
  await render('partner');
  assert.match(document.querySelector('[role=alert]').textContent,/Запись заблокирована/);

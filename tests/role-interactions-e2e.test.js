@@ -150,3 +150,48 @@ test('cross-tenant/customer/factory, stale sessions, forged role, MFA and race r
   assert.equal((await f.request('client')).data.order.version,1);
  }finally{await f.close()}
 });
+
+test('real loopback three-role HTTP hides old price during change, partner repricing and factory review',async()=>{
+ const f=await boot(),cfg=initialConfig();
+ try{
+  const c=command;
+  assert.equal((await post(f,'client',c('reprice-create',0,'create',{projectId:'ORDER1',name:'Custom Sofa',config:cfg}))).status,201);
+  assert.equal((await post(f,'partner',c('reprice-spec1',1,'prepare_spec',terms(cfg)))).status,201);
+  assert.equal((await post(f,'factory',c('reprice-confirm1',2,'confirm_spec',{reference:'ACK-1',note:'Review'},'S1'))).status,201);
+  assert.equal((await post(f,'partner',c('reprice-offer1',3,'offer',{note:'Published R1'},'S1'))).status,201);
+  assert.equal((await post(f,'client',c('reprice-accept1',4,'accept',{},'R1'))).status,201);
+  let result=await f.request('client');
+  assert.equal(result.data.order.offer.priceKopecks,200005);
+  assert.equal(result.data.order.offerStatus,'PUBLISHED_CONCEPT');
+  assert.equal((await post(f,'client',c('reprice-change1',5,'request_change',{note:'Increase width'},'R1'))).status,201);
+  result=await f.request('client');
+  assert.equal(result.data.order.offer,null);
+  assert.equal(result.data.order.finance.customerPriceKopecks,null);
+  assert.equal(result.data.order.dueDate,null);
+  assert.equal(result.data.order.offerStatus,'AWAITING_NEW_CONFIRMED_OFFER');
+  assert.equal(result.data.order.acceptedRevisionId,null);
+  const newSpec={...terms({...cfg,width:300}),customerPriceKopecks:250005};
+  assert.equal((await post(f,'partner',c('reprice-spec2',6,'prepare_spec',newSpec))).status,201);
+  result=await f.request('client');
+  assert.equal(result.data.order.config.width,cfg.width);
+  assert.equal(result.data.order.offer,null);
+  const factory=(await f.request('factory')).data.order;
+  assert.equal(factory.factoryTask.specId,'S2');
+  assert.equal(factory.factoryTask.sourceConfig.width,300);
+  assert.equal(factory.factoryTask.factoryCostKopecks,90001);
+  assert.equal(factory.offer,undefined);
+  assert.equal(factory.economics,undefined);
+  assert.equal((await post(f,'factory',c('reprice-confirm2',7,'confirm_spec',{reference:'ACK-2',note:'Concept checked'},'S2'))).status,201);
+  assert.equal((await f.request('client')).data.order.offer,null,
+   'Customer price requires explicit partner publication after factory acknowledgement');
+  assert.equal((await post(f,'partner',c('reprice-offer2',8,'offer',{note:'New quote'},'S2'))).status,201);
+  result=await f.request('client');
+  assert.equal(result.data.order.revisionId,'R2');
+  assert.equal(result.data.order.offer.priceKopecks,250005);
+  assert.equal(result.data.order.config.width,300);
+  assert.equal(result.data.order.acceptedRevisionId,null);
+  assert.equal((await post(f,'client',c('reprice-old-accept',9,'accept',{},'R1'))).status,422);
+  assert.equal((await post(f,'client',c('reprice-new-accept',9,'accept',{},'R2'))).status,201);
+  assert.equal((await f.request('partner')).data.order.economics.platformCommissionKopecks,30001);
+ }finally{await f.close()}
+});

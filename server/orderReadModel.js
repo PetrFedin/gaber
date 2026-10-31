@@ -1,5 +1,6 @@
 import {orderFinancials} from '../src/orderWorkflow.js';
 import {createManufacturingPackage} from '../src/manufacturing.js';
+import {getCurrentClientOffer} from '../src/clientOffer.js';
 
 export const ORDER_READ_SCHEMA='gaber-server-order-three-roles/1';
 const clone=x=>structuredClone(x);
@@ -35,18 +36,31 @@ export function projectOrderReadModel(state,role){
  const messages=clone(state.messages),config=clone(current?.config??state.sourceConfig);
  const task=factoryTask(state);
  if(role==='client'){
-  const f=orderFinancials(state);
-  return {...base,name:state.name,config,acceptedRevisionId:state.acceptedRevisionId,
-   offer:current?{revisionId:current.id,priceKopecks:current.priceKopecks,
-    advanceBps:current.advanceBps,note:current.note}:null,
-   finance:{customerPriceKopecks:f.priceKopecks,
-    advanceKopecks:f.advanceKopecks,advanceDueKopecks:f.advanceDueKopecks,
-    balanceKopecks:f.balanceKopecks,localRecordedKopecks:f.currentKopecks,
+  // Repricing or a customer change immediately revokes the current payable
+  // quote. Previous revisions remain in the journal but must not be presented
+  // as active offers or outstanding invoices to the customer.
+  const active=getCurrentClientOffer(state);
+  const f=active?orderFinancials(state):null;
+  return {...base,
+   revisionId:active?.id??null,
+   dueDate:active?.dueDate??null,
+   name:state.name,config:clone(active?.config??current?.config??state.sourceConfig),
+   configurationStatus:active?'PUBLISHED_CONCEPT':'HISTORICAL_OR_ORIGINAL_UNPRICED',
+   offerStatus:active?'PUBLISHED_CONCEPT':'AWAITING_NEW_CONFIRMED_OFFER',
+   acceptedRevisionId:active?state.acceptedRevisionId:null,
+   offer:active?{revisionId:active.id,priceKopecks:active.priceKopecks,
+    advanceBps:active.advanceBps,note:active.note}:null,
+   finance:{customerPriceKopecks:f?.priceKopecks??null,
+    advanceKopecks:f?.advanceKopecks??null,
+    advanceDueKopecks:f?.advanceDueKopecks??null,
+    balanceKopecks:f?.balanceKopecks??null,
+    localRecordedKopecks:f?.currentKopecks??null,
     verifiedBankKopecks:null,authority:'UNVERIFIED_NOT_SETTLEMENT'},
    paymentClaims:clone(state.paymentClaims),messages,issue:clone(state.issue)};
  }
  if(role==='factory'){
   return {...base,name:state.name,config:clone(task?.sourceConfig??config),
+   dueDate:task?.dueDate??null,
    factoryTask:task,acceptedRevisionId:state.acceptedRevisionId,
    messages,issue:clone(state.issue)};
  }

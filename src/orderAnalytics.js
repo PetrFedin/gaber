@@ -1,4 +1,5 @@
 import {ORDER_STAGES,orderFinancials,orderEngineering} from './orderWorkflow.js';
+import {getCurrentClientOffer} from './clientOffer.js';
 
 export const ORDER_PORTFOLIO_SCHEMA='gaber-local-operations-analytics/0.4.15';
 const ACTIVE_DUE_STAGES=new Set(['offered','accepted','change_requested','production','quality']);
@@ -44,24 +45,29 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
    productionRelease:{allowed:false}};
  if(!Array.isArray(projects))throw new TypeError('INVALID_PROJECT_LIST');
  const byStage=Object.fromEntries(Object.keys(ORDER_STAGES).map(k=>[k,0]));
- const rows=[],unlinkedProjectIds=[],seen=new Set(),claimed=[],recorded=[],offered=[],credits=[],factoryCosts=[],commissions=[],reserves=[];
+ const rows=[],unlinkedProjectIds=[],seen=new Set(),claimed=[],recorded=[],offered=[],credits=[],pendingRequote=[],factoryCosts=[],commissions=[],reserves=[];
  let revisionCount=0,issueCount=0,messageCount=0,integrityFailures=0,reconciliationFailures=0;
  for(const record of workspace.orders){
   const s=record.state,finance=orderFinancials(s),engineering=orderEngineering(s);
   if(seen.has(record.id)||s.projectId!==record.id||!(s.stage in byStage))
    throw new TypeError('INVALID_ORDER_PORTFOLIO');
   seen.add(record.id);byStage[s.stage]++;
-  const revision=s.revisions.at(-1),spec=s.specs?.at(-1),[actionOwner,nextAction]=decision(s,finance);
-  const overdue=!!revision&&ACTIVE_DUE_STAGES.has(s.stage)&&revision.dueDate<today;
+  const revision=s.revisions.at(-1),spec=s.specs?.at(-1),activeOffer=getCurrentClientOffer(s),
+   [actionOwner,nextAction]=decision(s,finance);
+  const proposedDueDate=['awaiting_factory','factory_confirmed','factory_changes'].includes(s.stage)
+   ?spec?.dueDate??null:activeOffer?.dueDate??null;
+  const overdue=!!activeOffer&&ACTIVE_DUE_STAGES.has(s.stage)&&activeOffer.dueDate<today;
   const priority=s.stage==='disputed'||!engineering.integrityOk||overdue?'critical':
    actionOwner!=='none'?'attention':'complete';
   const row={id:record.id,name:s.name,stage:s.stage,stageLabel:ORDER_STAGES[s.stage],
-   version:s.version,revisionId:revision?.id??null,
-   dueDate:revision?.dueDate??null,overdue,priority,
+   version:s.version,revisionId:activeOffer?.id??null,
+   dueDate:proposedDueDate,dueDateAuthority:activeOffer?'PUBLISHED_UNVERIFIED':'DRAFT_UNCONFIRMED',
+   overdue,priority,
    actionOwner,nextAction,engineeringIntegrityOk:engineering.integrityOk,
-   priceKopecks:finance.priceKopecks,localRecordedKopecks:finance.currentKopecks,
+   priceKopecks:activeOffer?.priceKopecks??null,
+   localRecordedKopecks:activeOffer?finance.currentKopecks:null,
    claimCount:s.paymentClaims.length,localPaymentCount:s.payments.length,
-   balanceKopecks:finance.balanceKopecks,
+   balanceKopecks:activeOffer?finance.balanceKopecks:null,
    openIssue:!!s.issue&&s.issue.status!=='resolved',
    productionRelease:{allowed:false}};
   if(!engineering.integrityOk)integrityFailures++;
@@ -71,7 +77,9 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
   revisionCount+=s.revisions.length;
   messageCount+=s.messages.length;
   issueCount+=(s.issues?.length??(s.issue?1:0));
-  offered.push(finance.priceKopecks);recorded.push(finance.currentKopecks);
+  offered.push(activeOffer?.priceKopecks??0);
+  recorded.push(activeOffer?finance.currentKopecks:0);
+  pendingRequote.push(activeOffer?0:finance.currentKopecks);
   if(spec?.economics){factoryCosts.push(spec.economics.factoryCostKopecks);commissions.push(spec.economics.platformCommissionKopecks);reserves.push(spec.economics.plannedReserveKopecks);}
   claimed.push(...s.paymentClaims.map(p=>p.amountKopecks));
   credits.push(...finance.priorCredits.map(p=>p.amountKopecks));
@@ -89,6 +97,7 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
   locallyRecordedCurrentKopecks:sumKopecks(recorded),
   claimedByClientKopecks:sumKopecks(claimed),
   unallocatedPriorCreditKopecks:sumKopecks(credits),
+  pendingRequoteLocalKopecks:sumKopecks(pendingRequote),
   bankVerifiedKopecks:null,actualRevenueKopecks:null,
   approvedProductionCostKopecks:null,
   plannedFactoryCostKopecks:sumKopecks(factoryCosts),

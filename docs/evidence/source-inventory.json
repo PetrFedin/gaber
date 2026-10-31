@@ -43,7 +43,7 @@
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
-      "sha": "ff95b90070dd4d66516ac668ad8fb311a10ce7ef"
+      "sha": "7dcc95ff0287392178f2b6ca0899afb50b0c67a6"
     },
     {
       "path": "docs/architecture.md",
@@ -123,11 +123,11 @@
     },
     {
       "path": "docs/verification-v0.4.17.md",
-      "sha": "148171f7dfa7383d307f9418fdcff647f46ccb87"
+      "sha": "148e4798acf00342f5d43d8d796ccdff115941aa"
     },
     {
       "path": "docs/verification-v0.4.18.md",
-      "sha": "54831b4a67e2b7504a69d08e0b2a5fe65b4141251"
+      "sha": "54831b4e421d7b225fb6b389103ddb2315a29580"
     },
     {
       "path": "docs/verification-v0.4.19.md",
@@ -211,7 +211,7 @@
     },
     {
       "path": "server/orderHttpApi.js",
-      "sha": "ef8a6ca972619b82d1c0d4eb667fd6c37170caa1"
+      "sha": "f06c0f090815fc506515b7d74d03e55b2d8d10e3"
     },
     {
       "path": "server/orderJournalService.js",
@@ -223,7 +223,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "bcf9671ef7ded82c292ae1e213f1815c702af900"
+      "sha": "654516d840aa67e9e1846e30c0767a412e939655"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -283,11 +283,11 @@
     },
     {
       "path": "src/OperationsPage.jsx",
-      "sha": "692cab038687e15b49ca446a71afe14a3702b961"
+      "sha": "cd2a2059e9653fd65d0361589c827b05e32d2b66"
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "64175bad026801bfd7b3f27c5dbe4f5eb0ceb90c"
+      "sha": "7a499bc34ec13b2c2d9574e9d2f1286e9e8e7cc3"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -315,7 +315,7 @@
     },
     {
       "path": "src/clientOffer.js",
-      "sha": "00917433ca821a870314c5f9d0e2c6e157855dc8"
+      "sha": "bd880ff50d2e708bf89366423236cac1da128e3a"
     },
     {
       "path": "src/costTraceability.js",
@@ -383,7 +383,7 @@
     },
     {
       "path": "src/orderAnalytics.js",
-      "sha": "35341a9c2c04914523253ce23a8027c3d673c6bd"
+      "sha": "b3736a503c463f9c3fedcd804f6a3a4c4929d957"
     },
     {
       "path": "src/orderMoney.js",
@@ -459,7 +459,7 @@
     },
     {
       "path": "tests/client-offer.test.js",
-      "sha": "01c3be85099420c10d9e6a562a07baa0d1b7d9ba"
+      "sha": "c7c113e63b5448691e4ee833f93d7d16345834aa"
     },
     {
       "path": "tests/cost-audit-hardening-v046.test.js",
@@ -539,7 +539,7 @@
     },
     {
       "path": "tests/order-analytics-v0415.test.js",
-      "sha": "7d5b6c51f33f8e439d16b36be8a1a8fe1515ea86"
+      "sha": "04a757e01009aad0f2e227ff4c40e44967eb6285"
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
@@ -555,7 +555,7 @@
     },
     {
       "path": "tests/order-http-api-v0419.test.js",
-      "sha": "1355ebad8d77dc8b4a7b209c6062908862a08b5b"
+      "sha": "c9a46a566837562a2ca4f96f8228a433a4f2a622"
     },
     {
       "path": "tests/order-journal-v0418.test.js",
@@ -563,7 +563,7 @@
     },
     {
       "path": "tests/order-read-v0419.test.js",
-      "sha": "288268dfdf33e57eaccf608c6c3f4ff21f50fa4"
+      "sha": "8936fc0b5d6b84fe40a7d6d584832d08b4d956f4"
     },
     {
       "path": "tests/order-workflow.test.js",
@@ -571,7 +571,7 @@
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "8809d325a60ad38c4a151b8ca675130f9703d0dd"
+      "sha": "f9a0a3c8dc354b8b6ef901c18cd8af41caa2cf2f"
     },
     {
       "path": "tests/partner-economics.test.js",
@@ -583,7 +583,7 @@
     },
     {
       "path": "tests/preview-layout.test.js",
-      "sha": "14493f8d77195d2e72cea3d203ac1a9a9b0baf9d"
+      "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
     },
     {
       "path": "tests/production-schedule.test.js",
@@ -603,7 +603,7 @@
     },
     {
       "path": "tests/role-interactions-e2e.test.js",
-      "sha": "e62c6805a0a2ecbd138b9261524a66b9ccaa9c2b"
+      "sha": "f2383e0e262e0c99fda927abcb5560f4f7466143"
     },
     {
       "path": "tests/storage.test.js",

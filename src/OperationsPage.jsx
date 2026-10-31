@@ -85,6 +85,8 @@ export default function OperationsPage({projects}){
       <dd>{moneyExact(data.totals.offeredKopecks)}</dd></div>
      <div><dt>Записано локально за текущие ревизии</dt>
       <dd>{moneyExact(data.totals.locallyRecordedCurrentKopecks)}</dd></div>
+     <div><dt>Локальные средства при переоценке · требуют перераспределения</dt>
+      <dd>{moneyExact(data.totals.pendingRequoteLocalKopecks)}</dd></div>
      <div><dt>Незачтённые записи прежних ревизий</dt>
       <dd>{moneyExact(data.totals.unallocatedPriorCreditKopecks)}</dd></div>
      <div><dt>Заявлено клиентами об оплате</dt>
@@ -114,7 +116,7 @@ export default function OperationsPage({projects}){
         {!row.engineeringIntegrityOk&&<small>Ошибка инженерной связности</small>}</td>
        <td><strong>{row.actionOwner==='client'?'Клиент':row.actionOwner==='factory'?'Фабрика':row.actionOwner==='partner'?'Партнёр GABER':'—'}</strong>
         <small>{row.nextAction}</small></td>
-       <td>{row.dueDate??'—'}{row.overdue&&<small className="gaber-overdue">Плановая дата прошла</small>}</td>
+       <td>{row.dueDate??'—'}{row.dueDate&&row.dueDateAuthority==='DRAFT_UNCONFIRMED'&&<small>Только ориентир · не подтверждён</small>}{row.overdue&&<small className="gaber-overdue">Плановая дата прошла</small>}</td>
       </tr>)}</tbody></table></div>}
     <p>Очередь носит диагностический характер. Настоящие полномочия и поручения должны
      определяться сервером по объектным правам и проверенным участникам заказа.</p>

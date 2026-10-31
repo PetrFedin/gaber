@@ -56,3 +56,32 @@ test('missing project is not silently presented as a valid client relationship',
  assert.equal(report.metrics.ordersMissingProject,1);
  assert.equal(report.tenantScope,'not-implemented-locally');
 });
+
+test('reprice pending removes stale price from current portfolio without losing local credits',()=>{
+ const workspace=fixture();
+ const order=workspace.orders[0].state;
+ assert.equal(order.revisions.at(-1).priceKopecks,205005);
+ assert.equal(order.payments.at(-1).amountKopecks,82002);
+ order.stage='change_requested';order.acceptedRevisionId=null;
+ let result=analyzeOrderPortfolio(workspace,[{id:'p-1',status:'requested'}],'2026-10-26');
+ assert.equal(result.totals.offeredKopecks,0);
+ assert.equal(result.totals.locallyRecordedCurrentKopecks,0);
+ assert.equal(result.totals.pendingRequoteLocalKopecks,82002);
+ assert.equal(result.rows[0].priceKopecks,null);
+ assert.equal(result.rows[0].balanceKopecks,null);
+ assert.equal(result.rows[0].dueDate,null);
+ assert.equal(result.rows[0].revisionId,null);
+ assert.equal(result.rows[0].actionOwner,'partner');
+ assert.equal(result.rows[0].overdue,false);
+ order.stage='awaiting_factory';
+ order.specs.push({
+  id:'S2',status:'awaiting_factory',config:order.revisions.at(-1).config,
+  dueDate:'2027-02-01',factoryDecision:null
+ });
+ result=analyzeOrderPortfolio(workspace,[{id:'p-1',status:'requested'}],'2026-10-26');
+ assert.equal(result.rows[0].dueDate,'2027-02-01');
+ assert.equal(result.rows[0].dueDateAuthority,'DRAFT_UNCONFIRMED');
+ assert.equal(result.rows[0].actionOwner,'factory');
+ assert.equal(result.totals.offeredKopecks,0);
+ assert.equal(result.totals.pendingRequoteLocalKopecks,82002);
+});

@@ -138,3 +138,48 @@ test('an unavailable order or forbidden requested fields cannot create read resu
   assert.equal(result.code,'INVALID_ORDER_REQUEST');
  }
 });
+
+test('client-facing price and due date are revoked until S2 is published as R2',async()=>{
+ const f=await seeded();
+ const before=(await f.read('client')).order;
+ assert.equal(before.offer.priceKopecks,200005);
+ assert.equal(before.offerStatus,'PUBLISHED_CONCEPT');
+ let result=await f.send('client','request_change',{note:'Wider model'},'R1');
+ assert.equal(result.accepted,true);
+ let client=(await f.read('client')).order;
+ assert.equal(client.stage,'change_requested');
+ assert.equal(client.revisionId,null);
+ assert.equal(client.dueDate,null);
+ assert.equal(client.offer,null);
+ assert.equal(client.offerStatus,'AWAITING_NEW_CONFIRMED_OFFER');
+ assert.equal(client.finance.customerPriceKopecks,null);
+ assert.equal(client.finance.advanceDueKopecks,null);
+ assert.equal(client.finance.balanceKopecks,null);
+ assert.equal(client.acceptedRevisionId,null);
+ assert.equal(client.configurationStatus,'HISTORICAL_OR_ORIGINAL_UNPRICED');
+ assert.equal(JSON.stringify(client).includes('40001'),false);
+ const config={...initialConfig(),width:300};
+ result=await f.send('partner','prepare_spec',spec(config));assert.equal(result.accepted,true);
+ client=(await f.read('client')).order;
+ assert.equal(client.stage,'awaiting_factory');
+ assert.equal(client.offer,null);
+ assert.equal(client.config.width,initialConfig().width,
+  'Unpublished factory design must not be shown as current customer configuration');
+ const factory=(await f.read('factory')).order;
+ assert.equal(factory.factoryTask.specId,'S2');
+ assert.equal(factory.factoryTask.sourceConfig.width,300);
+ const partner=(await f.read('partner')).order;
+ assert.equal(partner.economics.platformCommissionKopecks,40001);
+ result=await f.send('factory','confirm_spec',{reference:'ACK-S2',note:'Concept checked'},'S2');
+ assert.equal(result.accepted,true);
+ client=(await f.read('client')).order;
+ assert.equal(client.offer,null,'Factory confirmation alone does not republish a price');
+ result=await f.send('partner','offer',{note:'New approved quote'},'S2');
+ assert.equal(result.accepted,true);
+ client=(await f.read('client')).order;
+ assert.equal(client.revisionId,'R2');
+ assert.equal(client.offerStatus,'PUBLISHED_CONCEPT');
+ assert.equal(client.offer.priceKopecks,200005);
+ assert.equal(client.config.width,300);
+ assert.equal(client.acceptedRevisionId,null,'Client must consent to R2 separately');
+});

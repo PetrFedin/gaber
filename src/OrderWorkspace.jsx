@@ -4,10 +4,11 @@ import {ORDER_STAGES,orderFinancials,orderEngineering} from './orderWorkflow.js'
 import {ORDER_STORAGE_KEY,readOrderWorkspace,saveOrderCommand,exportOrderWorkspace} from './orderStorage.js';
 import ConfigurationDetails from './ConfigurationDetails.jsx';
 import ClientOfferAssurance from './ClientOfferAssurance.jsx';
+import {getCurrentClientOffer} from './clientOffer.js';
 import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
-const LABELS={create:'Создан заказ',offer:'Предложение производства',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
+const LABELS={create:'Создан заказ',prepare_spec:'ТЗ партнёра направлено фабрике',confirm_spec:'Фабрика подтвердила концепт-ТЗ',return_spec:'Фабрика вернула ТЗ на корректировку',offer:'Предложение Габер опубликовано',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
 const account=role=>({client:'Клиент',factory:'Фабрика',partner:'Партнёр GABER'}[role]??'Неизвестная роль');
 function storage(){try{return globalThis.localStorage??null;}catch{return null;}}
 function amount(text){
@@ -52,7 +53,7 @@ export default function OrderWorkspace({projects,role,selectedProjectId=null}){
   <p className="order-local-notice">Локальный сценарий без авторизации: кабинеты используют данные этого браузера. Оплаты, производство и доставка здесь не подтверждают реальные операции. Производственный допуск закрыт.</p>
   <div className="technical-actions">
    <button className="button outline" onClick={refresh}>Обновить журнал заказов</button>
-   <button className="button outline" onClick={()=>{try{exportFile(exportOrderWorkspace(store));}catch{setMessage('Не удалось выгрузить журнал.');}}}>Скачать журнал заказов</button>
+   {role==='partner'&&<button className="button outline" onClick={()=>{try{exportFile(exportOrderWorkspace(store));}catch{setMessage('Не удалось выгрузить журнал.');}}}>Скачать полный журнал · только оператор</button>}
   </div>
   {workspace.error&&<p className="inline-warning" role="alert">{workspace.error}</p>}
   {workspace.status==='ready'&&<>
@@ -76,6 +77,8 @@ export default function OrderWorkspace({projects,role,selectedProjectId=null}){
 }
 function OrderDetail({row,role,send,onError}){
  const s=row.state,r=s.revisions.at(-1),spec=s.specs?.at(-1),f=orderFinancials(s),factory=role==='factory',partner=role==='partner',client=role==='client';
+ const activeClientOffer=client?getCurrentClientOffer(s):null;
+ const displayConfig=client?(activeClientOffer?.config??r?.config??s.sourceConfig):(spec?.config??r?.config??s.sourceConfig);
  const engineering=useMemo(()=>orderEngineering(s),[r?.config,s.sourceConfig]);
  const [note,setNote]=useState(''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
  const [changeNote,setChangeNote]=useState(''),[issueNote,setIssueNote]=useState(''),[messageText,setMessageText]=useState(''),[paymentRef,setPaymentRef]=useState('');
@@ -95,12 +98,13 @@ function OrderDetail({row,role,send,onError}){
  return <div className="order-dossier">
   <div className="order-heading"><h3>{s.name}</h3><span className="order-stage">{ORDER_STAGES[s.stage]} · версия журнала {s.version}</span></div>
   <div className="order-columns"><div>
-   <h4>{r?'Предложение '+r.id:spec?'ТЗ '+spec.id:'Исходная конфигурация'}</h4>
-   <p>{Object.values(dimensions(spec?.config??r?.config??s.sourceConfig)).join(' × ')} см</p>
-   <ConfigurationDetails config={spec?.config??r?.config??s.sourceConfig}/>
+   <h4>{client&&r&&!activeClientOffer?'Историческая конфигурация '+r.id:r?'Предложение '+r.id:spec?'ТЗ '+spec.id:'Исходная конфигурация'}</h4>
+   {client&&r&&!activeClientOffer&&<p className="inline-warning" role="status">Прежнее предложение отозвано после запроса изменений или подготовки нового ТЗ. Действующей цены и счёта нет. Дождитесь нового подтверждения фабрики и предложения Габер.</p>}
+   <p>{Object.values(dimensions(displayConfig)).join(' × ')} см</p>
+   <ConfigurationDetails config={displayConfig}/>
    <p>{factory?`Связь с инженерной моделью: ${engineering.integrityOk?'цифровые ссылки согласованы':'есть ошибки связей'} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`:'Комплектация предложения связана с инженерным составом.'}</p>
    {client&&<ClientOfferAssurance state={s}/>}
-   {r&&!factory&&<><dl className="order-ledger">
+   {((client&&activeClientOffer)||(partner&&r))&&<><dl className="order-ledger">
     <div><dt>Цена предложения</dt><dd>{orderMoney(r.priceKopecks)}</dd></div>
     <div><dt>Аванс · {r.advanceBps/100}%</dt><dd>{orderMoney(f.advanceKopecks)}</dd></div>
     <div><dt>Локально учтено · {r.id}</dt><dd>{orderMoney(f.currentKopecks)}</dd></div>
@@ -146,7 +150,7 @@ function OrderDetail({row,role,send,onError}){
     <label className="order-field">Описание предложения<textarea required maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label>
     <button className="button dark" type="submit">Отправить ТЗ фабрике на подтверждение</button>
    </form>}
-   {spec&&<div className="order-technical-task"><h4>ТЗ {spec.id} · {spec.status}</h4>
+   {spec&&(factory||partner)&&<div className="order-technical-task"><h4>ТЗ {spec.id} · {spec.status}</h4>
      {(factory||partner)&&<><p>{spec.technicalNote}</p><p>Стоимость изготовления: {orderMoney(spec.economics.factoryCostKopecks)}</p>
       {spec.factoryDecision&&<p>Ответ фабрики: {spec.factoryDecision.note}{spec.factoryDecision.reference?' · '+spec.factoryDecision.reference:''}</p>}</>}
      {partner&&<dl className="order-ledger">
@@ -225,7 +229,7 @@ function OrderDetail({row,role,send,onError}){
    <form onSubmit={e=>submit(e,()=>send('message',{note:messageText}))}><label className="order-field">Сообщение другой стороне<textarea required maxLength={500} value={messageText} onChange={e=>setMessageText(e.target.value)}/></label><button className="button outline" type="submit">Записать сообщение в заказ</button></form>
   </div>
   <details className="order-history"><summary>Общая история заказа ({row.events.length})</summary><ol>
-   {row.events.map(event=><li key={event.id}><strong>{LABELS[event.type]}</strong><span>{account(event.role)} · {event.revisionId??'—'} · {new Date(event.at).toLocaleString('ru-RU')}</span>{event.payload.note&&<p>{event.payload.note}</p>}</li>)}
+   {row.events.filter(event=>role==='partner'||!(role==='client'&&['prepare_spec','confirm_spec','return_spec','record_payment'].includes(event.type))&&!(role==='factory'&&event.type==='record_payment')).map(event=><li key={event.id}><strong>{LABELS[event.type]??event.type}</strong><span>{account(event.role)} · {event.revisionId??'—'} · {new Date(event.at).toLocaleString('ru-RU')}</span>{event.payload.note&&<p>{event.payload.note}</p>}</li>)}
   </ol></details>
  </div>;
 }

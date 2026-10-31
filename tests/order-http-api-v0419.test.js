@@ -19,6 +19,7 @@ test.before(async()=>{
    execute:async({principal:p,request})=>{
     calls.push({principal:p,request});
     if(request.requestId==='stale')return {accepted:false,code:'STALE_ORDER_VERSION'};
+    if(request.requestId==='legacy-thread')return {accepted:false,code:'LEGACY_PRIVATE_THREAD_REMOVED'};
     if(request.requestId==='fail')throw Error('DOWN');
     return {accepted:true,code:'ORDER_EVENT_COMMITTED',version:1,eventSeq:1,stage:'requested'};
    }
@@ -53,6 +54,9 @@ test('HTTP POST derives actor from server session and forbids impersonation',asy
  assert.equal(r.status,400);
  r=await send({requestId:'stale',expectedVersion:0,type:'create',payload:{}});
  assert.equal(r.status,409);
+ r=await send({requestId:'legacy-thread',expectedVersion:0,type:'message',
+  payload:{note:'Legacy private thread',partnerId:'P1'}});
+ assert.equal(r.status,403,'Removed private thread is a permission rejection, not a transition conflict');
  r=await send({requestId:'fail',expectedVersion:0,type:'create',payload:{}});
  assert.equal(r.status,503);
 });

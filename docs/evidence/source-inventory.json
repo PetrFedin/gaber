@@ -19,7 +19,11 @@
     },
     {
       "path": "README.md",
-      "sha": "216ff4d296e01ec1cda70ce30c0a74a9e1abaae8"
+      "sha": "18a2fa40ae9d19e1e5f9ec0ab0e6a4b2e94d504b"
+    },
+    {
+      "path": "docs/CI-RECOVERY-RUNBOOK.md",
+      "sha": "be19b06788fe0b47947e296d167e41429d5f658e"
     },
     {
       "path": "docs/CLIENT-EXPERIENCE.md",
@@ -172,6 +176,10 @@
     {
       "path": "public/favicon.svg",
       "sha": "820cc9cf5620a295fd63971a1c01387d01ca15bb"
+    },
+    {
+      "path": "scripts/verify-release.sh",
+      "sha": "1f8e63677c2f86a711f54da8ad1056548d5d78b7"
     },
     {
       "path": "scripts/verify-source.mjs",

@@ -89,6 +89,10 @@ test('only unified server role and matching factory can conduct a technical revi
   {roles:['technologist']},
   {roles:['factory-admin']},
   {roles:['factory-operator']},
+  {roles:['factory','partner']},
+  {roles:['client','factory']},
+  {roles:['factory','factory']},
+  {roles:[]},
   {tenantId:null}
  ]){
   const result=await submitTechnologistReview(args(repository,{

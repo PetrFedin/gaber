@@ -64,3 +64,12 @@ test('server admission enforces private customer/factory channel membership',()=
  assert.equal(check('partner','message','client',{},p('client_partner')).code,'UNTRUSTED_COMMAND_ROLE');
  assert.equal(check('factory','message','factory',{factoryId:'OTHER'},p('factory_partner')).allowed,false);
 });
+
+test('only authenticated MFA partner can assign a factory; client and factory cannot',()=>{
+ assert.equal(check('partner','assign_factory').allowed,true);
+ assert.equal(check('client','assign_factory').allowed,false);
+ assert.equal(check('factory','assign_factory').allowed,false);
+ assert.equal(check('partner','assign_factory','partner',{mfaVerified:false}).code,'MFA_REQUIRED');
+ assert.equal(check('partner','assign_factory','partner',{tenantId:'OTHER'}).allowed,false);
+ assert.equal(check('partner','assign_factory','factory').code,'UNTRUSTED_COMMAND_ROLE');
+});

@@ -19,7 +19,7 @@
     },
     {
       "path": "README.md",
-      "sha": "560c239daf6bee0c5a39bd140ca8a0472238cac3"
+      "sha": "216ff4d296e01ec1cda70ce30c0a74a9e1abaae8"
     },
     {
       "path": "docs/CLIENT-EXPERIENCE.md",
@@ -39,11 +39,11 @@
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "9d26999741c0e3dfdb099d7203d60e1a78644e31"
+      "sha": "588e44900cccee3c930a01ee33cc6097c78015d6"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
-      "sha": "7750a9ee6ac667403db95ed097112265941d3aa8"
+      "sha": "6915695860b83192bd087e2a3c6314447d7a21d8"
     },
     {
       "path": "docs/architecture.md",
@@ -179,15 +179,15 @@
     },
     {
       "path": "server/accessPolicy.js",
-      "sha": "143ca25ddbfcccafa1eb46805af8008971b0db14"
+      "sha": "8cdfd0ee08cef1138f70f434d9c93a6a57b50cc4"
     },
     {
       "path": "server/factoryReviewPolicy.js",
-      "sha": "9ad03217a389187d20f44b7a30a361954c9b3e27"
+      "sha": "967f58badeb54ed76a6f52fc8622d74e0979d239"
     },
     {
       "path": "server/factoryReviewService.js",
-      "sha": "25564c16d4eb7b671592ea00a06ea0fa55e4e68f"
+      "sha": "096559327f972581e76593918dfd822055b6b7cf"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -210,8 +210,12 @@
       "sha": "473f8ab3f6f0304d7ec29288256f2ddc25cc9472"
     },
     {
+      "path": "server/migrations/006_order_intake_factory_assignment_hold.sql",
+      "sha": "3a5d20c34d8dba3018f84a3604ca1d34b97f9122"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
-      "sha": "04070a93ff93837ab47a0255cd483f4bbb3ae1f1"
+      "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
     },
     {
       "path": "server/orderHttpApi.js",
@@ -219,7 +223,7 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "3e537e7d43c7021f92dade29960646a6e3d7b891"
+      "sha": "a564038ae4ece88f3a4a912d35bd2ef66295f89a"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -227,7 +231,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "375f89f105c95861c8f1d2725ca7c873660fee02"
+      "sha": "87bf7d7dffd5144a191d3fe2f1d9d776507df1a6"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -235,7 +239,7 @@
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "2566ba6520c7b57d4b23f439ea6ce99ffbd014cd"
+      "sha": "c42b6569876d4d40ac753ddfe2579573425fb96c"
     },
     {
       "path": "src/App.jsx",
@@ -291,7 +295,7 @@
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "ecf2fbdb33d414799b8d238791bc97fb31de21a7"
+      "sha": "db342d3cb13f9f64ecda83e47230af4cc0c0de9d"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -403,7 +407,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "218a4bd706d9f13ffe5881a3e889420b5dfa260c"
+      "sha": "4f84e4dc9cde55ca61bbecd4b372d94ba7bae02b"
     },
     {
       "path": "src/partnerEconomics.js",
@@ -515,11 +519,11 @@
     },
     {
       "path": "tests/factory-review-policy.test.js",
-      "sha": "ff3c2d460ac60e684645a33c3395a4a3a62c3bfd"
+      "sha": "bca0f0380674e1c93b2da2b51e56d15833d47ef2"
     },
     {
       "path": "tests/factory-review-service.test.js",
-      "sha": "c0a84823d5a0d0565ad6074f5b2779d24adc41d7"
+      "sha": "64ff29893fc40205f99a27522ce86ba9839da5eb"
     },
     {
       "path": "tests/factory-revisions-v049.test.js",
@@ -551,11 +555,11 @@
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
-      "sha": "2307f76adaf7a95436b6ae7425ec9899b50ab36c"
+      "sha": "b5a0805c29fc7993f74210be077cac44452082f9"
     },
     {
       "path": "tests/order-disputes-v0415.test.js",
-      "sha": "68997ca64caf5500190685835b1a447fecc3d1a8"
+      "sha": "48510f28ce12249c83c14985cff6e1fd0bf2e0d8"
     },
     {
       "path": "tests/order-finance-ui.mjs",
@@ -566,8 +570,12 @@
       "sha": "1ed806a5bb2dec192c851e03766cd546ef45adba"
     },
     {
+      "path": "tests/order-intake-e2e.test.js",
+      "sha": "c6c496b008acddf680e80401df9a3f61f96e15df"
+    },
+    {
       "path": "tests/order-journal-v0418.test.js",
-      "sha": "b1a61ec97f5596b15471661e0bb80d50a8971e0f"
+      "sha": "b200f7f3cea03c327e9983af51b22e2e8abcc287"
     },
     {
       "path": "tests/order-message-channels.test.js",
@@ -579,11 +587,11 @@
     },
     {
       "path": "tests/order-workflow.test.js",
-      "sha": "f214dc167db00de1e0b5cf642d0f6a19fc8df62a"
+      "sha": "b59044e16f9e97268bfe0e9df963eb666dddb225"
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "c36e6c6e27f4cecfc669feab972686c63fa4a0ec"
+      "sha": "4e36ba5112d13805759202fc67d5d6e801e1f4dd"
     },
     {
       "path": "tests/partner-economics.test.js",

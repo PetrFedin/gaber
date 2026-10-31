@@ -80,14 +80,29 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    return deny('INVALID_SERVER_CLOCK');
   const scope={tenantId:actor.tenantId,orderId};
   return repository.withOrderTransaction(scope,async tx=>{
-   const resource=await tx.getResourceForUpdate();
+   let resource=await tx.getResourceForUpdate(),needsResource=false;
+   // An authenticated customer may submit a NEW order without a manually
+   // preseeded order_resources row. Construct the access scope exclusively
+   // from the verified session; never accept a clientId/tenantId in payload.
+   // The row is persisted only AFTER the reducer validates the create event.
+   if(!resource&&type==='create'){
+    resource={source:'server-repository',tenantId:scope.tenantId,orderId,
+     clientId:actor.clientId,factoryId:null};
+    needsResource=true;
+   }
    if(!resource||resource.source!=='server-repository'||resource.tenantId!==scope.tenantId||
      resource.orderId!==orderId)return deny('RESOURCE_NOT_AUTHORIZED');
-   const candidateRoles=['client','factory','partner'];
-   const possible=candidateRoles.map(role=>admission({principal:actor,resource,command:{type,role,payload},nowMs:now}));
-   const accepted=possible.filter(x=>x?.allowed);
-   if(accepted.length!==1)return deny(accepted.length?'AMBIGUOUS_ROLE':possible[0]?.code??'ROLE_FORBIDDEN');
-   const role=accepted[0].reducerRole;
+   // The verifier has already authenticated one server-held actor. Resolve
+   // exactly THAT role: trying candidate roles and returning possible[0]
+   // hides the real authorization reason for factory/partner principals.
+   // It also makes the result depend on the ordering of role constants.
+   if(!Array.isArray(actor.roles)||actor.roles.length!==1||
+      !['client','factory','partner'].includes(actor.roles[0]))
+    return deny('NO_VERIFIED_SESSION');
+   const role=actor.roles[0];
+   const verdict=admission({principal:actor,resource,command:{type,role,payload},nowMs:now});
+   if(!verdict?.allowed)return deny(verdict?.code??'ROLE_FORBIDDEN');
+   if(verdict.reducerRole!==role)return deny('UNTRUSTED_COMMAND_ROLE');
    let head=await tx.getHeadForUpdate();
    if(!head&&type!=='create')return deny('ORDER_MISSING');
    const firstWrite=!head;
@@ -102,6 +117,7 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
       stage:state?.stage??null,productionRelease:{allowed:false}};
    }
    if(expectedVersion!==head.version)return deny('STALE_ORDER_VERSION',{currentVersion:head.version});
+   if(type==='assign_factory'&&resource.factoryId!=null)return deny('FACTORY_ALREADY_ASSIGNED');
    if(state&&now<Date.parse(state.updatedAt))return deny('SERVER_CLOCK_BEHIND_ORDER');
    const command={id:requestId,at:new Date(now).toISOString(),type,role,payload,expectedVersion};
    if(revisionId!==undefined)command.revisionId=revisionId;
@@ -111,6 +127,22 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(result.duplicate||result.state?.version!==head.version+1)throw Error('JOURNAL_REDUCER_MISMATCH');
    const row={seq:head.version+1,actorId:actor.subject,requestId,requestHash,previousHash:head.headHash,command};
    row.eventHash=hashEvent(row,scope);
+   // These membership changes and the order event MUST commit in one
+   // SERIALIZABLE transaction; a failed event must not leave an orphan row.
+   if(needsResource){
+    if(typeof tx.createResource!=='function')return deny('ORDER_INTAKE_UNAVAILABLE');
+    if(await tx.createResource({clientId:actor.clientId})!==true)
+     return deny('RESOURCE_NOT_AUTHORIZED');
+    const created=await tx.getResourceForUpdate();
+    if(!created||created.tenantId!==scope.tenantId||
+       created.orderId!==orderId||created.clientId!==actor.clientId||
+       created.factoryId!=null)throw Error('ORDER_INTAKE_INTEGRITY_FAILURE');
+   }
+   if(type==='assign_factory'){
+    if(typeof tx.assignFactory!=='function')return deny('FACTORY_ASSIGNMENT_UNAVAILABLE');
+    if(await tx.assignFactory({factoryId:payload.factoryId,assignedBy:actor.subject})!==true)
+     return deny('FACTORY_ALREADY_ASSIGNED');
+   }
    if(firstWrite){
     await tx.ensureHead();
     const stored=await tx.getHeadForUpdate();

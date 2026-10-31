@@ -73,6 +73,10 @@ test('identity, MFA, role, session expiry and frozen revision are mandatory',()=
   {actor:{...actor,mfaVerified:false}},
   {actor:{...actor,identitySource:'browser-state'}},
   {actor:{...actor,roles:['client']}},
+  {actor:{...actor,roles:['factory','partner']}},
+  {actor:{...actor,roles:['client','factory']}},
+  {actor:{...actor,roles:['factory','factory']}},
+  {actor:{...actor,roles:[]}},
   {actor:{...actor,roles:['technologist']}}, // legacy role is not part of the three-role model
   {actor:{...actor,tenantId:'wrong tenant'}},
   {actor:{...actor,factoryId:null}},

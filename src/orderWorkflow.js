@@ -26,6 +26,7 @@ export function orderEngineering(state){
 }
 const TYPES={
  create:['client',['projectId','name','config']],
+ assign_factory:['partner',['factoryId']],
  message:['both',['note','channel']],
  prepare_spec:['partner',['config','technicalNote','customerPriceKopecks',
   'factoryCostKopecks','platformCommissionKopecks','logisticsKopecks',
@@ -40,7 +41,7 @@ const TYPES={
  start:['factory',[]],complete:['factory',[]],quality_pass:['factory',['reference']],
  ship:['factory',['carrier','tracking','reference']],deliver:['factory',['reference']],
  accept_delivery:['client',[]],report_issue:['client',['note']],
- respond_issue:['both',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
+ respond_issue:['factory_partner',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
 };
 export function orderFinancials(state){
  const current=state.revisions.at(-1);
@@ -64,8 +65,11 @@ function validConfig(config){
 function apply(state,command){
  if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion'])||!id(command.id)||!timestamp(command.at)||
   !Number.isSafeInteger(command.expectedVersion)||!TYPES[command.type]||!only(command.payload,TYPES[command.type][1]))fail('COMMAND_INVALID');
+ const requiredRole=TYPES[command.type][0];
  if(!['client','factory','partner'].includes(command.role)||
-   (TYPES[command.type][0]!=='both'&&TYPES[command.type][0]!==command.role))
+   (requiredRole==='factory_partner'
+     ? !['factory','partner'].includes(command.role)
+     : requiredRole!=='both'&&requiredRole!==command.role))
   fail('ROLE_FORBIDDEN');
  if(command.expectedVersion!==(state?.version??0))fail('STALE_ORDER');
  if(state&&command.at<state.updatedAt)fail('TIME_REVERSED');
@@ -73,13 +77,18 @@ function apply(state,command){
  if(command.type==='create'){
   if(state||command.revisionId!==undefined||!id(p.projectId)||!text(p.name))fail('CREATE_INVALID');
   return {schemaVersion:ORDER_SCHEMA,projectId:p.projectId,name:p.name,sourceConfig:validConfig(p.config),version:1,
-   stage:'requested',specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
+   stage:'requested',assignedFactoryId:null,specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
    shipment:null,delivery:null,quality:null,issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
    authority:'LOCAL_WORKFLOW_SIMULATION',productionRelease:{allowed:false}};
  }
  if(!state)fail('ORDER_MISSING');
  const s=copy(state),current=s.revisions.at(-1);
- if(command.type==='message'){
+ if(command.type==='assign_factory'){
+  if(!['requested','awaiting_factory','factory_changes'].includes(s.stage)||
+     s.assignedFactoryId!==null||command.revisionId!==undefined||!id(p.factoryId))
+   fail('FACTORY_ASSIGNMENT_INVALID');
+  s.assignedFactoryId=p.factoryId;
+ }else if(command.type==='message'){
   const channel=normalizeOrderMessageChannel(p.channel);
   if((command.revisionId??null)!==(current?.id??null)||!text(p.note))fail('MESSAGE_INVALID');
   if(channel===null||!canAccessOrderMessageChannel(command.role,channel))fail('MESSAGE_CHANNEL_FORBIDDEN');

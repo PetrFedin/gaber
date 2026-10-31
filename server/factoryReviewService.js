@@ -25,7 +25,7 @@ export async function submitTechnologistReview({principal,projectId,revisionId,r
   principal.authenticated!==true||!named(principal.subject)||
   !named(principal.tenantId)||!named(principal.factoryId)||
   !Array.isArray(principal.roles)||
-  !principal.roles.some(role=>role==='factory')||
+  (principal.roles.length!==1||principal.roles[0]!=='factory')||
   principal.mfaVerified!==true||!Number.isSafeInteger(nowMs)||
   !Number.isSafeInteger(principal.sessionExpiresAtMs)||
   principal.sessionExpiresAtMs<=nowMs)

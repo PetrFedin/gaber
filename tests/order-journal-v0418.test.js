@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createOrderJournalService} from '../server/orderJournalService.js';
 import {createPostgresOrderRepository} from '../server/postgresOrderRepository.js';
+import {admitOrderCommand} from '../server/orderCommandAdmission.js';
 const now=Date.parse('2026-10-27T12:00:00Z'),resource={source:'server-repository',tenantId:'T1',
  orderId:'O1',clientId:'C1',factoryId:'F1'};
 const client={identitySource:'server-session',authenticated:true,subject:'U1',tenantId:'T1',
@@ -108,4 +109,81 @@ test('PostgreSQL adapter uses tenant scope, rollback, parameterized queries',asy
  assert.deepEqual(queries.find(x=>x.sql.includes('set_config')).params,['T1']);
  assert.deepEqual(queries.find(x=>x.sql.includes('order_resources')).params,['T1','O1']);
  assert.equal(queries.at(-1).sql,'COMMIT');assert.equal(released,true);
+});
+
+test('verified single role determines deny reason for bilateral channel, MFA and spoofing',async()=>{
+ const repository=memory();
+ const service=createOrderJournalService({repository,admission:admitOrderCommand,
+  reducer,clock:()=>now});
+ const clientSession={...client,mfaVerified:true};
+ const factorySession={...client,subject:'FACTORY-USER',roles:['factory'],factoryId:'F1',mfaVerified:true};
+ const operatorSession={...partner,subject:'PARTNER-USER',mfaVerified:true};
+ const created=await service.execute({principal:clientSession,request});
+ assert.equal(created.code,'ORDER_EVENT_COMMITTED');
+ const message=(principal,requestId,payload)=>service.execute({principal,
+  request:{orderId:'O1',requestId,type:'message',payload,expectedVersion:1}});
+ const badFactory=await message(factorySession,'factory-forgery',
+  {note:'Try customer channel',channel:'client_partner'});
+ assert.equal(badFactory.accepted,false);
+ assert.equal(badFactory.code,'MESSAGE_CHANNEL_FORBIDDEN');
+ const badCustomer=await message(clientSession,'client-forgery',
+  {note:'Try factory channel',channel:'factory_partner'});
+ assert.equal(badCustomer.code,'MESSAGE_CHANNEL_FORBIDDEN');
+ const invalidRole=await message({...factorySession,roles:['factory','partner']},
+  'combined-role',{note:'Try shared channel',channel:'shared'});
+ assert.equal(invalidRole.code,'NO_VERIFIED_SESSION');
+ const invalidOperator=await service.execute({principal:{...operatorSession,mfaVerified:false},
+  request:{orderId:'O1',requestId:'no-mfa',expectedVersion:1,
+   type:'prepare_spec',payload:{note:'Draft'}}});
+ assert.equal(invalidOperator.code,'MFA_REQUIRED');
+ assert.equal(repository.map.get('T1|O1').rows.length,1);
+ const valid=await message(factorySession,'factory-note',
+  {note:'Factory-only technical note',channel:'factory_partner'});
+ assert.equal(valid.code,'ORDER_EVENT_COMMITTED');
+ assert.equal(repository.map.get('T1|O1').rows.length,2);
+ assert.equal(repository.map.get('T1|O1').rows[1].command.role,'factory');
+});
+
+test('PostgreSQL provisioning and factory assignment are tenant-scoped inserts in one transaction',async()=>{
+ const log=[],client={
+  async query(sql,params=[]){
+   log.push({sql,params});
+   if(sql.includes('INSERT INTO gaber_orders.order_resources'))
+    return {rowCount:1,rows:[{order_id:'O1'}]};
+   if(sql.includes('INSERT INTO gaber_orders.order_factory_assignments'))
+    return {rowCount:1,rows:[{factory_id:'F1'}]};
+   if(sql.includes('FROM gaber_orders.order_resources AS r'))
+    return {rowCount:1,rows:[{tenantId:'T1',orderId:'O1',clientId:'C1',factoryId:'F1'}]};
+   return {rowCount:0,rows:[]};
+  },
+  release(){}
+ };
+ const pool={connect:async()=>client};
+ const adapter=createPostgresOrderRepository({pool});
+ const ok=await adapter.withOrderTransaction({tenantId:'T1',orderId:'O1'},async tx=>{
+  assert.equal(await tx.createResource({clientId:'C1'}),true);
+  assert.equal(await tx.assignFactory({factoryId:'F1',assignedBy:'PARTNER-U1'}),true);
+  assert.equal((await tx.getResourceForUpdate()).factoryId,'F1');
+  return true;
+ });
+ assert.equal(ok,true);
+ const resource=log.find(x=>x.sql.includes('INSERT INTO gaber_orders.order_resources'));
+ const factory=log.find(x=>x.sql.includes('INSERT INTO gaber_orders.order_factory_assignments'));
+ const select=log.find(x=>x.sql.includes('LEFT JOIN gaber_orders.order_factory_assignments'));
+ assert.deepEqual(resource.params,['T1','O1','C1']);
+ assert.deepEqual(factory.params,['T1','O1','F1','PARTNER-U1']);
+ assert.deepEqual(select.params,['T1','O1']);
+ assert.match(select.sql,/FOR UPDATE OF r/);
+ assert.equal(log[0].sql,'BEGIN ISOLATION LEVEL SERIALIZABLE READ WRITE');
+ assert.equal(log.at(-1).sql,'COMMIT');
+});
+test('invalid provisioned identities are rejected before SQL writes',async()=>{
+ let queries=0;
+ const pool={connect:async()=>({query:async()=>{queries++;return {rows:[]}},release(){}})};
+ const adapter=createPostgresOrderRepository({pool});
+ await assert.rejects(adapter.withOrderTransaction({tenantId:'T1',orderId:'O1'},
+  tx=>tx.createResource({clientId:'invalid space'})),/INVALID_CUSTOMER/);
+ await assert.rejects(adapter.withOrderTransaction({tenantId:'T1',orderId:'O1'},
+  tx=>tx.assignFactory({factoryId:'F1',assignedBy:'invalid space'})),/INVALID_FACTORY_ASSIGNMENT/);
+ assert.equal(queries,6); // two BEGIN, two set_config, two ROLLBACK
 });

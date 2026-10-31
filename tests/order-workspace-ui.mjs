@@ -50,6 +50,10 @@ try{
  assert.doesNotMatch(document.body.textContent,/PRIVATE-CLIENT-MESSAGE/);
  await render('partner');
  assert.match(document.body.textContent,/PRIVATE-CLIENT-MESSAGE/);
+ await fill('Код фабрики','FACTORY-A');
+ await click('Назначить фабрику · локально');
+ assert.equal(state().assignedFactoryId,'FACTORY-A');
+ assert.equal([...document.querySelectorAll('button')].some(btn=>btn.textContent==='Назначить фабрику · локально'),false);
  for(const [label,value] of [
   ['Цена клиенту, ₽','1200'],['Себестоимость фабрики, ₽','700'],
   ['Комиссия Габер, ₽','200'],['Логистика, ₽','50'],

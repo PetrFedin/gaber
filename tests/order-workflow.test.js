@@ -158,3 +158,19 @@ test('the immutable reducer rejects a forged bilateral channel even without HTTP
  assert.equal(x.state.messages.at(-1).channel,'shared');
  assert.equal(x.state.productionRelease.allowed,false);
 });
+
+test('factory assignment is a single immutable operator event, never a customer selection',()=>{
+ const s=scenario();
+ assert.equal(s.state.assignedFactoryId,null);
+ assert.throws(()=>s.send('client','assign_factory',{factoryId:'F1'}),/ROLE_FORBIDDEN/);
+ assert.throws(()=>s.send('factory','assign_factory',{factoryId:'F1'}),/ROLE_FORBIDDEN/);
+ assert.throws(()=>s.send('partner','assign_factory',{factoryId:'not valid id'}),/FACTORY_ASSIGNMENT_INVALID/);
+ const version=s.state.version;
+ s.send('partner','assign_factory',{factoryId:'FACTORY-A'});
+ assert.equal(s.state.version,version+1);
+ assert.equal(s.state.assignedFactoryId,'FACTORY-A');
+ assert.throws(()=>s.send('partner','assign_factory',{factoryId:'FACTORY-B'}),/FACTORY_ASSIGNMENT_INVALID/);
+ s.offer();
+ assert.equal(s.state.assignedFactoryId,'FACTORY-A');
+ assert.equal(s.state.productionRelease.allowed,false);
+});

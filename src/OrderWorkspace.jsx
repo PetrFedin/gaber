@@ -9,7 +9,7 @@ import {visibleOrderMessages,canAccessOrderMessageChannel} from './orderMessageC
 import {orderMoney} from './orderMoney.js';
 
 const ERRORS={STALE_WORKSPACE:'Заказ изменён в другой вкладке. Обновите журнал и повторите действие.',STALE_ORDER:'Версия заказа устарела. Обновите журнал.',REVISION_MISMATCH:'Предложение изменилось. Просмотрите актуальную ревизию.',OFFER_INVALID:'Проверьте цену, аванс, срок и описание предложения.',CONFIG_INVALID:'Параметры изделия недопустимы.',PAYMENT_DUPLICATE:'Такой номер платёжной записи уже использован.',PAYMENT_EXCEEDS_BALANCE:'Сумма больше остатка текущей ревизии.',START_BLOCKED:'Для запуска сценария нужны согласование и полный аванс.',SHIPMENT_BLOCKED:'Нужны контроль качества, полный расчёт и сведения об отгрузке.',CREDIT_INVALID:'Перенос больше доступного аванса или остатка новой ревизии.',ISSUE_RESPONSE_BLOCKED:'Ответ возможен только на открытое замечание.',ISSUE_REJECTION_BLOCKED:'Отклонить можно только предложенное решение.',ISSUE_CONFIRMATION_BLOCKED:'Сначала требуется ответ производства.'};
-const LABELS={create:'Создан заказ',prepare_spec:'ТЗ партнёра направлено фабрике',confirm_spec:'Фабрика подтвердила концепт-ТЗ',return_spec:'Фабрика вернула ТЗ на корректировку',offer:'Предложение Габер опубликовано',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
+const LABELS={create:'Создан заказ',assign_factory:'Габер назначил фабрику',prepare_spec:'ТЗ партнёра направлено фабрике',confirm_spec:'Фабрика подтвердила концепт-ТЗ',return_spec:'Фабрика вернула ТЗ на корректировку',offer:'Предложение Габер опубликовано',accept:'Клиент согласовал',request_change:'Запрошена корректировка',report_payment:'Сообщение клиента об оплате',record_payment:'Локальная запись оплаты',allocate_credit:'Клиент перенёс аванс',start:'Проверка запуска пройдена · локально',complete:'Работы завершены · локально',quality_pass:'Контроль качества · локально',ship:'Отгрузка · локально',deliver:'Доставка · локально',accept_delivery:'Приёмка клиентом · локально',report_issue:'Замечания клиента',respond_issue:'Ответ фабрики на замечание',reject_resolution:'Клиент отклонил решение',confirm_resolution:'Клиент подтвердил решение',message:'Сообщение'};
 const account=role=>({client:'Клиент',factory:'Фабрика',partner:'Партнёр GABER'}[role]??'Неизвестная роль');
 const CHANNEL_LABELS={shared:'Общий канал',client_partner:'Клиент ↔ Габер',factory_partner:'Фабрика ↔ Габер'};
 function storage(){try{return globalThis.localStorage??null;}catch{return null;}}
@@ -85,6 +85,7 @@ function OrderDetail({row,role,send,onError}){
  const [note,setNote]=useState(''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
  const [changeNote,setChangeNote]=useState(''),[issueNote,setIssueNote]=useState(''),[messageText,setMessageText]=useState(''),[paymentRef,setPaymentRef]=useState('');
  const [messageChannel,setMessageChannel]=useState('client_partner');
+ const [factoryId,setFactoryId]=useState('');
  const [price,setPrice]=useState(spec?String(spec.economics.customerPriceKopecks/100):r?String(r.priceKopecks/100):'');
  const [factoryCost,setFactoryCost]=useState(spec?String(spec.economics.factoryCostKopecks/100):'');
  const [commission,setCommission]=useState(spec?String(spec.economics.platformCommissionKopecks/100):'');
@@ -137,6 +138,17 @@ function OrderDetail({row,role,send,onError}){
    </details>}
   </div><div className="order-actions-panel">
    <h4>{factory?'Решения фабрики':partner?'Сделка, себестоимость и ТЗ':'Решения клиента'}</h4>
+   {partner&&s.assignedFactoryId&&<p>Назначенная фабрика: <strong>{s.assignedFactoryId}</strong>. Изменение назначения требует отдельного аудита и нового заказа.</p>}
+   {partner&&!s.assignedFactoryId&&['requested','awaiting_factory','factory_changes'].includes(s.stage)&&
+    <form className="order-factory-assignment" onSubmit={e=>submit(e,()=>
+     send('assign_factory',{factoryId:factoryId.trim()},false))}>
+     <p>Для настоящего серверного исполнения Габер должен назначить фабрику. Действие ниже пока записывается только в демонстрационном журнале браузера.</p>
+     <label className="order-field">Код фабрики
+      <input required maxLength={128} pattern="[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}" value={factoryId} onChange={e=>setFactoryId(e.target.value)}/>
+     </label>
+     <button className="button outline" type="submit">Назначить фабрику · локально</button>
+    </form>}
+   {factory&&!s.assignedFactoryId&&<p className="inline-warning">Демонстрационный заказ: назначение фабрики на сервере не подтверждено.</p>}
    {partner&&['requested','change_requested','factory_changes','offered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>{
     if(!/^\d{1,3}([.,]\d{1,2})?$/.test(advance))throw Error('Проверьте процент аванса.');
     send('prepare_spec',{config:{...(spec?.config??r?.config??s.sourceConfig),width:Number(width)},

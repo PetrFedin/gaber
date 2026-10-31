@@ -8,7 +8,7 @@ export const GABER_ACCESS_SCHEMA='gaber-server-three-role-policy/1';
 export const GABER_ROLES=Object.freeze(['client','factory','partner']);
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
 const WRITE_MFA=new Set([
- 'partner.spec.prepare','offers.write','payments.record_unverified',
+ 'partner.spec.prepare','orders.assign_factory','offers.write','payments.record_unverified',
  'factory.spec.confirm','factory.spec.return','factory.technical_review',
  'qc.record','shipments.record','issues.respond','catalog.manage'
 ]);
@@ -20,6 +20,7 @@ const RIGHTS=Object.freeze({
  'orders.read':['client','factory','partner'],
  'orders.create':['client'],
  'orders.message':['client','factory','partner'],
+ 'orders.assign_factory':['partner'],
  'partner.spec.prepare':['partner'],
  'factory.spec.confirm':['factory'],
  'factory.spec.return':['factory'],

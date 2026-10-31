@@ -4,6 +4,7 @@ import {canAccessOrderMessageChannel} from '../src/orderMessageChannels.js';
 export const GABER_COMMAND_POLICY='gaber-three-role-command-admission/1';
 const MAP=Object.freeze({
  create:['orders.create','client'],message:['orders.message',null],
+ assign_factory:['orders.assign_factory','partner'],
  prepare_spec:['partner.spec.prepare','partner'],
  confirm_spec:['factory.spec.confirm','factory'],
  return_spec:['factory.spec.return','factory'],

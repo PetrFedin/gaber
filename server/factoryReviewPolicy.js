@@ -70,7 +70,7 @@ export function evaluateFactoryReview({revision,actor,evidenceEnvelopes,nowMs,se
  if(!actor||actor.authenticated!==true||actor.identitySource!=='server-session'||
   !named(actor.subject)||!named(actor.tenantId)||!named(actor.factoryId)||
   !Array.isArray(actor.roles)||
-  !actor.roles.some(x=>x==='factory')||
+  (actor.roles.length!==1||actor.roles[0]!=='factory')||
   actor.mfaVerified!==true||!time(actor.sessionExpiresAtMs)||
   !time(nowMs)||actor.sessionExpiresAtMs<=nowMs)
   blockers.add('UNAUTHORIZED_TECHNOLOGIST');

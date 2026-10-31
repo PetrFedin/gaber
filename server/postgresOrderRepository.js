@@ -12,10 +12,32 @@ export function createPostgresOrderRepository({pool}){
     const key=[tenantId,orderId];
     const tx={
      async getResourceForUpdate(){
-      const q=await c.query(`SELECT tenant_id AS "tenantId",order_id AS "orderId",
-       client_id AS "clientId",brand_id AS "brandId",factory_id AS "factoryId",partner_ids AS "partnerIds"
-       FROM gaber_orders.order_resources WHERE tenant_id=$1 AND order_id=$2 FOR UPDATE`,key);
+      const q=await c.query(`SELECT r.tenant_id AS "tenantId",r.order_id AS "orderId",
+       r.client_id AS "clientId",r.brand_id AS "brandId",
+       COALESCE(a.factory_id,r.factory_id) AS "factoryId",
+       r.partner_ids AS "partnerIds"
+       FROM gaber_orders.order_resources AS r
+       LEFT JOIN gaber_orders.order_factory_assignments AS a
+         ON a.tenant_id=r.tenant_id AND a.order_id=r.order_id
+       WHERE r.tenant_id=$1 AND r.order_id=$2 FOR UPDATE OF r`,key);
       return q.rows[0]?{...q.rows[0],source:'server-repository'}:null;
+     },
+     async createResource({clientId}){
+      if(!id(clientId))throw TypeError('INVALID_CUSTOMER');
+      const q=await c.query(`INSERT INTO gaber_orders.order_resources
+       (tenant_id,order_id,client_id) VALUES($1,$2,$3)
+       ON CONFLICT(tenant_id,order_id) DO NOTHING RETURNING order_id`,
+       [...key,clientId]);
+      return q.rowCount===1;
+     },
+     async assignFactory({factoryId,assignedBy}){
+      if(!id(factoryId)||!id(assignedBy))throw TypeError('INVALID_FACTORY_ASSIGNMENT');
+      const q=await c.query(`INSERT INTO gaber_orders.order_factory_assignments
+       (tenant_id,order_id,factory_id,assigned_by)
+       VALUES($1,$2,$3,$4)
+       ON CONFLICT(tenant_id,order_id) DO NOTHING RETURNING factory_id`,
+       [...key,factoryId,assignedBy]);
+      return q.rowCount===1;
      },
      async ensureHead(){await c.query(`INSERT INTO gaber_orders.order_heads
       (tenant_id,order_id,version,head_hash) VALUES($1,$2,0,NULL)

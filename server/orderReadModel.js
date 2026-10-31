@@ -76,6 +76,7 @@ export function projectOrderReadModel(state,role){
   finance:{...f,authority:'UNVERIFIED_RECORDS_NOT_BANK_SETTLEMENT'},
   payments:clone(state.payments),paymentClaims:clone(state.paymentClaims),
   messages,issue:clone(state.issue),
+  assignedFactoryId:state.assignedFactoryId??null,
   operatorScope:'TENANT_OPERATIONS'
  };
 }

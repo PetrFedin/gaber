@@ -80,3 +80,17 @@ test('open issues cannot silently close, ship or change commercial revision',()=
  assert.equal(s.state.stage,'disputed');
  assert.equal(s.state.productionRelease.allowed,false);
 });
+
+test('only factory or operator can propose resolution, never client impersonating the respondent',()=>{
+ const s=scenario();
+ s.send('client','report_issue',{note:'Need delivery clarification'});
+ const version=s.state.version,entries=s.events.length;
+ assert.throws(()=>s.send('client','respond_issue',{note:'Customer forged operator outcome'}),/ROLE_FORBIDDEN/);
+ assert.equal(s.events.length,entries);
+ assert.equal(s.state.version,version);
+ assert.equal(s.state.issue.status,'open');
+ s.send('partner','respond_issue',{note:'GABER operator proposes a documented response'});
+ assert.equal(s.state.issue.status,'response_proposed');
+ assert.equal(s.send('client','confirm_resolution').stage,'shipped');
+ assert.equal(s.state.productionRelease.allowed,false);
+});

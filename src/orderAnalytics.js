@@ -15,7 +15,7 @@ function decision(state,finance){
    :['partner','Назначить проверенную фабрику до отправки ТЗ'];
   case 'awaiting_factory':return state.assignedFactoryId
    ?['factory','Проверить и подтвердить техническое задание']
-   :['partner','Заявка без фабрики: назначить проверенную организацию'];
+   :['partner','Назначить проверенную фабрику — ТЗ ожидает назначения'];
   case 'factory_confirmed':return ['partner',state.assignedFactoryId
    ?'Опубликовать согласованное фабрикой предложение клиенту'
    :'Требуется назначение фабрики: публикация заблокирована'];

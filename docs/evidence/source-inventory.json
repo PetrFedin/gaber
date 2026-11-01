@@ -403,7 +403,7 @@
     },
     {
       "path": "src/orderAnalytics.js",
-      "sha": "8f3673858bef417e867401023dd9306f15e951e2"
+      "sha": "60ad93f8baa32cbd0e04c2a1389759be206664e5"
     },
     {
       "path": "src/orderMessageChannels.js",
@@ -591,7 +591,7 @@
     },
     {
       "path": "tests/order-journal-v0418.test.js",
-      "sha": "c7167c5a1e31f5531e992a2325e9b2fd134e361c"
+      "sha": "56783a8fa9778d4ded02ff5044df7fb4012c0bf8"
     },
     {
       "path": "tests/order-message-channels.test.js",

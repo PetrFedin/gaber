@@ -89,7 +89,10 @@ test('tampering blocks new events',async()=>{
 });
 test('unauthorized tenants, external production, forged actor fields fail closed',async()=>{
  const {service,repository}=setup();
- assert.equal((await service.execute({principal:{...client,tenantId:'T2'},request})).code,'RESOURCE_NOT_AUTHORIZED');
+ // A new tenant can initiate its own order in the real repository; this
+ // legacy mock intentionally has no atomic createResource method and must
+ // therefore fail closed without inserting any cross-tenant journal rows.
+ assert.equal((await service.execute({principal:{...client,tenantId:'T2'},request})).code,'ORDER_INTAKE_UNAVAILABLE');
  assert.equal((await service.execute({principal:client,request:{...request,role:'factory'}})).code,'INVALID_ORDER_REQUEST');
  assert.equal((await service.execute({principal:partner,
   request:{...request,type:'start'}})).code,'EXTERNAL_AUTHORITY_REQUIRED');

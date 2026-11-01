@@ -579,7 +579,7 @@
     },
     {
       "path": "tests/order-finance-ui.mjs",
-      "sha": "1e2e5db10fe3092eb8ed0a21f077616373adf7e7"
+      "sha": "f868b3e9b17abecca8cd55c8db92eb0e81d7c9a0"
     },
     {
       "path": "tests/order-http-api-v0419.test.js",

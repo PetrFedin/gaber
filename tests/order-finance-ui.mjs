@@ -29,6 +29,7 @@ try{
   ws=saveOrderCommand(localStorage,ws,'exact',event);
  };
  send('client','create',{projectId:'exact',name:'Exact kopecks',config});
+ send('partner','assign_factory',{factoryId:'FACTORY-1'});
  send('partner','prepare_spec',{config,customerPriceKopecks:200005,
   factoryCostKopecks:90000,platformCommissionKopecks:50000,logisticsKopecks:10000,
   taxKopecks:5000,otherCostsKopecks:0,advanceBps:5000,dueDate:'2026-10-26',
@@ -38,7 +39,10 @@ try{
  send('client','accept',{},'R1');
  send('partner','record_payment',{amountKopecks:100003,reference:'Local exact payment'},'R1');
  await act(async()=>root.render(React.createElement(OrderWorkspace,{projects,role:'client'})));
- const values=[...document.querySelectorAll('.order-ledger dd')].map(e=>e.textContent.replace(/\s/g,''));
+ // The client assurance panel has a separate .order-ledger for revision IDs,
+ // factory ACK reference and date. Test the direct commercial ledger instead.
+ const values=[...document.querySelectorAll('.order-columns > div:first-child > dl.order-ledger dd')]
+  .map(e=>e.textContent.replace(/\s/g,''));
  assert.deepEqual(values.slice(0,5),['2000,05₽','1000,03₽','1000,03₽','0,00₽','1000,02₽']);
  await act(async()=>root.render(React.createElement(OperationsPage,{projects})));
  const overdue=()=>[...document.querySelectorAll('.gaber-operations-kpis article')]

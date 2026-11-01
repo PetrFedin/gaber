@@ -163,6 +163,8 @@ try{
  assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent.includes('Скачать полный журнал')),false);
  await render('partner');
  assert.ok([...document.querySelectorAll('button')].some(b=>b.textContent.includes('Скачать полный журнал')));
+ assert.equal(field('Описание предложения').value,'Первоначальная цена',
+  'Partner revision must retain previous commercial note instead of failing silently');
  await fill('Ширина изделия, см','300');
  await fill('Цена клиенту, ₽','1300');
  await click('Отправить ТЗ фабрике на подтверждение');

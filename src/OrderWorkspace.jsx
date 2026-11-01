@@ -82,7 +82,7 @@ function OrderDetail({row,role,send,onError}){
  const activeClientOffer=client?getCurrentClientOffer(s):null;
  const displayConfig=client?(activeClientOffer?.config??r?.config??s.sourceConfig):(spec?.config??r?.config??s.sourceConfig);
  const engineering=useMemo(()=>orderEngineering(s),[r?.config,s.sourceConfig]);
- const [note,setNote]=useState(''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
+ const [note,setNote]=useState(role==='partner'?(spec?.note??r?.note??''):''),[reference,setReference]=useState(''),[payment,setPayment]=useState('');
  const [changeNote,setChangeNote]=useState(''),[issueNote,setIssueNote]=useState(''),[messageText,setMessageText]=useState(''),[paymentRef,setPaymentRef]=useState('');
  const [messageChannel,setMessageChannel]=useState('client_partner');
  const [factoryId,setFactoryId]=useState('');

@@ -19,7 +19,7 @@
     },
     {
       "path": "README.md",
-      "sha": "a87939bd7de2eca815908bb60dc976e98a820e6f"
+      "sha": "0dc396cc86ab1b9ff4062b9bd97a6485c1c404c5"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
@@ -46,12 +46,20 @@
       "sha": "02a0ef4e9142000d2ba2b70413a55974d23f1bdc"
     },
     {
+      "path": "docs/RELEASE-REVIEW-GATES.md",
+      "sha": "d46151ee0698ed6b2d7b0fa9d521c6e513de21ce"
+    },
+    {
       "path": "docs/REPRODUCIBILITY.md",
       "sha": "e552fb35704635b4646d56163852aa43e959745d"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
       "sha": "0836632e1b1c5de6784bff8fccccb7e9527ae020"
+    },
+    {
+      "path": "docs/VERIFIED-CANDIDATE-2026-11-01.md",
+      "sha": "f015444c2c0a1af40700c62bd39495c71605aa8f"
     },
     {
       "path": "docs/architecture.md",

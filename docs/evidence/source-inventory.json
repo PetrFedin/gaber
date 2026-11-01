@@ -183,7 +183,7 @@
     },
     {
       "path": "scripts/browser-smoke.mjs",
-      "sha": "3b2936fa4b7101606bf94a8b45bb09e22b9f5af6"
+      "sha": "99ac30c0b8f205844b5242c9b5a7eaad85a595ec"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",

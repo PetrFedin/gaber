@@ -41,7 +41,7 @@ async function evaluate(expression){
  if(result.exceptionDetails)throw Error('CHROME_JS_EXCEPTION '+JSON.stringify(result.exceptionDetails).slice(0,700));
  return result.result?.value;
 }
-const snapshotExpression='(() => { const w=document.documentElement.clientWidth; const e=document.getElementById("gaber-order-workspace"); return {ready:document.readyState, title:document.title, viewport:w, scrollWidth:document.documentElement.scrollWidth, bodyScrollWidth:document.body.scrollWidth, role:e?.getAttribute("aria-label")??null, studio:!!document.querySelector("main.studio"), h1:document.querySelector("h1")?.textContent?.trim()??"", nav:!!document.querySelector("nav[aria-label]"), error:document.querySelector("[role=alert]")?.textContent?.trim()??null}; })()';
+const snapshotExpression='(() => { const w=document.documentElement.clientWidth; const e=document.getElementById("gaber-order-workspace"); return {ready:document.readyState, title:document.title, viewport:w, outerViewport:window.innerWidth, scrollWidth:document.documentElement.scrollWidth, bodyScrollWidth:document.body.scrollWidth, role:e?.getAttribute("aria-label")??null, studio:!!document.querySelector("main.studio"), h1:document.querySelector("h1")?.textContent?.trim()??"", nav:!!document.querySelector("nav[aria-label]"), error:document.querySelector("[role=alert]")?.textContent?.trim()??null}; })()';
 try{
  await mkdir(screenshots,{recursive:true});
  const executable=chromeExecutable();
@@ -99,11 +99,15 @@ try{
     throw Error(error.message+' lastSnapshot='+JSON.stringify(last)+
      ' lastRuntimeErrors='+runtimeErrors.slice(-4).join(' | '));
    }
-   assert.ok(result.viewport===width,
-    'Wrong Chrome emulated viewport '+JSON.stringify({width,route:route.hash,result}));
-   assert.ok(result.scrollWidth<=width+4,
+   assert.equal(result.outerViewport,width,
+    'Wrong Chrome emulated outer viewport '+JSON.stringify({width,route:route.hash,result}));
+   // Desktop Chrome reserves 15px for a classic vertical scrollbar:
+   // html.clientWidth is the actual content viewport, not window.innerWidth.
+   assert.ok(result.viewport<=width&&result.viewport>=width-20,
+    'Unexpected content viewport '+JSON.stringify({width,route:route.hash,result}));
+   assert.ok(result.scrollWidth<=result.viewport+4,
     'Horizontal document overflow at '+width+' '+route.hash+': '+JSON.stringify(result));
-   assert.ok(result.bodyScrollWidth<=width+4,
+   assert.ok(result.bodyScrollWidth<=result.viewport+4,
     'Body overflow at '+width+' '+route.hash+': '+JSON.stringify(result));
    assert.ok(!result.error,
     'Unexpected error banner at '+width+' '+route.hash+': '+result.error);

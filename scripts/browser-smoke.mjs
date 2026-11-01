@@ -27,7 +27,7 @@ function chromeExecutable(){
  throw Error('CHROME_NOT_INSTALLED_ON_GITHUB_RUNNER');
 }
 let preview=null,chrome=null,ws=null,profile=null;
-let commandId=0;const pending=new Map();
+let commandId=0;const pending=new Map(),runtimeErrors=[];
 const screenshotPath=(size,route)=>join(screenshots,size+'-'+route+'.png');
 async function send(method,params={}){
  const id=++commandId;
@@ -66,6 +66,8 @@ try{
  });
  ws.addEventListener('message',event=>{
   const data=JSON.parse(String(event.data));
+  if(data.method==='Runtime.exceptionThrown')runtimeErrors.push(
+   JSON.stringify(data.params?.exceptionDetails??data.params).slice(0,700));
   if(data.id!==undefined&&pending.has(data.id)){
    const cb=pending.get(data.id);pending.delete(data.id);
    data.error?cb.reject(Error('CDP '+JSON.stringify(data.error))):cb.resolve(data.result);
@@ -85,11 +87,18 @@ try{
    {width,height,deviceScaleFactor:1,mobile:width<600});
   for(const route of routes){
    await send('Page.navigate',{url:base+'/#'+route.hash});
-   const result=await waitFor(async()=>{
-    const s=await evaluate(snapshotExpression);
-    return s?.ready==='complete'&&s.nav&&
-     (route.studio?s.studio:s.role?.includes(route.role))?s:null;
-   },'ROUTE_NOT_RENDERED '+width+' '+route.hash);
+   let result;
+   try{
+    result=await waitFor(async()=>{
+     const s=await evaluate(snapshotExpression);
+     return s?.ready==='complete'&&s.nav&&
+      (route.studio?s.studio:s.role?.includes(route.role))?s:null;
+    },'ROUTE_NOT_RENDERED '+width+' '+route.hash);
+   }catch(error){
+    const last=await evaluate(snapshotExpression).catch(e=>({evalError:String(e)}));
+    throw Error(error.message+' lastSnapshot='+JSON.stringify(last)+
+     ' lastRuntimeErrors='+runtimeErrors.slice(-4).join(' | '));
+   }
    assert.ok(result.viewport===width,
     'Wrong Chrome emulated viewport '+JSON.stringify({width,route:route.hash,result}));
    assert.ok(result.scrollWidth<=width+4,

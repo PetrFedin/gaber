@@ -107,9 +107,5 @@ jobs:
         run: npm run build
       - name: Test actual Chromium roles and viewport overflow at 375, 768 and 1440
         run: node scripts/browser-smoke.mjs
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: gaber-browser-qa-${{ github.event.pull_request.head.sha || github.sha }}
-          path: qa/browser-smoke/*.png
-          if-no-files-found: warn
+      # Screenshots remain in the ephemeral job only: repository Actions
+      # artifact quota is exhausted. Do not buy storage or change visibility.

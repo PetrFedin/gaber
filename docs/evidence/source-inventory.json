@@ -3,7 +3,7 @@
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "08b292db87bf67deaec2be14b4ee104039d04e57"
+      "sha": "1264d4698a1639b4fd81803d00f22985eaff1690"
     },
     {
       "path": ".gitignore",
@@ -40,6 +40,10 @@
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
       "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
+    },
+    {
+      "path": "docs/POSTGRES-STAGING-CONTRACT.md",
+      "sha": "02a0ef4e9142000d2ba2b70413a55974d23f1bdc"
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
@@ -178,6 +182,10 @@
       "sha": "820cc9cf5620a295fd63971a1c01387d01ca15bb"
     },
     {
+      "path": "scripts/verify-postgres-staging.sh",
+      "sha": "727494e5123af771de58c64092aea823b0ec2664"
+    },
+    {
       "path": "scripts/verify-release.sh",
       "sha": "1f8e63677c2f86a711f54da8ad1056548d5d78b7"
     },
@@ -252,6 +260,10 @@
     {
       "path": "server/postgresOrderRepository.js",
       "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+    },
+    {
+      "path": "server/tests/postgres-staging-v007.sql",
+      "sha": "58c6bf398f50b7890483b5f6d085a120d384de36"
     },
     {
       "path": "src/App.jsx",

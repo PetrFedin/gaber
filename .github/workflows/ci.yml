@@ -48,3 +48,38 @@ jobs:
       - name: Production build
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
         run: npm run build
+
+  # Isolated PostgreSQL 17 schema/RLS gate. No production databases, real
+  # account credentials or external service provisioning. All contents are
+  # discarded after the GitHub-hosted job completes.
+  postgres-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: gaber_ci_disposable_only
+          POSTGRES_DB: gaber_staging
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d gaber_staging"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact PostgreSQL contract SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          actual=$(git rev-parse HEAD)
+          test "$actual" = "$EXPECTED_SHA" || { echo "POSTGRES_SHA_MISMATCH" >&2; exit 1; }
+      - name: Apply seven staging migrations and run real PostgreSQL tenant/RLS contract
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: bash scripts/verify-postgres-staging.sh

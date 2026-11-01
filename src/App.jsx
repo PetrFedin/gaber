@@ -260,14 +260,18 @@ function App() {
     dim = dimensions(config);
   useEffect(() => {
     const f = () => {
-      const next = location.hash.split("?")[0].slice(1) || "home";
+      const requested = location.hash.split("?")[0].slice(1) || "home";
+      // #operations is a legacy alias; the canonical operator route is
+      // #partner. The partner entry MUST survive hashchange navigation,
+      // not only a direct initial page load.
+      const next = requested === "operations" ? "partner" : requested;
       setRoute(
         [
           "home",
           "studio",
           "projects",
           "factory",
-          "operations",
+          "partner",
           "materials",
           "costing",
           "technical",

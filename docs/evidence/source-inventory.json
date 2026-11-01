@@ -3,7 +3,7 @@
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "1264d4698a1639b4fd81803d00f22985eaff1690"
+      "sha": "1c8464a2747de5c250bf1931d262f294051e4702"
     },
     {
       "path": ".gitignore",
@@ -180,6 +180,10 @@
     {
       "path": "public/favicon.svg",
       "sha": "820cc9cf5620a295fd63971a1c01387d01ca15bb"
+    },
+    {
+      "path": "scripts/browser-smoke.mjs",
+      "sha": "6983f52eceaf8be3b14cca49b5451bf52ce93217"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",

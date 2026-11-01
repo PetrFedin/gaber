@@ -19,7 +19,7 @@
     },
     {
       "path": "README.md",
-      "sha": "18a2fa40ae9d19e1e5f9ec0ab0e6a4b2e94d504b"
+      "sha": "b9b75e8e3c055d3f83e6024c0451aaa271ff4c49"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
@@ -43,11 +43,11 @@
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "588e44900cccee3c930a01ee33cc6097c78015d6"
+      "sha": "e552fb35704635b4646d56163852aa43e959745d"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
-      "sha": "6915695860b83192bd087e2a3c6314447d7a21d8"
+      "sha": "0836632e1b1c5de6784bff8fccccb7e9527ae020"
     },
     {
       "path": "docs/architecture.md",
@@ -222,16 +222,20 @@
       "sha": "3a5d20c34d8dba3018f84a3604ca1d34b97f9122"
     },
     {
+      "path": "server/migrations/007_verified_factory_directory_hold.sql",
+      "sha": "5a2231897ec8cd8d36abd1ed01229ab3d46193d9"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
       "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
     },
     {
       "path": "server/orderHttpApi.js",
-      "sha": "a761da0bd11ce775fee3ad76a4b03eb92a9de2de"
+      "sha": "405630b1692ef90482c49f156425a83a4cba0b93"
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "a564038ae4ece88f3a4a912d35bd2ef66295f89a"
+      "sha": "41a59c87003f7ec3c9420f941cc08a841a9b20ac"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -247,7 +251,7 @@
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "c42b6569876d4d40ac753ddfe2579573425fb96c"
+      "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
     },
     {
       "path": "src/App.jsx",
@@ -299,11 +303,11 @@
     },
     {
       "path": "src/OperationsPage.jsx",
-      "sha": "cd2a2059e9653fd65d0361589c827b05e32d2b66"
+      "sha": "6c2a7cc1c565d0f29fdc65b484f7b1ea4e97cf87"
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "db342d3cb13f9f64ecda83e47230af4cc0c0de9d"
+      "sha": "aae2727f4ac8a2eddec3b463695a86998ed29c34"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -399,7 +403,7 @@
     },
     {
       "path": "src/orderAnalytics.js",
-      "sha": "b3736a503c463f9c3fedcd804f6a3a4c4929d957"
+      "sha": "8f3673858bef417e867401023dd9306f15e951e2"
     },
     {
       "path": "src/orderMessageChannels.js",
@@ -518,6 +522,10 @@
       "sha": "130c1b6cd15a01477942384592f3a079ddde8561"
     },
     {
+      "path": "tests/factory-directory-v07.test.js",
+      "sha": "7329c7f4b54195b9d8254c9fbff4aa78e0a2e328"
+    },
+    {
       "path": "tests/factory-editor-ui.mjs",
       "sha": "13a67fc606eb175a7d3dd2dec56617ef0fb7c96c"
     },
@@ -555,11 +563,11 @@
     },
     {
       "path": "tests/operations-workspace-ui.mjs",
-      "sha": "8873331cecc46ce03ac3c35dc70634af9c8fc338"
+      "sha": "7c9950d3e16663e0e2d97867b1ea65bfdeec6d3a"
     },
     {
       "path": "tests/order-analytics-v0415.test.js",
-      "sha": "04a757e01009aad0f2e227ff4c40e44967eb6285"
+      "sha": "e73e4a9411dd142cba7cbf14189e7086630a0408"
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
@@ -579,11 +587,11 @@
     },
     {
       "path": "tests/order-intake-e2e.test.js",
-      "sha": "c6c496b008acddf680e80401df9a3f61f96e15df"
+      "sha": "4176c5353c5289046a4e228f026535f00895b7df"
     },
     {
       "path": "tests/order-journal-v0418.test.js",
-      "sha": "b200f7f3cea03c327e9983af51b22e2e8abcc287"
+      "sha": "c7167c5a1e31f5531e992a2325e9b2fd134e361c"
     },
     {
       "path": "tests/order-message-channels.test.js",
@@ -591,7 +599,7 @@
     },
     {
       "path": "tests/order-read-v0419.test.js",
-      "sha": "828526f05ea4da616a6a661a4fa698d5942fa815"
+      "sha": "5764228583914c7040f209d8ce892f11d8d602d5"
     },
     {
       "path": "tests/order-workflow.test.js",
@@ -599,7 +607,7 @@
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "4e36ba5112d13805759202fc67d5d6e801e1f4dd"
+      "sha": "8149695f79ddcba0ddedf7904852abc6e8905ea9"
     },
     {
       "path": "tests/partner-economics.test.js",
@@ -631,7 +639,7 @@
     },
     {
       "path": "tests/role-interactions-e2e.test.js",
-      "sha": "2c10f5dfb1a599bad294f7933fc42be881d40aac"
+      "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
     },
     {
       "path": "tests/storage.test.js",

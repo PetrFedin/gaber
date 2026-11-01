@@ -15,6 +15,7 @@ function fixture(){
  };
  const c=initialConfig();
  send('client','create',{projectId:'p-1',name:'Sofa',config:c},false);
+ send('partner','assign_factory',{factoryId:'FACTORY-1'},false);
  send('partner','prepare_spec',{config:c,customerPriceKopecks:205005,
   factoryCostKopecks:100000,platformCommissionKopecks:40000,logisticsKopecks:10000,
   taxKopecks:5000,otherCostsKopecks:0,technicalNote:'Test CAD and BOM',advanceBps:4000,
@@ -84,4 +85,17 @@ test('reprice pending removes stale price from current portfolio without losing 
  assert.equal(result.rows[0].actionOwner,'factory');
  assert.equal(result.totals.offeredKopecks,0);
  assert.equal(result.totals.pendingRequoteLocalKopecks,82002);
+});
+
+test('unassigned factory never receives an actionable technical review in operator queue',()=>{
+ const workspace=fixture();
+ const order=workspace.orders[0].state;
+ order.assignedFactoryId=null;
+ order.stage='awaiting_factory';
+ const report=analyzeOrderPortfolio(workspace,[],'2026-10-26');
+ assert.equal(report.rows[0].actionOwner,'partner');
+ assert.match(report.rows[0].nextAction,/Назначить/);
+ assert.equal(report.metrics.awaitingFactory,0);
+ assert.equal(report.metrics.awaitingPartner,1);
+ assert.equal(report.rows[0].assignedFactoryId,null);
 });

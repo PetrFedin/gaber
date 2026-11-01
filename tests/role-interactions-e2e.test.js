@@ -34,6 +34,7 @@ function memoryRepository(){
   try{
    const tx={
     getResourceForUpdate:async()=>scope.tenantId==='GABER-TENANT'&&scope.orderId==='ORDER1'?resource:null,
+    isFactoryApproved:async({factoryId})=>scope.tenantId==='GABER-TENANT'&&factoryId==='FACTORY1',
     getHeadForUpdate:async()=>structuredClone(draft.head),
     getEvents:async()=>{metrics.eventReads++;return structuredClone(draft.rows)},
     ensureHead:async()=>{draft.head={version:0,headHash:null}},

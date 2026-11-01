@@ -37,6 +37,7 @@ function memory(){
   const draft=structuredClone(map.get(key)||{head:null,rows:[]});
   const tx={
    getResourceForUpdate:async()=>scope.tenantId==='T1'&&scope.orderId==='O1'?resource:null,
+   isFactoryApproved:async({factoryId})=>scope.tenantId==='T1'&&factoryId==='F1',
    getHeadForUpdate:async()=>draft.head,
    ensureHead:async()=>{draft.head={version:0,headHash:null}},
    getEvents:async()=>structuredClone(draft.rows),
@@ -152,6 +153,8 @@ test('PostgreSQL provisioning and factory assignment are tenant-scoped inserts i
     return {rowCount:1,rows:[{order_id:'O1'}]};
    if(sql.includes('INSERT INTO gaber_orders.order_factory_assignments'))
     return {rowCount:1,rows:[{factory_id:'F1'}]};
+   if(sql.includes('FROM gaber_orders.factory_directory'))
+    return {rowCount:1,rows:[{factory_id:'F1'}]};
    if(sql.includes('FROM gaber_orders.order_resources AS r'))
     return {rowCount:1,rows:[{tenantId:'T1',orderId:'O1',clientId:'C1',factoryId:'F1'}]};
    return {rowCount:0,rows:[]};
@@ -162,6 +165,7 @@ test('PostgreSQL provisioning and factory assignment are tenant-scoped inserts i
  const adapter=createPostgresOrderRepository({pool});
  const ok=await adapter.withOrderTransaction({tenantId:'T1',orderId:'O1'},async tx=>{
   assert.equal(await tx.createResource({clientId:'C1'}),true);
+  assert.equal(await tx.isFactoryApproved({factoryId:'F1'}),true);
   assert.equal(await tx.assignFactory({factoryId:'F1',assignedBy:'PARTNER-U1'}),true);
   assert.equal((await tx.getResourceForUpdate()).factoryId,'F1');
   return true;
@@ -170,9 +174,12 @@ test('PostgreSQL provisioning and factory assignment are tenant-scoped inserts i
  const resource=log.find(x=>x.sql.includes('INSERT INTO gaber_orders.order_resources'));
  const factory=log.find(x=>x.sql.includes('INSERT INTO gaber_orders.order_factory_assignments'));
  const select=log.find(x=>x.sql.includes('LEFT JOIN gaber_orders.order_factory_assignments'));
+ const directory=log.find(x=>x.sql.includes('FROM gaber_orders.factory_directory'));
  assert.deepEqual(resource.params,['T1','O1','C1']);
  assert.deepEqual(factory.params,['T1','O1','F1','PARTNER-U1']);
  assert.deepEqual(select.params,['T1','O1']);
+ assert.deepEqual(directory.params,['T1','F1']);
+ assert.match(directory.sql,/status='approved'/);
  assert.match(select.sql,/FOR UPDATE OF r/);
  assert.equal(log[0].sql,'BEGIN ISOLATION LEVEL SERIALIZABLE READ WRITE');
  assert.equal(log.at(-1).sql,'COMMIT');

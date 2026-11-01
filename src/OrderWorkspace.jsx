@@ -149,7 +149,7 @@ function OrderDetail({row,role,send,onError}){
      <button className="button outline" type="submit">Назначить фабрику · локально</button>
     </form>}
    {factory&&!s.assignedFactoryId&&<p className="inline-warning">Демонстрационный заказ: назначение фабрики на сервере не подтверждено.</p>}
-   {partner&&['requested','change_requested','factory_changes','offered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>{
+   {partner&&!!s.assignedFactoryId&&['requested','change_requested','factory_changes','offered'].includes(s.stage)&&<form onSubmit={e=>submit(e,()=>{
     if(!/^\d{1,3}([.,]\d{1,2})?$/.test(advance))throw Error('Проверьте процент аванса.');
     send('prepare_spec',{config:{...(spec?.config??r?.config??s.sourceConfig),width:Number(width)},
      technicalNote,customerPriceKopecks:amount(price),factoryCostKopecks:amount(factoryCost),
@@ -180,14 +180,14 @@ function OrderDetail({row,role,send,onError}){
       <div><dt>Логистика / налоги / прочие</dt><dd>{orderMoney(spec.economics.logisticsKopecks+spec.economics.taxKopecks+spec.economics.otherCostsKopecks)}</dd></div>
       <div><dt>Плановый резерв</dt><dd>{orderMoney(spec.economics.plannedReserveKopecks)}</dd></div>
      </dl>}
-     {factory&&s.stage==='awaiting_factory'&&<form onSubmit={e=>submit(e,()=>send('confirm_spec',{reference,note}))}>
+     {factory&&!!s.assignedFactoryId&&s.stage==='awaiting_factory'&&<form onSubmit={e=>submit(e,()=>send('confirm_spec',{reference,note}))}>
       <p>Проверьте конструкцию, материалы, сроки и стоимость. Это подтверждение проектного ТЗ, не запуск изготовления.</p>
       <label className="order-field">Документ подтверждения фабрики<input required maxLength={500} value={reference} onChange={e=>setReference(e.target.value)}/></label>
       <label className="order-field">Комментарий фабрики<textarea required maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label>
       <button className="button dark" type="submit">Подтвердить ТЗ · локально</button>
       <button className="button outline" type="button" onClick={()=>send('return_spec',{note:note||'Требуются уточнения ТЗ'})}>Вернуть ТЗ на доработку</button>
      </form>}
-     {partner&&s.stage==='factory_confirmed'&&<button className="button dark" onClick={()=>send('offer',{note:spec.note})}>Опубликовать предложение клиенту</button>}
+     {partner&&!!s.assignedFactoryId&&s.stage==='factory_confirmed'&&<button className="button dark" onClick={()=>send('offer',{note:spec.note})}>Опубликовать предложение клиенту</button>}
    </div>}
    {client&&s.stage==='offered'&&<div className="order-decision">
     <label><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/> Проверены комплектация, цена, аванс и срок предложения {r.id}</label>

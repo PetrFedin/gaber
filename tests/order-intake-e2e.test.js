@@ -24,9 +24,12 @@ const clone=x=>structuredClone(x);
  */
 function repository(){
  let doc={resource:null,factory:null,head:null,events:[]},calls=0;
+ const roster=new Map([['FACTORY-A','approved'],['FACTORY-B','approved'],
+  ['FACTORY-PAUSED','suspended']]);
  let mutex=Promise.resolve();
  return {
   get snapshot(){return clone(doc)},get commits(){return calls},
+  setFactoryStatus:(factoryId,status)=>roster.set(factoryId,status),
   async withOrderTransaction(scope,fn){
    let release;const gate=new Promise(resolve=>{release=resolve});
    const previous=mutex;mutex=previous.then(()=>gate);await previous;
@@ -42,6 +45,8 @@ function repository(){
       draft.resource={source:'server-repository',tenantId:tenant,orderId,
        clientId,factoryId:null};return true;
      },
+     isFactoryApproved:async({factoryId})=>
+      scope.tenantId===tenant&&scope.orderId===orderId&&roster.get(factoryId)==='approved',
      assignFactory:async({factoryId,assignedBy})=>{
       if(!draft.resource||draft.factory)return false;
       draft.factory={factoryId,assignedBy};return true;
@@ -111,6 +116,12 @@ test('new customer request provisions tenant resource atomically, operator assig
   assert.equal((await f.read('factory')).status,404,'Factory has not been assigned');
   assert.equal((await f.send('client','assign_factory',
    {factoryId:'FACTORY-A'},1,'FORGED-ASSIGN')).status,403);
+  assert.equal((await f.send('partner','prepare_spec',spec(cfg),1,'UNASSIGNED-SPEC')).status,409);
+  assert.equal((await f.send('partner','assign_factory',
+   {factoryId:'NON-EXISTENT'},1,'UNVERIFIED-ASSIGN')).status,403);
+  assert.equal((await f.send('partner','assign_factory',
+   {factoryId:'FACTORY-PAUSED'},1,'SUSPENDED-ASSIGN')).status,403);
+  assert.equal(f.db.snapshot.events.length,1);
   assert.equal((await f.send('partner','assign_factory',
    {factoryId:'FACTORY-A'},1,'ASSIGN-1')).status,201);
   assert.deepEqual(f.db.snapshot.factory,{factoryId:'FACTORY-A',assignedBy:'GABER-OWNER'});
@@ -126,6 +137,12 @@ test('new customer request provisions tenant resource atomically, operator assig
   assert.equal((await f.read('factory')).body.order.offer,undefined);
   assert.equal((await f.send('factory','confirm_spec',
    {reference:'ACK-A',note:'Factory concept reviewed'},3,'ACK-1','S1')).status,201);
+  f.db.setFactoryStatus('FACTORY-A','suspended');
+  assert.equal((await f.send('partner','offer',{note:'No quote for revoked factory'},
+   4,'OFFER-REVOKED','S1')).status,403);
+  assert.equal((await f.read('factory')).status,404);
+  assert.equal(f.db.snapshot.events.length,4);
+  f.db.setFactoryStatus('FACTORY-A','approved');
   assert.equal((await f.send('partner','offer',{note:'Final client quote'},4,'OFFER-1','S1')).status,201);
   assert.equal((await f.send('client','accept',{},5,'ACCEPT-1','R1')).status,201);
   assert.equal((await f.send('client','report_payment',
@@ -141,6 +158,16 @@ test('new customer request provisions tenant resource atomically, operator assig
   assert.equal(client.economics,undefined);
   assert.equal(partner.productionRelease.allowed,false);
   assert.equal(f.db.snapshot.events.length,8);
+  f.db.setFactoryStatus('FACTORY-A','suspended');
+  assert.equal((await f.read('factory')).status,404,
+   'Suspended factory loses access to previously assigned order');
+  assert.equal((await f.send('factory','message',
+   {note:'Revoked factory should not write',channel:'factory_partner'},8,
+   'REVOKED-WRITE','R1')).status,404);
+  assert.equal((await f.read('partner')).status,200);
+  assert.equal((await f.read('client')).status,200);
+  assert.equal(f.db.snapshot.events.length,8,
+   'Suspension must not erase or append immutable history');
  }finally{await f.close()}
 });
 test('invalid first event does not leave orphan resource, head, or assignment',async()=>{

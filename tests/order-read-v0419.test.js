@@ -21,6 +21,7 @@ function fixture(){
   const draft={head:structuredClone(head),rows:structuredClone(rows)};
   const result=await work({
    getResourceForUpdate:async()=>scope.tenantId==='T1'&&scope.orderId==='O1'?resource:null,
+   isFactoryApproved:async({factoryId})=>scope.tenantId==='T1'&&factoryId==='F1',
    getHeadForUpdate:async()=>draft.head,
    getEvents:async()=>{readCount++;return structuredClone(draft.rows)},
    ensureHead:async()=>{draft.head={version:0,headHash:null}},

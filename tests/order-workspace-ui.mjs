@@ -133,6 +133,10 @@ try{
  localStorage.removeItem(ORDER_STORAGE_KEY);
  await render('client');await click('Создать заказ из проекта');
  await render('partner');
+ assert.equal([...document.querySelectorAll('button')].some(b=>b.textContent==='Отправить ТЗ фабрике на подтверждение'),false);
+ await fill('Код фабрики','FACTORY-A');
+ await click('Назначить фабрику · локально');
+ assert.equal(state().assignedFactoryId,'FACTORY-A');
  for(const [label,value] of [
   ['Цена клиенту, ₽','1200'],['Себестоимость фабрики, ₽','700'],
   ['Комиссия Габер, ₽','200'],['Логистика, ₽','50'],

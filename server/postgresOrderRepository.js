@@ -30,6 +30,17 @@ export function createPostgresOrderRepository({pool}){
        [...key,clientId]);
       return q.rowCount===1;
      },
+     async isFactoryApproved({factoryId}){
+      if(!id(factoryId))return false;
+      // Trusted organisation roster; scoped by the same tenant GUC and the
+      // exact tenant key. The outer SERIALIZABLE transaction protects against
+      // inconsistent acknowledgement/revocation snapshots.
+      const q=await c.query(`SELECT factory_id FROM gaber_orders.factory_directory
+       WHERE tenant_id=$1 AND factory_id=$2
+         AND status='approved' AND verified_at IS NOT NULL LIMIT 1`,
+       [tenantId,factoryId]);
+      return q.rowCount===1;
+     },
      async assignFactory({factoryId,assignedBy}){
       if(!id(factoryId)||!id(assignedBy))throw TypeError('INVALID_FACTORY_ASSIGNMENT');
       const q=await c.query(`INSERT INTO gaber_orders.order_factory_assignments

@@ -52,6 +52,14 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(!resource||resource.orderId!==scope.orderId)return deny('RESOURCE_NOT_AUTHORIZED');
    const access=authorizeGaberAction({principal:actor,resource,action:'orders.read',nowMs:now});
    if(!access.allowed)return deny(access.reason);
+   // Even a formerly assigned factory loses access when its verified
+   // organisation is suspended. Do not read the event history before this
+   // check; the operator and customer retain their own lawful access.
+   if(access.role==='factory'){
+    if(typeof tx.isFactoryApproved!=='function')return deny('FACTORY_DIRECTORY_UNAVAILABLE');
+    if(await tx.isFactoryApproved({factoryId:resource.factoryId})!==true)
+     return deny('RESOURCE_MEMBERSHIP_DENIED');
+   }
    const head=await tx.getHeadForUpdate();
    if(!head)return deny('ORDER_MISSING');
    const {state}=verify(head,await tx.getEvents(),scope,reducer.replayOrder);
@@ -103,6 +111,20 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    const verdict=admission({principal:actor,resource,command:{type,role,payload},nowMs:now});
    if(!verdict?.allowed)return deny(verdict?.code??'ROLE_FORBIDDEN');
    if(verdict.reducerRole!==role)return deny('UNTRUSTED_COMMAND_ROLE');
+   if(role==='factory'){
+    if(typeof tx.isFactoryApproved!=='function')return deny('FACTORY_DIRECTORY_UNAVAILABLE');
+    if(await tx.isFactoryApproved({factoryId:resource.factoryId})!==true)
+     return deny('RESOURCE_MEMBERSHIP_DENIED');
+   }
+   // The partner cannot submit a new production task or publish a quote
+   // for an unassigned, unverified or since-suspended factory.
+   if(type==='prepare_spec'||type==='offer'){
+    if(resource.factoryId==null)return deny('FACTORY_ASSIGNMENT_REQUIRED');
+    if(typeof tx.isFactoryApproved!=='function')
+     return deny('FACTORY_DIRECTORY_UNAVAILABLE');
+    if(await tx.isFactoryApproved({factoryId:resource.factoryId})!==true)
+     return deny('FACTORY_NOT_APPROVED');
+   }
    let head=await tx.getHeadForUpdate();
    if(!head&&type!=='create')return deny('ORDER_MISSING');
    const firstWrite=!head;
@@ -139,6 +161,14 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
        created.factoryId!=null)throw Error('ORDER_INTAKE_INTEGRITY_FAILURE');
    }
    if(type==='assign_factory'){
+    // A factory ID from an operator form is NOT proof that this organization
+    // belongs to the tenant and is approved. Inspect the authoritative
+    // directory under this same serializable transaction and lock the roster
+    // row until the immutable order assignment is committed.
+    if(typeof tx.isFactoryApproved!=='function')
+     return deny('FACTORY_DIRECTORY_UNAVAILABLE');
+    if(await tx.isFactoryApproved({factoryId:payload.factoryId})!==true)
+     return deny('FACTORY_NOT_APPROVED');
     if(typeof tx.assignFactory!=='function')return deny('FACTORY_ASSIGNMENT_UNAVAILABLE');
     if(await tx.assignFactory({factoryId:payload.factoryId,assignedBy:actor.subject})!==true)
      return deny('FACTORY_ALREADY_ASSIGNED');

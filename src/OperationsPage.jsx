@@ -110,7 +110,7 @@ export default function OperationsPage({projects}){
      <div className="gaber-operations-table"><table>
       <thead><tr><th>Изделие / ID</th><th>Состояние</th><th>Следующее действие</th><th>Срок</th></tr></thead>
       <tbody>{listed.map(row=><tr key={row.id}>
-       <td><strong>{row.name}</strong><small>{row.id} · {row.revisionId??'без предложения'}</small></td>
+       <td><strong>{row.name}</strong><small>{row.id} · {row.revisionId??'без предложения'}</small><small>Фабрика: {row.assignedFactoryId??'не назначена'}</small></td>
        <td>{row.stageLabel}
         {row.openIssue&&<small>Открыто замечание</small>}
         {!row.engineeringIntegrityOk&&<small>Ошибка инженерной связности</small>}</td>

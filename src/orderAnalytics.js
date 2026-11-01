@@ -10,10 +10,18 @@ const sumKopecks=values=>{
 };
 function decision(state,finance){
  switch(state.stage){
-  case 'requested':return ['partner','Подготовить ТЗ, себестоимость и комиссию'];
-  case 'awaiting_factory':return ['factory','Проверить и подтвердить техническое задание'];
-  case 'factory_confirmed':return ['partner','Опубликовать согласованное фабрикой предложение клиенту'];
-  case 'factory_changes':return ['partner','Исправить ТЗ по замечаниям фабрики'];
+  case 'requested':return state.assignedFactoryId
+   ?['partner','Подготовить ТЗ, себестоимость и комиссию']
+   :['partner','Назначить проверенную фабрику до отправки ТЗ'];
+  case 'awaiting_factory':return state.assignedFactoryId
+   ?['factory','Проверить и подтвердить техническое задание']
+   :['partner','Заявка без фабрики: назначить проверенную организацию'];
+  case 'factory_confirmed':return ['partner',state.assignedFactoryId
+   ?'Опубликовать согласованное фабрикой предложение клиенту'
+   :'Требуется назначение фабрики: публикация заблокирована'];
+  case 'factory_changes':return ['partner',state.assignedFactoryId
+   ?'Исправить ТЗ по замечаниям фабрики'
+   :'Назначить фабрику для повторного согласования ТЗ'];
   case 'offered':return ['client','Согласовать предложение или запросить изменение'];
   case 'change_requested':return ['partner','Обновить ТЗ, расчёт и согласование фабрики'];
   case 'accepted':return finance.advanceDueKopecks>0
@@ -60,7 +68,8 @@ export function analyzeOrderPortfolio(workspace,projects=[],today=localOperation
   const priority=s.stage==='disputed'||!engineering.integrityOk||overdue?'critical':
    actionOwner!=='none'?'attention':'complete';
   const row={id:record.id,name:s.name,stage:s.stage,stageLabel:ORDER_STAGES[s.stage],
-   version:s.version,revisionId:activeOffer?.id??null,
+   version:s.version,assignedFactoryId:s.assignedFactoryId??null,
+   revisionId:activeOffer?.id??null,
    dueDate:proposedDueDate,dueDateAuthority:activeOffer?'PUBLISHED_UNVERIFIED':'DRAFT_UNCONFIRMED',
    overdue,priority,
    actionOwner,nextAction,engineeringIntegrityOk:engineering.integrityOk,

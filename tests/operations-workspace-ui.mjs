@@ -28,6 +28,7 @@ try{
   workspace=saveOrderCommand(localStorage,workspace,'ops-1',command);
  };
  send('client','create',{projectId:'ops-1',name:'Reference Sofa',config});
+ send('partner','assign_factory',{factoryId:'FACTORY-1'});
  send('partner','prepare_spec',{config,customerPriceKopecks:200005,
   factoryCostKopecks:95000,platformCommissionKopecks:40000,
   logisticsKopecks:9000,taxKopecks:6000,otherCostsKopecks:0,
@@ -42,6 +43,7 @@ try{
  assert.match(document.body.textContent,/Финансовый контекст/);
  assert.match(document.body.textContent,/Подтверждённые банком поступления/);
  assert.match(document.body.textContent,/Плановая комиссия Габер/);
+ assert.match(document.body.textContent,/Фабрика: FACTORY-1/);
  assert.match(document.body.textContent,/Ждут партнёра/);
  localStorage.setItem(ORDER_STORAGE_KEY,'{broken');
  await act(async()=>window.dispatchEvent(new window.StorageEvent('storage',{key:ORDER_STORAGE_KEY})));

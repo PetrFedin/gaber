@@ -15,15 +15,36 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # PR default checkout is a synthetic merge commit, NOT the head SHA.
+          # The release gate must verify the exact authored source revision.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact checkout SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          actual=$(git rev-parse HEAD)
+          if [ "$actual" != "$EXPECTED_SHA" ]; then
+            echo "CHECKOUT_SHA_MISMATCH: expected=$EXPECTED_SHA actual=$actual" >&2
+            exit 1
+          fi
+          echo "GABER_VERIFIED_SOURCE_SHA=$actual"
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - name: Dependency install
+        id: install
         run: npm ci
       - name: Verify source inventory
+        id: source
         run: npm run verify:source
-      - name: Domain, geometry and render tests
-        run: npm test
+      - name: Node domain, engineering and API regression tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: npm run test:node
+      - name: DOM integration, rendering and three-role smoke tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: npm run test:ui
       - name: Production build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
         run: npm run build

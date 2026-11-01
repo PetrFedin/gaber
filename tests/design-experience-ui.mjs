@@ -5,7 +5,12 @@ import {createServer} from 'vite';
 
 const dom=new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',{url:'https://gaber.example.test/'});
 globalThis.window=dom.window;globalThis.document=dom.window.document;
-globalThis.navigator=dom.window.navigator;globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+// Node 24 exposes navigator as a getter-only global. A normal assignment
+// throws before the DOM test can mount any React component.
+Object.defineProperty(globalThis,'navigator',{
+ value:dom.window.navigator,configurable:true,writable:true
+});
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const {createRoot}=await import('react-dom/client');
 const server=await createServer({optimizeDeps:{noDiscovery:true,include:[]},server:{middlewareMode:true},appType:'custom'});
 const root=createRoot(document.getElementById('root'));

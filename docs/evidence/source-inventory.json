@@ -3,7 +3,7 @@
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "58865edc920722c21ddde684673f3d35c6d94b75"
+      "sha": "08b292db87bf67deaec2be14b4ee104039d04e57"
     },
     {
       "path": ".gitignore",
@@ -19,11 +19,11 @@
     },
     {
       "path": "README.md",
-      "sha": "b9b75e8e3c055d3f83e6024c0451aaa271ff4c49"
+      "sha": "a87939bd7de2eca815908bb60dc976e98a820e6f"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
-      "sha": "be19b06788fe0b47947e296d167e41429d5f658e"
+      "sha": "16d65a05d5f848f95d7d7ab22ddfa4b99d2f7e7f"
     },
     {
       "path": "docs/CLIENT-EXPERIENCE.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "package.json",
-      "sha": "1f713b5017e654a7f0cfa4ee7ea7b9b2a9db96ea"
+      "sha": "64c382798323a3a262d6e969b14d4daa8bf9d871"
     },
     {
       "path": "public/favicon.svg",
@@ -499,7 +499,7 @@
     },
     {
       "path": "tests/design-experience-ui.mjs",
-      "sha": "1d59bb95cc86a54e0d3087ff869e17a34f20274f"
+      "sha": "e866a2480aa1365005418f425cf7af1782cfbfba"
     },
     {
       "path": "tests/design-guidance.test.js",

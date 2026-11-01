@@ -1,3 +1,31 @@
+## Runner восстановлен: первый исполняемый CI (01.11.2026)
+
+**Исторический блокер ниже закрыт как неисполнимый CI, но причина прежней
+невозможности выделить runner всё ещё не установлена.** Не требуется повторно
+менять billing, секреты или приватность репозитория.
+
+- [Run #41347158538](https://github.com/PetrFedin/gaber/actions/runs/41347158538),
+  PR SHA `6c589a9369bb5090a2fc83b1d47cb5eed67b1d2d`:
+  runner присвоен, `npm ci` GREEN, `verify:source` GREEN;
+  **234 Node tests: 232 PASS / 2 FAIL**. Два дефекта в legacy ожидании
+  `ORDER_INTAKE_UNAVAILABLE` и тексте `Назначить` исправлены
+  коммитом `305fa9d`.
+- [Run #41347295857](https://github.com/PetrFedin/gaber/actions/runs/41347295857),
+  SHA `305fa9dc5b0cd18cd44dcfccb8224580fc1b29c0`:
+  **234/234 Node tests GREEN**, 52/52 SSR scenarios GREEN,
+  **DOM smoke RED** на `globalThis.navigator=...`: в Node 24
+  `navigator` имеет getter без setter. Исправлена установка через
+  `Object.defineProperty`. Build в этом прогоне пропущен.
+- Текущий workflow разделяет Node tests / DOM tests / build и проверяет
+  точный PR head SHA, потому что GitHub `pull_request` по умолчанию
+  checkout-ит синтетический merge SHA, а релизные доказательства должны
+  относиться к **единому source SHA**. Следующий run должен быть проверен,
+  а не считаться GREEN заранее.
+
+**Этот документ хранит полную хронологию, включая прежний pre-runner отказ.
+Факт успешной установки и тестов не означает readiness PostgreSQL, PSP,
+заводского ТЗ или браузерной приёмки.**
+
 # GABER — CI runner recovery and release verification
 
 > Status (2026-10-31): **BLOCKED BY RUNNER PROVISIONING / UNDIAGNOSED PREFLIGHT**.

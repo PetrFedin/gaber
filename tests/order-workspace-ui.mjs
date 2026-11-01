@@ -28,7 +28,11 @@ try{
   const b=button(label);assert.equal(b.disabled,false,'Disabled: '+label);b.click();
  });
  const field=label=>{
-  const el=[...document.querySelectorAll('label')].find(x=>x.textContent.trim()===label);
+  // A populated <textarea> exposes its initial text as a descendant of
+  // <label>. Match only direct label text nodes, not the field's value.
+  const el=[...document.querySelectorAll('label')].find(x=>
+   [...x.childNodes].filter(n=>n.nodeType===window.Node.TEXT_NODE)
+    .map(n=>n.textContent).join('').trim()===label);
   assert.ok(el,'Missing field: '+label);
   return el.querySelector('input,textarea,select');
  };

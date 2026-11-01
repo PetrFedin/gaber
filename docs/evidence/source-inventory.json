@@ -607,7 +607,7 @@
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "7ce11ed143a95a73d903232320e50134a3f0d6e6"
+      "sha": "2a87e019aa7026dde3d35867dc64ca9b6983b831"
     },
     {
       "path": "tests/partner-economics.test.js",

@@ -79,7 +79,7 @@
     },
     {
       "path": "docs/engineering-v0.3.md",
-      "sha": "0151da123b83c66e56a87f61f82fc616a8a6d3b1"
+      "sha": "0151da123b83c66e56a87f61f82fc616c6979a9b"
     },
     {
       "path": "docs/engineering-v0.4.md",
@@ -91,11 +91,11 @@
     },
     {
       "path": "docs/expansion-v0.2.md",
-      "sha": "6d81bcbd282c0947ac56e5e04cf14e9071a4b1d2"
+      "sha": "6d81bcbd282c0947ac56e5e04b0eacf90981268b"
     },
     {
       "path": "docs/market-benchmark-v046-2026-10-20.md",
-      "sha": "4f2fd988e3ab49b8712dc6e395b5e76eaefbfb"
+      "sha": "4f2fd988e3ab49b8712dc6e395a8f4bf73320fd7"
     },
     {
       "path": "docs/project-map-v0.4.16.md",
@@ -103,7 +103,7 @@
     },
     {
       "path": "docs/project-recovery-2026-10-19.md",
-      "sha": "aed4a85d87072dae3b4f3203e6fcf19fe9358029"
+      "sha": "aed4a85b87072dae3b4f3203e6fcf19fe9358029"
     },
     {
       "path": "docs/roadmap.md",
@@ -111,7 +111,7 @@
     },
     {
       "path": "docs/technical-specification-v1.md",
-      "sha": "b04b4d581c7a93cbabf1cf9a50d1b8cecd1c4563"
+      "sha": "b04f8ff73b0eb389ea9c1c5c3752c7e69bc809fd"
     },
     {
       "path": "docs/verification-storage-2026-10-19.md",
@@ -123,11 +123,11 @@
     },
     {
       "path": "docs/verification-v0.4.10.md",
-      "sha": "51b106d195cc1d7a3b2bba5b712f77d4084b98ce3"
+      "sha": "51b106d195cc1d7a7b5f922ae40e880a48afa278"
     },
     {
       "path": "docs/verification-v0.4.11.md",
-      "sha": "c5b19b8a8c1864e4ee833f93d7a4f7cd9e2b1c1b"
+      "sha": "c5b19b8a8c1862cd4cdc81d5b94c109bf4c20ee7"
     },
     {
       "path": "docs/verification-v0.4.12.md",
@@ -135,7 +135,7 @@
     },
     {
       "path": "docs/verification-v0.4.13.md",
-      "sha": "5fd3647d928ab2dea52544d7c4a50d1b8cecd1c4563"
+      "sha": "5fd3647b928ab2dea52544e219c870f77a54901d"
     },
     {
       "path": "docs/verification-v0.4.14.md",
@@ -159,15 +159,15 @@
     },
     {
       "path": "docs/verification-v0.4.3.md",
-      "sha": "1533c8ab9a08b9bfeefcffd6e83f4ce0f0dd4592"
+      "sha": "153b3ce1313c034ee91bfdca0bdedd5572905183"
     },
     {
       "path": "docs/verification-v0.4.4.md",
-      "sha": "47fa84963c9135519a9b7b4b1b29f55e2f7c65c9"
+      "sha": "47fa84963c9135519a9b7b5b7624f637f013427a"
     },
     {
       "path": "docs/verification-v0.4.5.md",
-      "sha": "2d66428dc2c8c9749772425b71cf8fe0ba36678"
+      "sha": "2d66428dc2b25a9aa5dfd0009711cf7f5b1d1242"
     },
     {
       "path": "docs/verification-v0.4.7.md",
@@ -175,7 +175,7 @@
     },
     {
       "path": "docs/verification-v0.4.8.md",
-      "sha": "ab45a61c1d69a229022b2b8a63b57b2bfe8c2d9f"
+      "sha": "ab45a61c1d69a229023796826a78eb1bfb877593"
     },
     {
       "path": "index.html",
@@ -223,7 +223,7 @@
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
-      "sha": "0943192d0d360a24fadca4a2e08cee817e8e537"
+      "sha": "0943192d0d360a24fadca4a2e08cee8178e8c537"
     },
     {
       "path": "server/migrations/002_order_event_journal_hold.sql",
@@ -395,7 +395,7 @@
     },
     {
       "path": "src/designGuidance.js",
-      "sha": "80187d1e270c45c75c023dd88b2a6c0c67c9c0e0"
+      "sha": "80187d1e270c45e4724f8ee73adeb34adfff2b3c"
     },
     {
       "path": "src/domain.js",
@@ -411,7 +411,7 @@
     },
     {
       "path": "src/factoryDraftStorage.js",
-      "sha": "3cbbe5130137181c5a71d641a4ccbb8c536d471f370346"
+      "sha": "3cbbe5130137181c5a71a648eb5205d553cfe72e"
     },
     {
       "path": "src/factoryInsights.js",

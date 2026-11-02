@@ -22,11 +22,16 @@ const FORBIDDEN=new Set(['ROLE_FORBIDDEN','MFA_REQUIRED','EXTERNAL_AUTHORITY_REQ
  'FACTORY_NOT_APPROVED']);
 const VERSION_CONFLICT=new Set(['STALE_ORDER_VERSION','IDEMPOTENCY_CONFLICT',
  'AMBIGUOUS_ROLE','FACTORY_ASSIGNMENT_REQUIRED']);
+const SERVER_UNAVAILABLE=new Set(['FACTORY_DIRECTORY_UNAVAILABLE',
+ 'FACTORY_ASSIGNMENT_UNAVAILABLE','ORDER_INTAKE_UNAVAILABLE']);
 function statusFor(code,read=false){
  if(code==='NO_VERIFIED_SESSION')return 401;
  if(READ_MISSING.has(code))return 404;
  if(VERSION_CONFLICT.has(code))return 409;
  if(FORBIDDEN.has(code))return 403;
+ // Missing server adapters and the authoritative factory directory are
+ // infrastructure failures, NOT invalid customer transactions.
+ if(SERVER_UNAVAILABLE.has(code))return 503;
  if(CLIENT_BAD.has(code))return 400;
  if(code==='ORDER_TRANSITION_REJECTED')return 422;
  return read?503:422;

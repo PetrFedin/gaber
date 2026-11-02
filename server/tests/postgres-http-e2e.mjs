@@ -44,9 +44,9 @@ const spec=(config,price=210005)=>({
  taxKopecks:5000,otherCostsKopecks:0,advanceBps:5000,
  dueDate:'2027-02-01',note:'Price after factory review'
 });
-let api,base,checks=0;
+let api,base,checks=0,lastRequest=null;
 function check(actual,expected,label){
- assert.deepEqual(actual,expected,label);checks++;
+ assert.deepEqual(actual,expected,label+' lastHttp='+JSON.stringify(lastRequest));checks++;
 }
 function ok(actual,label){assert.ok(actual,label);checks++;}
 const request=async(role,method,url,body)=>{
@@ -54,7 +54,9 @@ const request=async(role,method,url,body)=>{
   ...(users[role]?{authorization:'Bearer '+users[role]}:{}),
   ...(method==='POST'?{'content-type':'application/json'}:{})
  },...(body!==undefined?{body:JSON.stringify(body)}:{})});
- return {status:response.status,body:await response.json()};
+ const bodyResult=await response.json();
+ lastRequest={role,method,url,status:response.status,code:bodyResult?.code??null};
+ return {status:response.status,body:bodyResult};
 };
 const read=(role,orderId=id)=>request(role,'GET','/api/v1/orders/'+orderId);
 const send=(role,type,payload,expectedVersion,requestId,revisionId,orderId=id)=>request(
@@ -72,9 +74,9 @@ async function rows(tenant,orderId=id){
  finally{client.release()}
 }
 async function main(){
- const jwtResolved=async token=>tokens.has(token)?structuredClone(tokens.get(token)):null;
+ const resolveTestSession=async token=>tokens.has(token)?structuredClone(tokens.get(token)):null;
  const journal=wirePostgresOrderJournal({pool:clientPool,clock:()=>now});
- api=createOrderHttpServer({journal,resolveSession:jwtResolved,clock:()=>now});
+ api=createOrderHttpServer({journal,resolveSession:resolveTestSession,clock:()=>now});
  api.listen(0,'127.0.0.1');await once(api,'listening');
  base='http://127.0.0.1:'+api.address().port;
  const cfg=initialConfig();
@@ -88,12 +90,22 @@ async function main(){
  check((await send('client','create',created,0,'C-A-1')).status,200,
   'Identical request ID retries return idempotent 200');
  check((await rows(tenantA)).length,1,'Idempotent request inserted once');
+ check((await send('client','create',{...created,name:'Same key different request'},0,'C-A-1')).status,409,
+  'Same requestId with changed payload fails with idempotency conflict');
+ check((await request('client','POST','/api/v1/orders/'+id+'/commands',{
+  requestId:'BODY-ROLE-FORGERY',expectedVersion:1,type:'assign_factory',
+  role:'partner',payload:{factoryId:'FAB-A'}
+ })).status,400,'Client cannot override session role through JSON');
  check((await read('otherClient')).status,404,'Separate client cannot read private order');
  check((await read('factory')).status,404,'Unassigned factory cannot read order');
  check((await send('client','assign_factory',{factoryId:'FAB-A'},1,'FORGED-ASSIGN')).status,403,
   'Client cannot assume partner authority');
  check((await send('partner','prepare_spec',spec(cfg),1,'SPEC-UNASSIGNED')).status,409,
   'Partner cannot issue factory specification before assignment');
+ tokens.get(users.partner).mfaVerified=false;
+ check((await send('partner','assign_factory',{factoryId:'FAB-A'},1,'ASSIGN-NO-MFA')).status,403,
+  'Partner assigning an organisation must pass MFA');
+ tokens.get(users.partner).mfaVerified=true;
  check((await send('partner','assign_factory',{factoryId:'FAB-B-ONLY'},1,'FOREIGN-ROSTER')).status,403,
   'Partner cannot assign factory in another tenant directory');
  check((await send('partner','assign_factory',{factoryId:'FAB-PAUSED'},1,'PAUSED-ROSTER')).status,403,
@@ -233,9 +245,35 @@ async function main(){
   'Concurrent first orders exactly one winner, one stale conflict');
  check((await rows(tenantA,fresh)).length,1,'Only one first event committed');
 
+ // Contending assignments on a different, real PostgreSQL order must commit
+ // exactly one immutable membership + event pair, never two factory owners.
+ const contested='ORDER-PG-FACTORY-RACE';
+ check((await send('client','create',{projectId:contested,name:'Concurrent factory case',
+  config:cfg},0,'ASSIGN-RACE-CREATE',undefined,contested)).status,201,
+  'Create independent order for competing factory assignments');
+ const assignmentRace=await Promise.all([
+  send('partner','assign_factory',{factoryId:'FAB-A'},1,'ASSIGN-RACE-A',undefined,contested),
+  send('partner','assign_factory',{factoryId:'FAB-OTHER'},1,'ASSIGN-RACE-B',undefined,contested)
+ ]);
+ check(assignmentRace.map(r=>r.status).sort((a,b)=>a-b),[201,409],
+  'Competing factory assignments commit exactly once');
+ const assignedOrder=(await read('partner',contested)).body.order;
+ ok(['FAB-A','FAB-OTHER'].includes(assignedOrder.assignedFactoryId),
+  'Approved factory assignment must be visible to partner in authoritative read');
+ check((await rows(tenantA,contested)).length,2,
+  'Contended factory assignment has only one persistent journal event');
+ check((await read('factory',contested)).status,
+  assignedOrder.assignedFactoryId==='FAB-A'?200:404,
+  'Only selected factory A can read contested order');
+ check((await read('otherFactory',contested)).status,
+  assignedOrder.assignedFactoryId==='FAB-OTHER'?200:404,
+  'Only selected factory B can read contested order');
+
  // Session revocation is a separate TEST resolver capability; not real IdP.
  tokens.delete(users.factory);
  check((await read('factory')).status,401,'Server-side session revocation denies old bearer token');
+ tokens.get(users.client).sessionExpiresAtMs=now-1;
+ check((await read('client')).status,401,'Expired test bearer is immediately invalid');
  console.log('GABER_POSTGRES_HTTP_E2E_GREEN assertions='+checks+
   ' two_tenants=true independent_three_roles=true concurrency=true revocation=true');
  console.log('NOTICE: identity principals above are test-only server fixtures, NOT real login or PSP authority.');

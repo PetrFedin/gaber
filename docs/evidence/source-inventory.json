@@ -255,7 +255,7 @@
     },
     {
       "path": "server/orderHttpApi.js",
-      "sha": "405630b1692ef90482c49f156425a83a4cba0b93"
+      "sha": "bcdd013480338e3c0d70000cd380b8f99877dc57"
     },
     {
       "path": "server/orderJournalService.js",
@@ -283,7 +283,7 @@
     },
     {
       "path": "server/tests/postgres-http-e2e.mjs",
-      "sha": "7289bde7d7eca216c488431efb999bdd1bae3a88"
+      "sha": "cc649f2000681e4300de88a7a4c60266e58f9f75"
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",
@@ -619,7 +619,7 @@
     },
     {
       "path": "tests/order-http-api-v0419.test.js",
-      "sha": "1ed806a5bb2dec192c851e03766cd546ef45adba"
+      "sha": "5a1c2d2a92dad182e6b7fc165e2f0312527592ea"
     },
     {
       "path": "tests/order-intake-e2e.test.js",

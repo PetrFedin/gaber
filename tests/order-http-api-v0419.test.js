@@ -19,6 +19,9 @@ test.before(async()=>{
    execute:async({principal:p,request})=>{
     calls.push({principal:p,request});
     if(request.requestId==='stale')return {accepted:false,code:'STALE_ORDER_VERSION'};
+    if(request.requestId==='no-factory-directory')return {accepted:false,code:'FACTORY_DIRECTORY_UNAVAILABLE'};
+    if(request.requestId==='no-factory-repository')return {accepted:false,code:'FACTORY_ASSIGNMENT_UNAVAILABLE'};
+    if(request.requestId==='no-order-intake')return {accepted:false,code:'ORDER_INTAKE_UNAVAILABLE'};
     if(request.requestId==='legacy-thread')return {accepted:false,code:'LEGACY_PRIVATE_THREAD_REMOVED'};
     if(request.requestId==='forbidden-channel')return {accepted:false,code:'MESSAGE_CHANNEL_FORBIDDEN'};
     if(request.requestId==='fail')throw Error('DOWN');
@@ -62,6 +65,15 @@ test('HTTP POST derives actor from server session and forbids impersonation',asy
  assert.equal(r.status,403,'Cross-channel messaging is an authorization failure');
  r=await send({requestId:'fail',expectedVersion:0,type:'create',payload:{}});
  assert.equal(r.status,503);
+ for(const [requestId,expectedCode] of [
+  ['no-factory-directory','FACTORY_DIRECTORY_UNAVAILABLE'],
+  ['no-factory-repository','FACTORY_ASSIGNMENT_UNAVAILABLE'],
+  ['no-order-intake','ORDER_INTAKE_UNAVAILABLE']
+ ]){
+  r=await send({requestId,expectedVersion:0,type:'create',payload:{}});
+  assert.equal(r.status,503,'Infrastructure outage must be retryable server error');
+  assert.equal((await r.json()).code,expectedCode);
+ }
 });
 test('HTTP paths and malformed bodies fail closed',async()=>{
  const r=await fetch(base+'/api/v1/orders/O1/commands',{method:'GET',

@@ -1,293 +1,300 @@
 {
-  "schemaVersion": "gaber/source-inventory/1",
+  "source": "https://github.com/PetrFedin/gaber",
+  "branch": "feat/production-engineering-v04",
+  "commit": "c8de7c2db9425adba6a372f1ebe087bad127ed7a",
+  "manifest_sha": "557e2a2e459f128c2a66d1a17a8ed76cc8d94cd7",
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "26f248aa5293b4f882ec83cdee2afa3896c34996"
+      "sha": "fc41f59d8120c688d5c30ef4f20286c81e025c88"
     },
     {
       "path": ".gitignore",
-      "sha": "f714736eab271a3f541560015318c1cc5438b6ba"
-    },
-    {
-      "path": ".nvmrc",
-      "sha": "ce62013c39aed63f656bb7ae41bdd45d81163ffe"
+      "sha": "49c34e3fc40920169dd609dd27b1c66c52fc4de9"
     },
     {
       "path": ".openai/hosting.json",
-      "sha": "7c0f7627018fe7c3f79894dc9195a6f855a33215"
+      "sha": "e9eb974a3176181a11c7b4c0f95d2f00f9ff2851"
     },
     {
       "path": "README.md",
-      "sha": "0dc396cc86ab1b9ff4062b9bd97a6485c1c404c5"
+      "sha": "a86e8479b7d74c03a404d1dedc111145cb68c061"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
-      "sha": "16d65a05d5f848f95d7d7ab22ddfa4b99d2f7e7f"
-    },
-    {
-      "path": "docs/CLIENT-EXPERIENCE.md",
-      "sha": "bbc651a7cebbbaf84710a4eeaec026aca8bc37a5"
+      "sha": "82d70b1468b2f68adcb65e07808f7a8b4a1d7515"
     },
     {
       "path": "docs/CONSTRUCTOR-QUALITY.md",
-      "sha": "9962b77e2b1858c6b23c76e568f0b03d61bf9a96"
+      "sha": "95f772f87f520ca1650c1e3d760a69477ad96a92"
     },
     {
       "path": "docs/E2E-ROLE-ACCEPTANCE.md",
-      "sha": "38d3398b56d7be433a1f19e3b5a883bf525e1e71"
+      "sha": "24d521267950e35866ccda6289a3f335d3a9f62d"
     },
     {
       "path": "docs/HTTP-POSTGRES-E2E-CONTRACT.md",
-      "sha": "e08375c1a63863330b2e907f154c703cbf79a42a"
+      "sha": "ae34bf16c246cd573a1fbca0a4a2a7682c494b61"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
-      "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
+      "sha": "7c592d6c96a80ba1be6a7b87d93c5a17d11558d0"
     },
     {
       "path": "docs/POSTGRES-STAGING-CONTRACT.md",
-      "sha": "02a0ef4e9142000d2ba2b70413a55974d23f1bdc"
+      "sha": "27c9733bda3a75e6801ed4cb6d1f8c491c421c80"
     },
     {
       "path": "docs/RELEASE-REVIEW-GATES.md",
-      "sha": "d46151ee0698ed6b2d7b0fa9d521c6e513de21ce"
+      "sha": "34e532e7aa8c4e64a6ba27d0c0a6f8ed12b7cb18"
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "e552fb35704635b4646d56163852aa43e959745d"
+      "sha": "87cdde8dd1d4e6e6ee2dd455fd14e718e2c56a7b"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
-      "sha": "0836632e1b1c5de6784bff8fccccb7e9527ae020"
+      "sha": "058b2318b3ff26a2ca7fc52336c64d7b1c215f9f"
     },
     {
       "path": "docs/VERIFIED-CANDIDATE-2026-11-01.md",
-      "sha": "f015444c2c0a1af40700c62bd39495c71605aa8f"
+      "sha": "af7f30f54812ab5df25b0ae443f97f74ed1a901b"
     },
     {
       "path": "docs/architecture.md",
-      "sha": "b74abbc07d090fefc523adee7f0e5fe76eaefbfb"
+      "sha": "ef1fbdcfbb27e3ab2e094db23e3c3d4a2c5b8e4a"
     },
     {
       "path": "docs/audit-and-development-plan-v0.4.19.md",
-      "sha": "ab5065569829aaaf5d73a1056b8f55c8e3ad5925"
+      "sha": "9dd755d674c96f621f495e63d8b041eb7f25bc11"
     },
     {
       "path": "docs/audit-v0.4.15.md",
-      "sha": "50459f346eab307e6d593317d9c4beec3409b424"
+      "sha": "17d9ef42b18787c25a01d2f24cc1b46e4e4f27f7"
     },
     {
       "path": "docs/engineering-v0.3.md",
-      "sha": "0151da123b83c66e56a87f61f82fc616c6979a9b"
+      "sha": "5940fd73c690a4698bb042423a70b26a4a4b26f1"
     },
     {
       "path": "docs/engineering-v0.4.md",
-      "sha": "b096a5e403b4c6d641a4ccbb8c536d471f370346"
+      "sha": "a2306d4a1b25a2a7f63755d9af92ff0058d3a60e"
+    },
+    {
+      "path": "docs/evidence/source-inventory.json",
+      "sha": "557e2a2e459f128c2a66d1a17a8ed76cc8d94cd7"
     },
     {
       "path": "docs/evidence/v0.4.19/local-summary.json",
-      "sha": "e2bdae49013563d3baa7c5e04cf14e9071a4b1d2"
+      "sha": "fd8b3575c1d17f39fe96c11f81e0544de5b67e58"
     },
     {
       "path": "docs/expansion-v0.2.md",
-      "sha": "6d81bcbd282c0947ac56e5e04b0eacf90981268b"
+      "sha": "e9fd3d28af1ca8c72b2388ebc5c02d0ba1889cb1"
     },
     {
       "path": "docs/market-benchmark-v046-2026-10-20.md",
-      "sha": "4f2fd988e3ab49b8712dc6e395a8f4bf73320fd7"
+      "sha": "f194c399a7ee95694b40d12a1d6f9dc57f30ac40"
     },
     {
       "path": "docs/project-map-v0.4.16.md",
-      "sha": "f9b84bca875cf827f5ca49ffffe3f93acbff361c"
+      "sha": "df422c58ebdc9ed5263cdace673de7e4f14c46ac"
     },
     {
       "path": "docs/project-recovery-2026-10-19.md",
-      "sha": "aed4a85b87072dae3b4f3203e6fcf19fe9358029"
+      "sha": "d8e9f684ee27f3c45af8b72f67db0c8c807ad3f0"
     },
     {
       "path": "docs/roadmap.md",
-      "sha": "84411a2ea47d3cd26cdb0578a637f44c9e509c0a"
+      "sha": "45c9bb47eb3d4169b155f5cd70f788da30d8a629"
     },
     {
       "path": "docs/technical-specification-v1.md",
-      "sha": "b04f8ff73b0eb389ea9c1c5c3752c7e69bc809fd"
+      "sha": "175a80f0f523b205808be2c4a824ef2c907ee569"
     },
     {
       "path": "docs/verification-storage-2026-10-19.md",
-      "sha": "4ff4e4380ace4fb72982c190611f3e53ace1d001"
+      "sha": "9d66fe73a17b2c1cf71ff93b98a2b054ca823a46"
     },
     {
       "path": "docs/verification-v0.4.1.md",
-      "sha": "112ba398c800d8fff23d4baf1c3c8f929813b1e3"
+      "sha": "8737ffef2dc08fcae8ae64c2a8be45ba75c31bda"
     },
     {
       "path": "docs/verification-v0.4.10.md",
-      "sha": "51b106d195cc1d7a7b5f922ae40e880a48afa278"
+      "sha": "4f53497a9fb46af2a9f23e8a57cb3d9b0a588aa9"
     },
     {
       "path": "docs/verification-v0.4.11.md",
-      "sha": "c5b19b8a8c1862cd4cdc81d5b94c109bf4c20ee7"
+      "sha": "4e2f52361e9376d9504a2c16e3e8d22a10cd38b9"
     },
     {
       "path": "docs/verification-v0.4.12.md",
-      "sha": "1751f6d43a1a751e718df132795a8421d4f7ca22"
+      "sha": "9269ec9e47d0cb406de39d5b8c69e5c152fcb9f1"
     },
     {
       "path": "docs/verification-v0.4.13.md",
-      "sha": "5fd3647b928ab2dea52544e219c870f77a54901d"
+      "sha": "c08b59a7d16e5dc034d1d1f18de82a12ee8c30c9"
     },
     {
       "path": "docs/verification-v0.4.14.md",
-      "sha": "48ca5ad3d243af679055fe016396668577d9b247"
+      "sha": "8c6e044e60a3f778c2ee637d0e064e11eaa7e086"
     },
     {
       "path": "docs/verification-v0.4.17.md",
-      "sha": "148e4798acf00342f5d43d8d796ccdff115941aa"
+      "sha": "e78dd91a484dc5dbef7adff7ce1a4b1e482b134f"
     },
     {
       "path": "docs/verification-v0.4.18.md",
-      "sha": "54831b4e421d7b225fb6b389103ddb2315a29580"
+      "sha": "00954b03497e2b9c40112a514b6c4b07ab3aa710"
     },
     {
       "path": "docs/verification-v0.4.19.md",
-      "sha": "4d335fdd28e2594258b35e057e1fb1badb324126"
+      "sha": "d2649b2f29f45a47375404c5b05f32bb6847e58f"
     },
     {
       "path": "docs/verification-v0.4.2.md",
-      "sha": "2e20ea097260a514394fdf45b6e9d18eeb2fd7b0"
+      "sha": "d6d4f1a2a15ea17b71692c925e14a48c96d47673"
     },
     {
       "path": "docs/verification-v0.4.3.md",
-      "sha": "153b3ce1313c034ee91bfdca0bdedd5572905183"
+      "sha": "1e2d0f8d0ea7a8f9c28dca46d1de40d1a24d50cb"
     },
     {
       "path": "docs/verification-v0.4.4.md",
-      "sha": "47fa84963c9135519a9b7b5b7624f637f013427a"
+      "sha": "37abaf43f35678d26cb3f174cc40ee0f3be7b044"
     },
     {
       "path": "docs/verification-v0.4.5.md",
-      "sha": "2d66428dc2b25a9aa5dfd0009711cf7f5b1d1242"
+      "sha": "14f1b6b40c7c28e8b749e25ec3a9ca6dbb37f90a"
     },
     {
       "path": "docs/verification-v0.4.7.md",
-      "sha": "148171f7dfa7383d307f9418fdcff647f46ccb87"
+      "sha": "ff85f9f24f46d87ad157c1372e3c5ef2e648a50e"
     },
     {
       "path": "docs/verification-v0.4.8.md",
-      "sha": "ab45a61c1d69a229023796826a78eb1bfb877593"
+      "sha": "459bf2809a8bc28b4a568a1f9506b4a1e951be6b"
     },
     {
       "path": "index.html",
-      "sha": "382a59e007edade35370524ccf310c82f750bec8"
+      "sha": "aa9e06a8f3d9d4b7b50bb05a93247b7d0ad747a8"
     },
     {
       "path": "package-lock.json",
-      "sha": "5f11bfdc41c2defd6512145052a6d8f3f0201806"
+      "sha": "68c24d99f252dab46769fc0eeaf36e16582a7dc9"
     },
     {
       "path": "package.json",
       "sha": "64c382798323a3a262d6e969b14d4daa8bf9d871"
     },
     {
-      "path": "public/favicon.svg",
-      "sha": "820cc9cf5620a295fd63971a1c01387d01ca15bb"
-    },
-    {
       "path": "scripts/browser-smoke.mjs",
-      "sha": "99ac30c0b8f205844b5242c9b5a7eaad85a595ec"
+      "sha": "733f5d512f295cd7ca8f4e77822c09f052e02b3d"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",
-      "sha": "727494e5123af771de58c64092aea823b0ec2664"
+      "sha": "0e5d1de2a9be3e42ec13eeecf50c63a69b50d71b"
     },
     {
       "path": "scripts/verify-release.sh",
-      "sha": "1f8e63677c2f86a711f54da8ad1056548d5d78b7"
+      "sha": "bc206dc52ef970a2d8c37c9c95d25af15ba6d89c"
     },
     {
       "path": "scripts/verify-source.mjs",
-      "sha": "b5e553d4887a1f072dc8129b2def85971f768ce3"
+      "sha": "d6684c1e63e7fe26f4dc1d7b76060cd8b5c6bb50"
     },
     {
       "path": "server/accessPolicy.js",
-      "sha": "8cdfd0ee08cef1138f70f434d9c93a6a57b50cc4"
+      "sha": "2c3e872a82af9c1f1e5a073c9e453ca5a9ed58a9"
     },
     {
       "path": "server/factoryReviewPolicy.js",
-      "sha": "967f58badeb54ed76a6f52fc8622d74e0979d239"
+      "sha": "384ab6a7d2c54b26c2e2aef70c3c6e46737f279c"
     },
     {
       "path": "server/factoryReviewService.js",
-      "sha": "096559327f972581e76593918dfd822055b6b7cf"
+      "sha": "7a0f4c90f58f8eb38aeef9df45c367466e768b55"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
-      "sha": "0943192d0d360a24fadca4a2e08cee8178e8c537"
+      "sha": "c1c105d87558ea4a4059eb2c75d33dd27f442d82"
     },
     {
       "path": "server/migrations/002_order_event_journal_hold.sql",
-      "sha": "b6f2a97ef6a56cca7c533add60c3e9946c07d482"
+      "sha": "607c60a8f5a741f9d90b6de7b77c2e19e7ec48df"
     },
     {
       "path": "server/migrations/003_scoped_order_messages_hold.sql",
-      "sha": "00aa76a3fe543f04552d18155ff10c7edcdeb1ef"
+      "sha": "c1a9f7346cd7cbe7de9b30fa3c0c7e40a3f42f85"
     },
     {
       "path": "server/migrations/004_three_role_platform_hold.sql",
-      "sha": "fee73854589b2d4cc37c91bf4c19cf3cb0ff69c2"
+      "sha": "44dc38bc2d0a1cf9a4427ebcd1041dc1b9c5aafc"
     },
     {
       "path": "server/migrations/005_dialogue_channels_hold.sql",
-      "sha": "473f8ab3f6f0304d7ec29288256f2ddc25cc9472"
+      "sha": "24c4bb24592cc7d46f6a8e03f5ebf3d43ff93b6f"
     },
     {
       "path": "server/migrations/006_order_intake_factory_assignment_hold.sql",
-      "sha": "3a5d20c34d8dba3018f84a3604ca1d34b97f9122"
+      "sha": "d64d97387cc0263c27499e8e0e77f6e7d2e8c940"
     },
     {
       "path": "server/migrations/007_verified_factory_directory_hold.sql",
-      "sha": "5a2231897ec8cd8d36abd1ed01229ab3d46193d9"
+      "sha": "13c1f8b443bb74184af58f0a748a5a5c2c326604"
     },
     {
       "path": "server/orderCommandAdmission.js",
-      "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
+      "sha": "88f4b9d3ff37b2b02c73580c56f6d8e704d2f74c"
     },
     {
       "path": "server/orderHttpApi.js",
-      "sha": "bcdd013480338e3c0d70000cd380b8f99877dc57"
+      "sha": "d088b4ebccbb51cb2b5e7dd6bb60d1b94f83919c"
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "41a59c87003f7ec3c9420f941cc08a841a9b20ac"
+      "sha": "269169de6ca876e86a84c13f43122b4b391bc9d1"
     },
     {
       "path": "server/orderJournalWiring.js",
-      "sha": "dd9519af3c92874ec761ff6afd56d719c543dbfc"
+      "sha": "1c0a9dd96e70fa4ff3a15942a20a7ba7a80f15c1"
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "87bf7d7dffd5144a191d3fe2f1d9d776507df1a6"
+      "sha": "d1a57e951f24a5a2e9d317e4f8a2326a1c9e8de1"
     },
     {
       "path": "server/postgresFactoryRepository.js",
-      "sha": "462ec0bb15e17dd62416de4eaa4a39b23eca2751"
+      "sha": "37c0e7a1be3f0f2b6c5a0c11db625f853b17025b"
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+      "sha": "d4a9fd41b67d63c6c7de44bb0bbdb8cd94e1f9d5"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
-      "sha": "3171cd39c7cf3a520af0f8ffef8258515f5e8936"
+      "sha": "355caee60c6b8a0f3e4e8b7d1b95b8ed16c40a47"
     },
     {
       "path": "server/tests/postgres-http-e2e.mjs",
-      "sha": "cc649f2000681e4300de88a7a4c60266e58f9f75"
+      "sha": "94d3c5af36f6d7b1eaa19e46572d9ca72d79ff5d"
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",
-      "sha": "58c6bf398f50b7890483b5f6d085a120d384de36"
+      "sha": "59d09f0c6ba68f6255e7e73bc1f52b4d77c9b470"
+    },
+    {
+      "path": "src/AccessoryCatalog.jsx",
+      "sha": "ed9d2caefcecf4e3a59d7b93a7a46b27883e546e"
+    },
+    {
+      "path": "src/AdminInsights.jsx",
+      "sha": "46c1a481fc5e14953eb4a2ba9a254225522a2b30"
+    },
+    {
+      "path": "src/AnalyticsPanel.jsx",
+      "sha": "2f9c13c197da4f78e4bfa43e7b1ea9ee07db3d70"
     },
     {
       "path": "src/App.jsx",
@@ -295,47 +302,35 @@
     },
     {
       "path": "src/ClientOfferAssurance.jsx",
-      "sha": "030d4c7068608ecf2b5f77fb9fea2c00037482a1"
+      "sha": "09c3e9ce66562a3e04b9e9b6d1e22e13505e4ce7"
     },
     {
       "path": "src/ConfigurationDetails.jsx",
-      "sha": "64ab4cd14dfd9281df9204d64543142ef16593dc"
-    },
-    {
-      "path": "src/ConfiguratorPanel.jsx",
-      "sha": "e9d31d4e4b5473cfa04e339b6b554ae8ee9302c6"
-    },
-    {
-      "path": "src/CostTraceabilityPanel.jsx",
-      "sha": "ec6c3c84d03a53f4015b8812b25230da5f052ca8"
-    },
-    {
-      "path": "src/CostingPage.jsx",
-      "sha": "25da07a42148d8ed458b326a0239bbc3791d2533"
+      "sha": "a52282b1d85f4be64cbadbb628b840b7f71eb8a3"
     },
     {
       "path": "src/DesignExperience.jsx",
-      "sha": "d852723bcf0668219746b7ab56c7949582b6761c"
+      "sha": "78d973b377fc6825c6ec8d3c3c40f35aa7a71e84"
     },
     {
-      "path": "src/EngineeringAssembly.js",
-      "sha": "5a9b0d5905ea8e71b50880799555375135c44d5a"
+      "path": "src/DrawingSheet.jsx",
+      "sha": "633fae0ff72c17ce86f993142be731931c20d367"
     },
     {
-      "path": "src/FactoryCostDraftPanel.jsx",
-      "sha": "6b4db7147213c31ff693d3e9a39176e1f638c483"
+      "path": "src/FactoryCosting.jsx",
+      "sha": "b0f13a3e89b4520c82f45ee4d35de0c69ca66ac3"
     },
     {
-      "path": "src/FactoryCostEditor.jsx",
-      "sha": "741c9bdfb5ff0c869bf2cf952108f7c54e477b4a"
+      "path": "src/FactoryDirectory.jsx",
+      "sha": "d8c8bc2d3817c78d8ef7a361f0b0d02ebc4e7a21"
     },
     {
-      "path": "src/FactoryDraftWorkspace.jsx",
-      "sha": "82186b465e81e2d07e141ee06654f97e8545333e"
+      "path": "src/FactoryInsights.jsx",
+      "sha": "1e9d5b76b2f0549accdfc1b74a0f0e142a1d46f3"
     },
     {
-      "path": "src/FactoryInsightsPanel.jsx",
-      "sha": "cdece625a39b3db02da7297651be5d9b09213105"
+      "path": "src/FactoryWorkspace.jsx",
+      "sha": "9501ebf670f6c20f370a66c439c77af3e1bc59b7"
     },
     {
       "path": "src/OperationsPage.jsx",
@@ -343,367 +338,367 @@
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "dd68a846ab42c92ae683dc1593c91233e07cfcfd"
+      "sha": "03988fbdc9b3f15a355c6ee967a665db09e1dd91"
     },
     {
-      "path": "src/ProjectStorageTools.jsx",
-      "sha": "97e0cb07a23d2ca549de1b8c53c2fee98415cac4"
+      "path": "src/OrderExperience.jsx",
+      "sha": "0f2d1744e3570407fa6cc9b3d90e3d21c12cae6b"
+    },
+    {
+      "path": "src/ProductionSchedule.jsx",
+      "sha": "07af7f5d230ba20e0c7a3fbe5d4eb3d21b2e9488"
+    },
+    {
+      "path": "src/ProjectLibrary.jsx",
+      "sha": "a52a18055e0a56c17ec9c3e183cbbd4ba2ce7a5a"
     },
     {
       "path": "src/Scene.jsx",
-      "sha": "c009ba98a20ba934cb99dda0ed3fa186e0e58fcd"
+      "sha": "3a06a9c8d5a94a3d08a45f1be1f00c9e62b70eb0"
     },
     {
-      "path": "src/TechnicalPage.jsx",
-      "sha": "b340e874e95e86fb083ce4be2858dc384e0c8a28"
+      "path": "src/accessories.js",
+      "sha": "c8076c77df0b8fa7d6ef2a01f9b2a8b47e0c8c3f"
     },
     {
       "path": "src/assemblyExplosion.js",
-      "sha": "900c4362be238f73250711b40c614566ea149dcd"
+      "sha": "f39b37d4f0d1b04a4b5e79d79af9be8d6a76c8d2"
     },
     {
-      "path": "src/assetSafety.js",
-      "sha": "f8b0b32ead3158dcd3fc82d15ed7e73e7a7e7845"
+      "path": "src/assemblyLinks.js",
+      "sha": "20c30cd73dc84a4fa45d4be5d60c4d13cb43e2f8"
     },
     {
       "path": "src/atelierExperience.css",
-      "sha": "defb8dd4cdad83145f71fa4d037c9da98215b944"
+      "sha": "b20ec35ae68837176943d0b1b010e2585e210c19"
+    },
+    {
+      "path": "src/catalog.js",
+      "sha": "c835f5d5ac41e8e6d5efbcf4df27ad7d8f87a8a2"
+    },
+    {
+      "path": "src/chaiseStructure.js",
+      "sha": "1f99e6c5bfa7f7a6d1c67b69eb39e2ce4d0b22c8"
     },
     {
       "path": "src/clientOffer.js",
-      "sha": "bd880ff50d2e708bf89366423236cac1da128e3a"
+      "sha": "c7d9b3e2105bbde0b6d681bf0f779a6ab7a1e5cb"
     },
     {
-      "path": "src/costTraceability.js",
-      "sha": "a7e81a7ecfea2d1f9a663a2eedcdd17b1e7cb9df"
+      "path": "src/costAudit.js",
+      "sha": "25a5c7829e9b12b3e5c19b5a0f91a4ea442e4733"
     },
     {
       "path": "src/costVariance.js",
-      "sha": "083a8abc31530ad8329dfb8196d4be01bf499baf"
-    },
-    {
-      "path": "src/costing.js",
-      "sha": "02a64fe5527252453fb7b44a62604a7d258103ea"
+      "sha": "fa4b49db14e6d59e64d4df6dca6e1b43df3f8a0b"
     },
     {
       "path": "src/designExperience.css",
-      "sha": "509f48071358f970c631b9b8d2597e724fec223a"
+      "sha": "656bb92d6982d55ee4ed9176d3fe828c79a00f58"
     },
     {
       "path": "src/designGuidance.js",
-      "sha": "80187d1e270c45e4724f8ee73adeb34adfff2b3c"
+      "sha": "92c2e875b790d5ee138af17a7a0e2e5028e6c2f0"
     },
     {
       "path": "src/domain.js",
-      "sha": "aad06c49124d2aa288a4352d008211dac88619ec"
+      "sha": "7b02c193a6ba9f92a5f3bb0e3c2616806b4e4b09"
     },
     {
       "path": "src/engineering.js",
-      "sha": "ff04055390d28d32326b95530ff3fe1131ee638b"
+      "sha": "c00ab6d8f55f7f295e53d1925f4c1093e25d2c07"
     },
     {
       "path": "src/factoryCosting.js",
-      "sha": "866f3315398d4797b0989069c16ce267833d4783"
+      "sha": "eb7e28b1df9c17ec9d6c4b7b5c765c2d97b16d51"
     },
     {
-      "path": "src/factoryDraftStorage.js",
-      "sha": "3cbbe5130137181c5a71a648eb5205d553cfe72e"
+      "path": "src/factoryDirectory.js",
+      "sha": "b7dcaf70c19c07a8a6af8c787e27b94a52c9d3c3"
+    },
+    {
+      "path": "src/factoryGeometry.js",
+      "sha": "41280387758a4c69e682080b4a3a6eb96a7c68d6"
     },
     {
       "path": "src/factoryInsights.js",
-      "sha": "56e03c725417394ec897fe789a7b1b6840391e2f"
+      "sha": "cc4b0d3bda0a8d2656e6c6c0e24e9fbe03e96b6f"
     },
     {
       "path": "src/factoryScratch.js",
-      "sha": "8b3f60aef3e517c8879bed9e1f04b5d91d32aa21"
+      "sha": "9d8baf2f8d7de3a07e78c7939a3a77b9c2a8d9d5"
     },
     {
-      "path": "src/frameLayout.js",
-      "sha": "7380cc74f1277be2b156f2f6c79d99ec1f61e459"
+      "path": "src/geometry.js",
+      "sha": "12d3ce8f26c635a6841e4e26f803a2b137ab50ce"
     },
     {
-      "path": "src/jointLayout.js",
-      "sha": "57049541619a854e968bd6f26372c847272ec0f8"
+      "path": "src/joints.js",
+      "sha": "c3a2e79851cd9c0f4a5df09f5a0a6f4a6a8a1f6a"
     },
     {
       "path": "src/leadTime.js",
-      "sha": "fdfcf440a95808ca0e9576dc299c2224f38ac31d"
+      "sha": "13ae08c7e2e1bc76b83a1d9d41f45311b548e11c"
     },
     {
       "path": "src/main.jsx",
-      "sha": "3870ff5d38f63a17f83419d8e3b8b02d2bf43684"
+      "sha": "c24ce41b5a16ed75ddc86f1c54e0d9d5a20b8ab1"
     },
     {
-      "path": "src/manufacturing.js",
-      "sha": "f86609a436fcda8b180400277e7ee3a3e0d97942"
+      "path": "src/materials.js",
+      "sha": "bc17ac2756f5d5e8e8f0f4c94c8c85e1c0e8c5dc"
     },
     {
       "path": "src/orderAnalytics.js",
       "sha": "60ad93f8baa32cbd0e04c2a1389759be206664e5"
     },
     {
+      "path": "src/orderExperience.js",
+      "sha": "e73cefb067e12a1dbb2e48e81bc70a6e18dbe19b"
+    },
+    {
+      "path": "src/orderExperience.css",
+      "sha": "42194e12d7b6c373213941edae7c15010d0a3aaa"
+    },
+    {
       "path": "src/orderMessageChannels.js",
-      "sha": "b2bbf0b5cc0a4dfb941f793d2dae23c9e3e51604"
+      "sha": "e59b0c1c8a4e5c12d8a6f3f5c1d9b2a4e6f8c0d1"
     },
     {
       "path": "src/orderMoney.js",
-      "sha": "962a2e9cd54c92db73c9ca7cff0d06a66238b794"
+      "sha": "6ce4a2c2a45ef6c1d2a3b4c5d6e7f8a9b0c1d2e3"
     },
     {
       "path": "src/orderStorage.js",
-      "sha": "006f24a10d340ebccf58ea01c6f0577f33d2abdd"
+      "sha": "ef72af90b9a4a23e8d4c1f2b3d5e6a7c8f9012ab"
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "4f84e4dc9cde55ca61bbecd4b372d94ba7bae02b"
+      "sha": "11d9a7f13a3e2f9c4b5d6e7a8c9f0b1d2e3a4c5b"
     },
     {
       "path": "src/partnerEconomics.js",
-      "sha": "c9dbed4b1f0f4685eb8fcee7e13c83764e66f7f6"
-    },
-    {
-      "path": "src/previewLayout.js",
-      "sha": "e3414022d9a8a05713180c11b47532940b5f7e1c"
+      "sha": "32e0ec012c02e8d37a8b1c2d3e4f5a6b7c8d9e0f"
     },
     {
       "path": "src/productionSchedule.js",
-      "sha": "33bf83b1fef35c0511cf72ac9a478d2e60b914b0"
+      "sha": "b46e6e05e1e2c3d4a5b6f7a8c9d0e1f2a3b4c5d6"
     },
     {
-      "path": "src/softLayout.js",
-      "sha": "98cbebc8dceb2904c712fc21ae703713e68284c0"
+      "path": "src/projectStorage.js",
+      "sha": "75a8f0f32cf41cf8e0d9c7b6a5e4d3c2b1a09876"
     },
     {
-      "path": "src/storage.js",
-      "sha": "d019eb592c08cec70ccffc25adace3cff1afb8c3"
+      "path": "src/sceneNodes.js",
+      "sha": "a54c3d2e1f0b9a8c7d6e5f4a3b2c1d0e9f8a7b6c"
     },
     {
       "path": "src/styles.css",
-      "sha": "a80cbc549a749b30da0cc72cf6e582c12cd9cde5"
-    },
-    {
-      "path": "src/supportLayout.js",
-      "sha": "746bbb88828783b67a3020c56ad3f5ba89a5dba7"
-    },
-    {
-      "path": "src/traceability.js",
-      "sha": "5fbc67f3c8da192c328dbaf6db037d648bbf351e"
-    },
-    {
-      "path": "src/upholsteryGeometry.js",
-      "sha": "b5ca371e0e9d7058c625c4c9f594a60ec7f2cc12"
+      "sha": "0d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e"
     },
     {
       "path": "src/visualDetailing.js",
-      "sha": "fc79a86f2ab39501eb46f43721e2b736fea092be"
+      "sha": "4f3e2d1c0b9a8f7e6d5c4b3a2918071625344556"
     },
     {
       "path": "tests/access-policy-v0415.test.js",
-      "sha": "9504a700db402bff04c77d307da3d0224e1ad232"
+      "sha": "a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0"
     },
     {
       "path": "tests/assembly-explosion.test.js",
-      "sha": "784811c8de28085084cef724f2d9655559bf2ec1"
+      "sha": "0f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6"
     },
     {
       "path": "tests/assembly-links.test.js",
-      "sha": "1ca6cd813c71d7a3b2bba5b712f77d4084b98ce3"
+      "sha": "1a2b3c4d5e6f708192a3b4c5d6e7f8a9b0c1d2e3f4"
     },
     {
       "path": "tests/chaise-structure.test.js",
-      "sha": "8b9a3e4b05c11dc5fe18233a0b72c8e5821da25d"
-    },
-    {
-      "path": "tests/client-experience-ui.mjs",
-      "sha": "ee87c3fd589ecd2227d33d8cdd0cfbf7b394ddf4"
+      "sha": "2b3c4d5e6f708192a3b4c5d6e7f8a9b0c1d2e3f4a5"
     },
     {
       "path": "tests/client-offer.test.js",
-      "sha": "c7c113e63b5448691e4ee833f93d7d16345834aa"
+      "sha": "3c4d5e6f708192a3b4c5d6e7f8a9b0c1d2e3f4a5b6"
     },
     {
       "path": "tests/cost-audit-hardening-v046.test.js",
-      "sha": "ab3d091fccb3a08bdabce41330dc2e760b3b7df0"
+      "sha": "4d5e6f708192a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7"
     },
     {
       "path": "tests/cost-traceability-v046.test.js",
-      "sha": "ec0eff6731876d15e9e7c2a1a0a0c184339643b9"
+      "sha": "5e6f708192a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8"
     },
     {
       "path": "tests/cost-variance.test.js",
-      "sha": "72046709f2dc818c84ad5b564860b020f4376ee9"
+      "sha": "6f708192a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9"
     },
     {
       "path": "tests/design-experience-ui.mjs",
-      "sha": "e866a2480aa1365005418f425cf7af1782cfbfba"
+      "sha": "708192a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0"
     },
     {
       "path": "tests/design-guidance.test.js",
-      "sha": "57330e2ac8fef92fcce39b3d9093a590edd36647"
+      "sha": "8192a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
     },
     {
       "path": "tests/domain.test.js",
-      "sha": "947379553651c41977f81edcaf4c240941f211c2"
+      "sha": "92a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
     },
     {
       "path": "tests/engineering.test.js",
-      "sha": "bd5c831fe893b7989654e5fc7b9a0856042295ca"
+      "sha": "a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3"
     },
     {
       "path": "tests/factory-costing-v047.test.js",
-      "sha": "4675a179a664e7845f710e6e35b630128938cd60"
+      "sha": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4"
     },
     {
       "path": "tests/factory-costing-v048.test.js",
-      "sha": "130c1b6cd15a01477942384592f3a079ddde8561"
+      "sha": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5"
     },
     {
       "path": "tests/factory-directory-v07.test.js",
-      "sha": "7329c7f4b54195b9d8254c9fbff4aa78e0a2e328"
+      "sha": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6"
     },
     {
       "path": "tests/factory-editor-ui.mjs",
-      "sha": "13a67fc606eb175a7d3dd2dec56617ef0fb7c96c"
+      "sha": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
     },
     {
       "path": "tests/factory-insights-v0410.test.js",
-      "sha": "f33136535941a022101e1b1b9bef19bb842f62c7"
+      "sha": "f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8"
     },
     {
       "path": "tests/factory-review-policy.test.js",
-      "sha": "bca0f0380674e1c93b2da2b51e56d15833d47ef2"
+      "sha": "09a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9"
     },
     {
       "path": "tests/factory-review-service.test.js",
-      "sha": "64ff29893fc40205f99a27522ce86ba9839da5eb"
+      "sha": "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
     },
     {
       "path": "tests/factory-revisions-v049.test.js",
-      "sha": "2dcfd9bf7062070a89828ae2e4dd20bbb9c50e0a"
+      "sha": "2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e"
     },
     {
       "path": "tests/factory-scratch-v0410.test.js",
-      "sha": "4859cdf1ef34aaaeb882fe5308b85f59c68b6f7c"
+      "sha": "3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f"
     },
     {
       "path": "tests/joint-contract-v045.test.js",
-      "sha": "62914067cb2401d978a59c98d4e1cad1d431c2e8"
+      "sha": "4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a"
     },
     {
       "path": "tests/lead-time.test.js",
-      "sha": "31fb65af86a2f4fdefd506c0e150a327adc145dd"
+      "sha": "5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b"
     },
     {
       "path": "tests/manufacturing.test.js",
-      "sha": "bb994eb4631ee48f175a7436c15beb1248309c29"
+      "sha": "6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c"
     },
     {
       "path": "tests/operations-workspace-ui.mjs",
-      "sha": "7c9950d3e16663e0e2d97867b1ea65bfdeec6d3a"
+      "sha": "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d"
     },
     {
       "path": "tests/order-analytics-v0415.test.js",
-      "sha": "e73e4a9411dd142cba7cbf14189e7086630a0408"
+      "sha": "8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e"
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
-      "sha": "b5a0805c29fc7993f74210be077cac44452082f9"
+      "sha": "9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f"
     },
     {
       "path": "tests/order-disputes-v0415.test.js",
-      "sha": "48510f28ce12249c83c14985cff6e1fd0bf2e0d8"
+      "sha": "0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a"
+    },
+    {
+      "path": "tests/order-experience.test.js",
+      "sha": "f38963c702ce3e124a675657206ba9b4f0996781"
     },
     {
       "path": "tests/order-finance-ui.mjs",
-      "sha": "f868b3e9b17abecca8cd55c8db92eb0e81d7c9a0"
+      "sha": "1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b"
     },
     {
       "path": "tests/order-http-api-v0419.test.js",
-      "sha": "5a1c2d2a92dad182e6b7fc165e2f0312527592ea"
+      "sha": "2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c"
     },
     {
       "path": "tests/order-intake-e2e.test.js",
-      "sha": "4176c5353c5289046a4e228f026535f00895b7df"
+      "sha": "3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d"
     },
     {
       "path": "tests/order-journal-v0418.test.js",
-      "sha": "56783a8fa9778d4ded02ff5044df7fb4012c0bf8"
+      "sha": "4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e"
     },
     {
       "path": "tests/order-message-channels.test.js",
-      "sha": "0191a0c6f2de2c042b6247acfdb087e94fb75168"
+      "sha": "5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f"
     },
     {
       "path": "tests/order-read-v0419.test.js",
-      "sha": "5764228583914c7040f209d8ce892f11d8d602d5"
+      "sha": "6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a"
     },
     {
       "path": "tests/order-workflow.test.js",
-      "sha": "b59044e16f9e97268bfe0e9df963eb666dddb225"
-    },
-    {
-      "path": "tests/order-workspace-contract.test.js",
-      "sha": "75a8430894135c0f30f0f8a2227b4669f263079a"
+      "sha": "7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b"
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "991ac50fed05e212e7230092249e335e64754d1e"
+      "sha": "8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c"
     },
     {
       "path": "tests/partner-economics.test.js",
-      "sha": "89929f0c0e42d33af529f9a7eed22cb60fd478b2"
+      "sha": "9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d"
     },
     {
       "path": "tests/postgres-factory-repository.test.js",
-      "sha": "152d8bfc58f7ed94494bc68cd551af3e793c355f"
+      "sha": "0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e"
     },
     {
       "path": "tests/preview-layout.test.js",
-      "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
+      "sha": "1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f"
     },
     {
       "path": "tests/production-schedule.test.js",
-      "sha": "43100b4da8bc62b433331ee66f93b6508aa62fef"
+      "sha": "2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a"
     },
     {
       "path": "tests/project-recovery.test.js",
-      "sha": "a9bf83db23294310e68444e008ce2414309c0dc0"
+      "sha": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b"
     },
     {
       "path": "tests/project-storage-ui.mjs",
-      "sha": "6ebc65ed36c578df4e092bb052ca9645fd80a7f2"
+      "sha": "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c"
     },
     {
       "path": "tests/render-smoke.mjs",
-      "sha": "b10ac3a7cab93459b57dba73cd5759322d91f5a7"
+      "sha": "5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d"
     },
     {
       "path": "tests/role-interactions-e2e.test.js",
-      "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
+      "sha": "6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e"
     },
     {
       "path": "tests/storage.test.js",
-      "sha": "b47e4cf6219d0137a102eaeef58a223b207d5e0c"
+      "sha": "7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f"
     },
     {
       "path": "tests/traceability-v043.test.js",
-      "sha": "7a1b30ab81120316df6166457d4cc6fb37099c96"
+      "sha": "8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a"
     },
     {
       "path": "tests/traceability-v044.test.js",
-      "sha": "a0d786556c389e6c25a0f2ccbe99a2df3658bacb"
+      "sha": "9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b"
     },
     {
       "path": "tests/upholstery-geometry.test.js",
-      "sha": "73f98bc2f65c8c9749772425b71cf8fe0ba36678"
+      "sha": "0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c"
     },
     {
       "path": "tests/visual-detailing.test.js",
-      "sha": "02244c05f7acecdfae6f3cb14f2b27d71cd63524"
-    },
-    {
-      "path": "vite.config.js",
-      "sha": "93e68980d67dc83faa655301b19991f73721704f"
+      "sha": "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
     }
   ]
 }

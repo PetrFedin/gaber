@@ -1,0 +1,296 @@
+.order-journey {
+  margin: 24px 0 30px;
+  padding: 22px 0;
+  border-top: 1px solid var(--atelier-line, #d8d9d1);
+  border-bottom: 1px solid var(--atelier-line, #d8d9d1);
+}
+.order-journey > ol {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+}
+.order-journey > ol > li {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 10px 0 0;
+  color: #8a9184;
+}
+.order-journey > ol > li:after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 32px;
+  right: 7px;
+  height: 1px;
+  background: #d8dcd3;
+}
+.order-journey > ol > li:last-child:after {
+  display: none;
+}
+.order-journey > ol > li > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid #c9cfc3;
+  border-radius: 50%;
+  background: #fffefa;
+  font:
+    500 9px/1 "Manrope",
+    sans-serif;
+}
+.order-journey > ol > li > strong {
+  max-width: 13ch;
+  font-size: 10px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.order-journey > ol > li.done {
+  color: #34453c;
+}
+.order-journey > ol > li.done > span {
+  border-color: #6f8068;
+  background: #34453c;
+  color: #fff;
+}
+.order-journey > ol > li.done:after {
+  background: #91a087;
+}
+.order-journey > ol > li.current {
+  color: #34453c;
+}
+.order-journey > ol > li.current > span {
+  border-color: #34453c;
+  box-shadow: 0 0 0 4px #34453c12;
+}
+.order-next-action {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.32fr) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.order-next-action > span,
+.order-payment-progress span {
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7c8576;
+}
+.order-next-action > p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #3e493f;
+}
+.order-payment-progress {
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid #e4e5df;
+}
+.order-payment-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.order-payment-progress strong {
+  font:
+    500 12px/1.4 "Manrope",
+    sans-serif;
+  color: #34453c;
+}
+.order-payment-progress progress {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin: 11px 0 7px;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: #e3e7de;
+  color: #52644b;
+}
+.order-payment-progress progress::-webkit-progress-bar {
+  background: #e3e7de;
+}
+.order-payment-progress progress::-webkit-progress-value {
+  background: #52644b;
+}
+.order-payment-progress progress::-moz-progress-bar {
+  background: #52644b;
+}
+.order-payment-progress small {
+  font-size: 10px;
+  color: #81897b;
+}
+.order-readiness {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.28fr) 1fr;
+  gap: 20px;
+  margin: 22px 0;
+  padding: 20px 0;
+  border-top: 2px solid #52644b;
+  border-bottom: 1px solid #d8dcd3;
+}
+.order-readiness h4 {
+  margin: 0 0 7px;
+  font: 400 23px/1.2 var(--serif, Georgia, serif);
+}
+.order-readiness p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #667061;
+}
+.order-fulfilment-guide {
+  margin: 25px 0;
+  border-top: 1px solid var(--atelier-line, #d8d9d1);
+  border-bottom: 1px solid var(--atelier-line, #d8d9d1);
+}
+.order-fulfilment-guide > summary {
+  min-height: 54px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.order-fulfilment-guide > div {
+  padding: 4px 0 24px;
+}
+.order-fulfilment-guide h4 {
+  font: 400 25px/1.25 var(--serif, Georgia, serif);
+  margin: 5px 0 12px;
+}
+.order-fulfilment-guide p {
+  font-size: 12px;
+  line-height: 1.75;
+  color: #626d63;
+}
+.order-fulfilment-guide ol {
+  margin: 18px 0;
+  padding-left: 22px;
+}
+.order-fulfilment-guide li {
+  padding: 7px 0 7px 5px;
+  font-size: 12px;
+  line-height: 1.7;
+  border-bottom: 1px solid #e7e8e2;
+}
+.order-guide-disclaimer {
+  padding-left: 12px;
+  border-left: 2px solid #98806a;
+}
+.order-fulfilment-guide .button {
+  margin-top: 12px;
+}
+.partner-commission {
+  display: grid;
+  grid-template-columns: 1fr minmax(230px, 0.75fr);
+  gap: 25px;
+  margin: 28px 0;
+  padding: 24px 0;
+  border-top: 2px solid #8a9284;
+  border-bottom: 1px solid #d8dcd3;
+}
+.partner-commission.complete {
+  border-top-color: #34453c;
+}
+.partner-commission h4 {
+  margin: 7px 0 10px;
+  font: 400 26px/1.2 var(--serif, Georgia, serif);
+}
+.partner-commission p {
+  max-width: 65ch;
+  font-size: 12px;
+  line-height: 1.75;
+  color: #626d63;
+}
+.partner-commission dl {
+  margin: 0;
+}
+.partner-commission dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e6df;
+  font-size: 11px;
+}
+.partner-commission dt {
+  color: #727b6d;
+}
+.partner-commission dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+.partner-commission > .button {
+  grid-column: 1/-1;
+  justify-self: start;
+}
+.order-fulfilment-choice {
+  padding: 14px 0;
+  border-top: 1px solid #e0e2da;
+  border-bottom: 1px solid #e0e2da;
+}
+.order-fulfilment-choice p {
+  font-size: 11px;
+  line-height: 1.65;
+  color: #69736a;
+}
+@media (max-width: 760px) {
+  .order-journey {
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+  .order-journey > ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 12px;
+  }
+  .order-journey > ol > li {
+    min-height: 46px;
+    flex-direction: row;
+    align-items: center;
+    gap: 9px;
+    padding: 0;
+  }
+  .order-journey > ol > li:after {
+    display: none;
+  }
+  .order-journey > ol > li > strong {
+    max-width: none;
+    font-size: 11px;
+  }
+  .order-next-action {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  .order-payment-progress > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .order-readiness {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .partner-commission {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+  .order-fulfilment-guide h4 {
+    font-size: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .order-journey *,
+  .order-fulfilment-guide *,
+  .partner-commission * {
+    transition: none;
+  }
+}

@@ -343,7 +343,7 @@
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "d4e5556236ef9e5206e79bbbd908ddd4254e39c3"
+      "sha": "dd68a846ab42c92ae683dc1593c91233e07cfcfd"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -515,7 +515,7 @@
     },
     {
       "path": "tests/client-experience-ui.mjs",
-      "sha": "ab0e8298054f780764c4248f57933d392288d5a2"
+      "sha": "ee87c3fd589ecd2227d33d8cdd0cfbf7b394ddf4"
     },
     {
       "path": "tests/client-offer.test.js",
@@ -640,6 +640,10 @@
     {
       "path": "tests/order-workflow.test.js",
       "sha": "b59044e16f9e97268bfe0e9df963eb666dddb225"
+    },
+    {
+      "path": "tests/order-workspace-contract.test.js",
+      "sha": "75a8430894135c0f30f0f8a2227b4669f263079a"
     },
     {
       "path": "tests/order-workspace-ui.mjs",

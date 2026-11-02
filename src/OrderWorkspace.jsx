@@ -144,7 +144,7 @@ function OrderDetail({row,role,send,onError}){
      send('assign_factory',{factoryId:factoryId.trim()},false))}>
      <p>Для настоящего серверного исполнения Габер должен назначить фабрику. Действие ниже пока записывается только в демонстрационном журнале браузера.</p>
      <label className="order-field">Код фабрики
-      <input required maxLength={128} pattern="[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}" value={factoryId} onChange={e=>setFactoryId(e.target.value)}/>
+      <input required maxLength={128} pattern="[A-Za-z0-9][A-Za-z0-9_.:\-]{0,127}" value={factoryId} onChange={e=>setFactoryId(e.target.value)}/>
      </label>
      <button className="button outline" type="submit">Назначить фабрику · локально</button>
     </form>}

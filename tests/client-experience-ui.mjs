@@ -88,6 +88,31 @@ try {
     root.render(React.createElement(App));
   });
   assert.equal(document.querySelectorAll(".home-assurance>div").length, 3);
+  assert.equal(
+    document.querySelector(
+      'nav[aria-label="Основная навигация"] a[href="#partner"]',
+    ).textContent,
+    "Партнёр GABER",
+  );
+  for (const hash of ["operations", "partner"]) {
+    await act(async () => {
+      dom.window.location.hash = hash;
+      dom.window.dispatchEvent(new dom.window.HashChangeEvent("hashchange"));
+    });
+    await flush();
+    assert.equal(document.querySelector(".gaber-operations") !== null, true);
+    assert.equal(
+      document.querySelector(
+        '#gaber-order-workspace[aria-label="Кабинет партнёра GABER · заказы"]',
+      ) !== null,
+      true,
+    );
+  }
+  await act(async () => {
+    dom.window.location.hash = "home";
+    dom.window.dispatchEvent(new dom.window.HashChangeEvent("hashchange"));
+  });
+  await flush();
   await act(async () => {
     button("Создать свой предмет").click();
   });

@@ -21,6 +21,7 @@ import {
 import { orderMoney } from "./orderMoney.js";
 import {
   OrderJourney,
+  OrderServicePulse,
   OrderReadiness,
   OrderFulfilmentGuide,
   PartnerCommissionSummary,
@@ -67,7 +68,7 @@ const LABELS = {
   deliver: "Доставка · локально",
   accept_delivery: "Приёмка клиентом · локально",
   report_issue: "Замечания клиента",
-  respond_issue: "Ответ фабрики на замечание",
+  respond_issue: "Предложено решение замечания",
   reject_resolution: "Клиент отклонил решение",
   confirm_resolution: "Клиент подтвердил решение",
   message: "Сообщение",
@@ -462,6 +463,14 @@ function OrderDetail({ row, role, send, onError }) {
         </span>
       </div>
       <OrderJourney state={s} role={role} financials={f} />
+      <OrderServicePulse
+        state={s}
+        role={role}
+        financials={f}
+        events={visibleEvents}
+        eventLabel={(event) => LABELS[event.type] ?? event.type}
+        accountLabel={account}
+      />
       <OrderReadiness state={s} />
       <div className="order-columns">
         <div>
@@ -549,7 +558,7 @@ function OrderDetail({ row, role, send, onError }) {
               Замечание: {s.issue.note}.{" "}
               {s.issue.status === "response_proposed"
                 ? "Ожидается ответ клиента."
-                : "Ожидается ответ производства."}
+                : "Ожидается ответ фабрики или GABER."}
             </p>
           )}
           {!!s.issues?.length && (
@@ -567,7 +576,7 @@ function OrderDetail({ row, role, send, onError }) {
                   </strong>
                   <p>Замечание: {issue.note}</p>
                   {issue.response && (
-                    <p>Ответ фабрики: {issue.response.note}</p>
+                    <p>Ответ исполнителя: {issue.response.note}</p>
                   )}
                   {issue.rejections.map((rejected, i) => (
                     <p key={i}>Отклонено клиентом: {rejected.note}</p>
@@ -1182,36 +1191,41 @@ function OrderDetail({ row, role, send, onError }) {
               </button>
             </form>
           )}
-          {factory && s.stage === "disputed" && s.issue?.status === "open" && (
-            <form
-              className="order-dispute-action"
-              onSubmit={(e) =>
-                submit(e, () => send("respond_issue", { note: resolutionNote }))
-              }
-            >
-              <h4>Ответить на замечание {s.issue.id}</h4>
-              <p>
-                Предложенное действие не является подтверждённым актом ремонта.
-              </p>
-              <label className="order-field">
-                Предложение фабрики
-                <textarea
-                  required
-                  maxLength={500}
-                  value={resolutionNote}
-                  onChange={(e) => setResolutionNote(e.target.value)}
-                />
-              </label>
-              <button className="button dark" type="submit">
-                Предложить решение · локально
-              </button>
-            </form>
-          )}
+          {(factory || partner) &&
+            s.stage === "disputed" &&
+            s.issue?.status === "open" && (
+              <form
+                className="order-dispute-action"
+                onSubmit={(e) =>
+                  submit(e, () =>
+                    send("respond_issue", { note: resolutionNote }),
+                  )
+                }
+              >
+                <h4>Ответить на замечание {s.issue.id}</h4>
+                <p>
+                  Предложенное действие не является подтверждённым актом
+                  ремонта.
+                </p>
+                <label className="order-field">
+                  {partner ? "Предложение GABER" : "Предложение фабрики"}
+                  <textarea
+                    required
+                    maxLength={500}
+                    value={resolutionNote}
+                    onChange={(e) => setResolutionNote(e.target.value)}
+                  />
+                </label>
+                <button className="button dark" type="submit">
+                  Предложить решение · локально
+                </button>
+              </form>
+            )}
           {client &&
             s.stage === "disputed" &&
             s.issue?.status === "response_proposed" && (
               <div className="order-dispute-action">
-                <h4>Решение фабрики по замечанию {s.issue.id}</h4>
+                <h4>Решение по замечанию {s.issue.id}</h4>
                 <p>{s.issue.response?.note}</p>
                 <label className="order-resolution-check">
                   <input
@@ -1272,7 +1286,7 @@ function OrderDetail({ row, role, send, onError }) {
           ))}
         </details>
       )}
-      <div className="order-conversation">
+      <div className="order-conversation" id="order-conversation">
         <h4>Обсуждение заказа</h4>
         <p>
           Клиент и фабрика ведут отдельные диалоги с Габер. Общий канал видят

@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { orderMoney } from "./orderMoney.js";
 import {
   buildAssemblyGuide,
   getNextOrderAction,
+  getOrderDueSignal,
   getOrderJourney,
+  getOrderServiceOwner,
   getPartnerCommissionStatus,
+  getUnreadOrderMessages,
   isPickupOrder,
 } from "./orderExperience.js";
 import "./orderExperience.css";
@@ -74,6 +77,133 @@ export function OrderJourney({ state, role, financials }) {
           <small>Демо-записи, не подтверждение банка · {paymentPercent}%</small>
         </div>
       )}
+    </section>
+  );
+}
+
+const SERVICE_READ_KEY = "gaber.order-service-read.v1";
+
+function getServiceReadMarker(orderId, role) {
+  try {
+    const markers = JSON.parse(localStorage.getItem(SERVICE_READ_KEY) || "{}");
+    return markers[`${orderId}:${role}`] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function OrderServicePulse({
+  state,
+  role,
+  financials,
+  events,
+  eventLabel,
+  accountLabel,
+}) {
+  const [readAt, setReadAt] = useState(() =>
+    getServiceReadMarker(state.projectId, role),
+  );
+  const owner = getOrderServiceOwner(state, financials);
+  const due = getOrderDueSignal(state);
+  const unread = getUnreadOrderMessages(state, role, readAt);
+  const latestEvents = events.slice(-4).reverse();
+  const markRead = () => {
+    const marker = unread.at(-1)?.at;
+    if (!marker) return;
+    try {
+      const markers = JSON.parse(
+        localStorage.getItem(SERVICE_READ_KEY) || "{}",
+      );
+      markers[`${state.projectId}:${role}`] = marker;
+      localStorage.setItem(SERVICE_READ_KEY, JSON.stringify(markers));
+    } catch {
+      // Reading the order and its journal does not depend on this preference.
+    }
+    setReadAt(marker);
+  };
+  return (
+    <section className="order-service-pulse" aria-label="Сервис заказа">
+      <div className="order-service-heading">
+        <div>
+          <span className="eyebrow">СЕРВИС ЗАКАЗА · ДЕМО</span>
+          <h4>Живое взаимодействие</h4>
+        </div>
+        <span
+          className={`order-service-unread ${unread.length ? "active" : ""}`}
+        >
+          {unread.length
+            ? `Новых сообщений: ${unread.length}`
+            : "Новых сообщений нет"}
+        </span>
+      </div>
+      <div className="order-service-status">
+        <div>
+          <span>Сейчас действует</span>
+          <strong>{owner.label}</strong>
+          <p>
+            {owner.role === role
+              ? "Следующее действие на вашей стороне."
+              : owner.role
+                ? "Ваши доступные действия — ниже в кабинете."
+                : "Все этапы локального сценария завершены."}
+          </p>
+        </div>
+        {due && (
+          <div className={`order-service-due ${due.tone}`}>
+            <span>Плановая дата · {due.dueDate}</span>
+            <strong>
+              {due.days < 0
+                ? `Просрочка ${Math.abs(due.days)} дн.`
+                : due.days === 0
+                  ? "Сегодня"
+                  : `${due.days} дн.`}
+            </strong>
+            <p>{due.text}</p>
+          </div>
+        )}
+      </div>
+      {unread.length > 0 && (
+        <div className="order-service-new-messages" role="status">
+          <div>
+            <strong>Новое для вашей роли</strong>
+            {unread.slice(-2).map((message) => (
+              <p key={`${message.at}:${message.role}`}>
+                {accountLabel(message.role)} · {message.note}
+              </p>
+            ))}
+          </div>
+          <div className="technical-actions">
+            <a
+              className="button dark"
+              href="#order-conversation"
+              onClick={markRead}
+            >
+              Открыть диалог
+            </a>
+            <button className="button outline" type="button" onClick={markRead}>
+              Отметить прочитанными
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="order-service-events">
+        <span>Последние события журнала</span>
+        <ol>
+          {latestEvents.map((event) => (
+            <li key={event.id}>
+              <strong>{eventLabel(event)}</strong>
+              <span>
+                {accountLabel(event.role)} ·{" "}
+                {new Date(event.at).toLocaleString("ru-RU")}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <small>
+          События и переписка хранятся в локальном журнале этого браузера.
+          Прочитанность также отмечается только на этом устройстве.
+        </small>
+      </div>
     </section>
   );
 }

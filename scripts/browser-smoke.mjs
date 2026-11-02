@@ -1,134 +1,374 @@
-// Actual Chromium smoke for the built, local-only GABER demo.
-// This does NOT establish real multi-user login, PostgreSQL or PSP E2E.
-// Node 24 built-ins only: no browser test runner, cloud service or plugin.
-import assert from 'node:assert/strict';
-import {spawn,spawnSync,execFileSync} from 'node:child_process';
-import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {join,resolve} from 'node:path';
+import { createRequire } from "node:module";
+import { spawn } from "node:child_process";
+import assert from "node:assert/strict";
+import fs from "node:fs";
 
-const base='http://127.0.0.1:4173';
-const screenshots=resolve('qa/browser-smoke');
-const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
-const delay=ms=>new Promise(done=>setTimeout(done,ms));
-async function waitFor(probe,label,ms=20000){
- const until=Date.now()+ms,failures=[];
- while(Date.now()<until){
-  try{const v=await probe();if(v)return v;}catch(e){failures.push(String(e.message??e));}
-  await delay(160);
- }
- throw Error(label+' TIMEOUT '+failures.slice(-3).join(' | '));
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+const url = process.env.SMOKE_URL || "http://127.0.0.1:4173";
+const dueDate = new Date(Date.now() + 45 * 86400000).toISOString().slice(0, 10);
+let vite;
+let browser;
+let page;
+const errors = [];
+const checkpoints = [];
+const stage = (name) => {
+  checkpoints.push({ name, at: new Date().toISOString() });
+  console.log(`[browser-smoke] ${name}`);
+};
+const watch = (target) => {
+  target.on("pageerror", (error) => errors.push(error.message));
+  target.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+};
+
+async function readProjects(targetPage = page) {
+  return targetPage.evaluate(async () => {
+    const { readProjects } = await import("/src/storage.js");
+    return readProjects();
+  });
 }
-function chromeExecutable(){
- for(const name of ['google-chrome','google-chrome-stable','chromium','chromium-browser']){
-  const p=spawnSync('sh',['-c','command -v '+name],{encoding:'utf8'});
-  if(p.status===0&&p.stdout.trim())return p.stdout.trim();
- }
- throw Error('CHROME_NOT_INSTALLED_ON_GITHUB_RUNNER');
+async function readOrder(targetPage = page) {
+  const row = await targetPage.evaluate(() => {
+    const journal = JSON.parse(
+      localStorage.getItem("gaber.order-workflow.v1") || "null",
+    );
+    return journal?.orders?.[0] || null;
+  });
+  if (!row) return null;
+  return targetPage.evaluate(async (events) => {
+    const { replayOrder, orderFinancials } = await import(
+      "/src/orderWorkflow.js"
+    );
+    const { getPartnerCommissionStatus } = await import(
+      "/src/orderExperience.js"
+    );
+    const state = replayOrder(events);
+    const financials = orderFinancials(state);
+    return {
+      state,
+      financials,
+      commission: getPartnerCommissionStatus(state, financials),
+      eventCount: events.length,
+    };
+  }, row.events);
 }
-let preview=null,chrome=null,ws=null,profile=null;
-let commandId=0;const pending=new Map(),runtimeErrors=[];
-const screenshotPath=(size,route)=>join(screenshots,size+'-'+route+'.png');
-async function send(method,params={}){
- const id=++commandId;
- return new Promise((resolve,reject)=>{
-  pending.set(id,{resolve,reject});
-  ws.send(JSON.stringify({id,method,params}));
- });
+async function waitStage(expected) {
+  await page.waitForFunction(async (stage) => {
+    const journal = JSON.parse(
+      localStorage.getItem("gaber.order-workflow.v1") || "null",
+    );
+    const events = journal?.orders?.[0]?.events;
+    if (!events) return false;
+    const { replayOrder } = await import("/src/orderWorkflow.js");
+    return replayOrder(events).stage === stage;
+  }, expected);
 }
-async function evaluate(expression){
- const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
- if(result.exceptionDetails)throw Error('CHROME_JS_EXCEPTION '+JSON.stringify(result.exceptionDetails).slice(0,700));
- return result.result?.value;
+async function go(role) {
+  const route =
+    role === "partner"
+      ? "partner"
+      : role === "factory"
+        ? "factory"
+        : "projects";
+  await page.goto(`${url}/#${route}`, { waitUntil: "networkidle" });
+  await page.locator(".order-workspace").waitFor();
 }
-const snapshotExpression='(() => { const w=document.documentElement.clientWidth; const e=document.getElementById("gaber-order-workspace"); return {ready:document.readyState, title:document.title, viewport:w, outerViewport:window.innerWidth, scrollWidth:document.documentElement.scrollWidth, bodyScrollWidth:document.body.scrollWidth, role:e?.getAttribute("aria-label")??null, studio:!!document.querySelector("main.studio"), h1:document.querySelector("h1")?.textContent?.trim()??"", nav:!!document.querySelector("nav[aria-label]"), error:document.querySelector("[role=alert]")?.textContent?.trim()??null}; })()';
-try{
- await mkdir(screenshots,{recursive:true});
- const executable=chromeExecutable();
- preview=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','4173','--strictPort'],{stdio:'ignore'});
- await waitFor(async()=>{try{return (await fetch(base)).ok}catch{return false}},'VITE_PREVIEW_NOT_SERVING');
- profile=await mkdtemp(join(tmpdir(),'gaber-chrome-'));
- chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage',
-  '--disable-gpu','--remote-allow-origins=*','--remote-debugging-port=0',
-  '--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
- const port=await waitFor(async()=>{
-  const s=await readFile(join(profile,'DevToolsActivePort'),'utf8');
-  const p=Number(s.split('\n')[0]);return Number.isInteger(p)&&p>0?p:null;
- },'CHROME_REMOTE_DEBUGGING_UNAVAILABLE');
- const list=await waitFor(async()=>{
-  const v=await (await fetch('http://127.0.0.1:'+port+'/json/list')).json();
-  return v.find(x=>x.type==='page'&&x.webSocketDebuggerUrl);
- },'CHROME_PAGE_NOT_AVAILABLE');
- ws=new WebSocket(list.webSocketDebuggerUrl);
- await new Promise((ok,fail)=>{
-  ws.addEventListener('open',ok,{once:true});
-  ws.addEventListener('error',()=>fail(Error('CHROME_WS_CONNECT_FAILED')),{once:true});
- });
- ws.addEventListener('message',event=>{
-  const data=JSON.parse(String(event.data));
-  if(data.method==='Runtime.exceptionThrown')runtimeErrors.push(
-   JSON.stringify(data.params?.exceptionDetails??data.params).slice(0,700));
-  if(data.id!==undefined&&pending.has(data.id)){
-   const cb=pending.get(data.id);pending.delete(data.id);
-   data.error?cb.reject(Error('CDP '+JSON.stringify(data.error))):cb.resolve(data.result);
+async function click(name) {
+  const button = page.getByRole("button", { name, exact: true });
+  await button.scrollIntoViewIfNeeded();
+  await button.click({ noWaitAfter: true });
+}
+async function fill(label, value) {
+  const field = page.getByLabel(label, { exact: true });
+  await field.scrollIntoViewIfNeeded();
+  await field.fill(value);
+}
+async function downloadText(name) {
+  const pending = page.waitForEvent("download");
+  await click(name);
+  const download = await pending;
+  return fs.readFileSync(await download.path(), "utf8");
+}
+
+try {
+  if (!process.env.SMOKE_URL) {
+    vite = spawn("npm", ["run", "dev", "--", "--strictPort"], {
+      stdio: "ignore",
+      detached: process.platform !== "win32",
+    });
+    let ready = false;
+    for (let i = 0; i < 80; i++) {
+      try {
+        if ((await fetch(url)).ok) {
+          ready = true;
+          break;
+        }
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    assert.ok(ready, "Vite did not become ready");
   }
- });
- await send('Page.enable');await send('Runtime.enable');
- const routes=[
-  {hash:'projects',role:'Кабинет клиента',studio:false},
-  {hash:'factory',role:'Кабинет фабрики',studio:false},
-  {hash:'partner',role:'Кабинет партнёра GABER',studio:false},
-  {hash:'studio',role:null,studio:true}
- ];
- let checks=0,images=0;
- for(const width of [375,768,1440]){
-  const height=width===375?812:width===768?1024:900;
-  await send('Emulation.setDeviceMetricsOverride',
-   {width,height,deviceScaleFactor:1,mobile:width<600});
-  for(const route of routes){
-   await send('Page.navigate',{url:base+'/#'+route.hash});
-   let result;
-   try{
-    result=await waitFor(async()=>{
-     const s=await evaluate(snapshotExpression);
-     return s?.ready==='complete'&&s.nav&&
-      (route.studio?s.studio:s.role?.includes(route.role))?s:null;
-    },'ROUTE_NOT_RENDERED '+width+' '+route.hash);
-   }catch(error){
-    const last=await evaluate(snapshotExpression).catch(e=>({evalError:String(e)}));
-    throw Error(error.message+' lastSnapshot='+JSON.stringify(last)+
-     ' lastRuntimeErrors='+runtimeErrors.slice(-4).join(' | '));
-   }
-   assert.equal(result.outerViewport,width,
-    'Wrong Chrome emulated outer viewport '+JSON.stringify({width,route:route.hash,result}));
-   // Desktop Chrome reserves 15px for a classic vertical scrollbar:
-   // html.clientWidth is the actual content viewport, not window.innerWidth.
-   assert.ok(result.viewport<=width&&result.viewport>=width-20,
-    'Unexpected content viewport '+JSON.stringify({width,route:route.hash,result}));
-   assert.ok(result.scrollWidth<=result.viewport+4,
-    'Horizontal document overflow at '+width+' '+route.hash+': '+JSON.stringify(result));
-   assert.ok(result.bodyScrollWidth<=result.viewport+4,
-    'Body overflow at '+width+' '+route.hash+': '+JSON.stringify(result));
-   assert.ok(!result.error,
-    'Unexpected error banner at '+width+' '+route.hash+': '+result.error);
-   if(route.studio)assert.ok(result.studio,'Studio not rendered');
-   else assert.ok(result.role.includes(route.role),'Wrong role view');
-   const screen=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-   await writeFile(screenshotPath(width,route.hash),Buffer.from(screen.data,'base64'));
-   checks+=5;images++;
-   console.log('BROWSER_PASS '+width+' '+route.hash+
-    ' role='+(result.role??'studio')+' overflow='+result.scrollWidth+'/'+result.viewport);
+  browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    acceptDownloads: true,
+  });
+  page = await context.newPage();
+  watch(page);
+  await page.goto(url, { waitUntil: "networkidle" });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: "networkidle" });
+  await page.locator(".hero h1").waitFor();
+  await page.locator(".collection-grid").waitFor();
+  stage("home");
+
+  await page.locator(".collection-card").first().click({ noWaitAfter: true });
+  await page.locator(".studio-canvas canvas").waitFor();
+  await page.getByRole("heading", { name: "Архитектура предмета" }).waitFor();
+  const studioMetrics = await page.evaluate(() => {
+    const canvas = document.querySelector(".studio-canvas canvas");
+    const panel = document.querySelector(".studio-panel");
+    const rect = canvas?.getBoundingClientRect();
+    return {
+      canvasWidth: rect?.width,
+      canvasHeight: rect?.height,
+      panelWidth: panel?.getBoundingClientRect().width,
+      horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+    };
+  });
+  assert.ok(studioMetrics.canvasWidth > 250);
+  assert.ok(studioMetrics.canvasHeight > 250);
+  assert.ok(studioMetrics.panelWidth > 250);
+  assert.equal(studioMetrics.horizontalOverflow, false);
+  await page.getByLabel("Трансформация", { exact: true }).selectOption("fold");
+  await page
+    .getByRole("button", { name: /^Обивка/ })
+    .click({ noWaitAfter: true });
+  await page.getByLabel("Материал", { exact: true }).selectOption({ index: 1 });
+  await page
+    .getByRole("button", { name: "Проверить и продолжить", exact: true })
+    .click({ noWaitAfter: true });
+  await page.getByRole("heading", { name: "Ваш предмет" }).waitFor();
+  await page
+    .getByRole("button", { name: "Создать демо-заявку", exact: true })
+    .click({ noWaitAfter: true });
+  await page.waitForFunction(() =>
+    document.querySelector(".toast")?.textContent.includes("Заявка появилась"),
+  );
+  assert.equal((await readProjects()).length, 1);
+  assert.equal((await readProjects())[0].status, "requested");
+  stage("configure-and-save-project");
+
+  const dataPage = await context.newPage();
+  watch(dataPage);
+  await dataPage.goto(`${url}/#projects`, { waitUntil: "networkidle" });
+  assert.equal((await readProjects(dataPage)).length, 1);
+  await dataPage.reload({ waitUntil: "networkidle" });
+  assert.equal((await readProjects(dataPage)).length, 1);
+  await dataPage.close();
+  stage("project-reload-and-second-tab");
+
+  await go("client");
+  await page.locator(".project-card").waitFor();
+  await click("Создать заказ из проекта");
+  await waitStage("requested");
+  await page.locator(".order-journey").waitFor();
+  const initial = await readOrder();
+  const orderId = initial.state.projectId;
+  assert.ok(orderId);
+
+  await go("partner");
+  await fill("Код фабрики", "FACTORY-A");
+  await click("Назначить фабрику · локально");
+  for (const [label, value] of [
+    ["Цена клиенту, ₽", "1200"],
+    ["Себестоимость фабрики, ₽", "700"],
+    ["Комиссия Габер, ₽", "200"],
+    ["Логистика, ₽", "50"],
+    ["Налоги, ₽", "50"],
+    ["Прочие расходы, ₽", "0"],
+    ["Плановая дата готовности", dueDate],
+    [
+      "Техническое задание фабрике",
+      "Каркас, допуски, наполнитель, обивка и швы",
+    ],
+    ["Описание предложения", "Цена после заводского подтверждения"],
+  ])
+    await fill(label, value);
+  await click("Отправить ТЗ фабрике на подтверждение");
+  await go("factory");
+  await fill("Документ подтверждения фабрики", "ACK-1");
+  await fill("Комментарий фабрики", "Концепция подтверждена");
+  await click("Подтвердить ТЗ · локально");
+  await go("partner");
+  await click("Опубликовать предложение клиенту");
+  await waitStage("offered");
+  stage("factory-review-and-offer");
+
+  await go("client");
+  await page.locator(".order-decision input").check();
+  await click("Согласовать R1");
+  await fill("Сумма, ₽", "600");
+  await fill("Номер / ссылка на платёжный документ", "CLIENT-CLAIM");
+  await click("Сообщить об оплате");
+  await go("partner");
+  await fill("Сумма, ₽", "600");
+  await fill("Номер / ссылка на платёжный документ", "LOCAL-ADVANCE");
+  await click("Добавить локальную запись оплаты");
+  await go("factory");
+  await click("Запустить производственный сценарий");
+  await click("Передать на контроль качества");
+  await fill("Акт контроля качества", "QC-CONCEPT");
+  await click("Зафиксировать контроль · локально");
+  await waitStage("ready");
+  await go("partner");
+  await fill("Сумма, ₽", "600");
+  await fill("Номер / ссылка на платёжный документ", "LOCAL-BALANCE");
+  await click("Добавить локальную запись оплаты");
+  stage("payment-production-and-readiness");
+
+  await go("factory");
+  await page.locator(".order-readiness").waitFor();
+  await fill("Перевозчик", "TEST carrier");
+  await fill("Номер отправления", "TRACK-1");
+  await fill("Отгрузочный документ", "PACK-1");
+  await click("Зафиксировать отгрузку · локально");
+  await fill("Подтверждение доставки", "POD-1");
+  await click("Зафиксировать доставку · локально");
+  await go("client");
+  const guide = await downloadText("Скачать демо-инструкцию");
+  assert.match(guide, /Не является утверждённой производственной инструкцией/);
+  await click("Принять доставленный заказ");
+  await waitStage("closed");
+  const closed = await readOrder();
+  assert.equal(closed.financials.balanceKopecks, 0);
+  assert.ok(closed.financials.priceKopecks > 0);
+  assert.equal(closed.financials.verifiedBankKopecks, null);
+  assert.equal(closed.commission.status, "DEMO_SETTLEMENT_COMPLETE");
+  assert.equal(closed.commission.bankVerifiedKopecks, null);
+  await go("partner");
+  await page
+    .getByText("Итоговый расчёт комиссии завершён", { exact: true })
+    .waitFor();
+  const settlement = await downloadText("Скачать демо-сверку сделки");
+  assert.match(settlement, /20000/);
+  assert.match(settlement.toLowerCase(), /банк не/);
+  stage("delivery-assembly-guide-and-demo-settlement");
+
+  await page.reload({ waitUntil: "networkidle" });
+  await page.locator(".order-workspace").waitFor();
+  const reloaded = await readOrder();
+  assert.equal(reloaded.state.stage, "closed");
+  assert.equal(reloaded.financials.balanceKopecks, 0);
+  await page
+    .getByText("Итоговый расчёт комиссии завершён", { exact: true })
+    .waitFor();
+  stage("closed-order-reload");
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(url, { waitUntil: "networkidle" });
+  await page.locator(".collection-grid").waitFor();
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  await page.locator(".collection-card").first().click({ noWaitAfter: true });
+  await page.locator(".studio-canvas canvas").waitFor();
+  const mobileStudio = await page.evaluate(() => ({
+    overflow: document.documentElement.scrollWidth > innerWidth,
+    canvas: document
+      .querySelector(".studio-canvas canvas")
+      ?.getBoundingClientRect().width,
+  }));
+  assert.equal(mobileStudio.overflow, false);
+  assert.ok(mobileStudio.canvas > 200);
+  stage("mobile-constructor");
+
+  const isolated = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const second = await isolated.newPage();
+  watch(second);
+  await second.goto(`${url}/#projects`, { waitUntil: "networkidle" });
+  await second
+    .getByRole("heading", { name: "Здесь начнётся ваша коллекция" })
+    .waitFor();
+  assert.equal((await readProjects(second)).length, 0);
+  await second.evaluate(() =>
+    localStorage.setItem("gaber.order-workflow.v1", "not-json"),
+  );
+  await second.reload({ waitUntil: "networkidle" });
+  await second
+    .getByRole("alert")
+    .filter({ hasText: "Журнал заказов недоступен или повреждён" })
+    .waitFor();
+  assert.equal(
+    await second.evaluate(() =>
+      localStorage.getItem("gaber.order-workflow.v1"),
+    ),
+    "not-json",
+  );
+  await isolated.close();
+  stage("fresh-browser-and-corrupt-journal-protection");
+
+  const unknown = await context.newPage();
+  watch(unknown);
+  await unknown.goto(`${url}/this-route-does-not-exist`, {
+    waitUntil: "networkidle",
+  });
+  await unknown.locator(".hero h1").waitFor();
+  await unknown.close();
+  assert.deepEqual(errors, []);
+  stage("unknown-route-and-console");
+
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        checkpoints,
+        orderId,
+        events: closed.eventCount,
+        stages:
+          "requested → offered → accepted → production → quality → ready → shipped → delivered → closed",
+        scope:
+          "LOCAL SMOKE ONLY — no real payments, production, bank or factory acceptance",
+      },
+      null,
+      2,
+    ),
+  );
+} catch (error) {
+  console.error(
+    JSON.stringify(
+      {
+        ok: false,
+        checkpoints,
+        error: error.stack || error.message,
+        consoleErrors: errors,
+        url: page?.url(),
+      },
+      null,
+      2,
+    ),
+  );
+  if (page && process.env.SMOKE_SCREENSHOT) {
+    await page.screenshot({
+      path: process.env.SMOKE_SCREENSHOT,
+      fullPage: true,
+    });
+    console.error(`Screenshot: ${process.env.SMOKE_SCREENSHOT}`);
   }
- }
- console.log('GABER_BROWSER_SMOKE_GREEN source_sha='+sha+
-  ' responsive_checks='+checks+' screenshots='+images);
- console.log('NOTICE: screenshot/route tests are on static local browser demo, NOT real authenticated multi-user E2E.');
-}finally{
- for(const cb of pending.values())cb.reject(Error('CHROME_SHUTDOWN'));
- pending.clear();
- try{ws?.close();}catch{}
- if(chrome)chrome.kill('SIGTERM');
- if(preview)preview.kill('SIGTERM');
- await delay(300);
- if(profile)await rm(profile,{recursive:true,force:true});
+  process.exitCode = 1;
+} finally {
+  await browser?.close();
+  if (vite) {
+    try {
+      if (process.platform === "win32") vite.kill();
+      else process.kill(-vite.pid, "SIGTERM");
+    } catch {}
+  }
 }

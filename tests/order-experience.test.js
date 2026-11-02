@@ -4,8 +4,11 @@ import {
   PICKUP_CARRIER,
   buildAssemblyGuide,
   getNextOrderAction,
+  getOrderDueSignal,
   getOrderJourney,
+  getOrderServiceOwner,
   getPartnerCommissionStatus,
+  getUnreadOrderMessages,
   isPickupOrder,
   orderStageLabel,
 } from "../src/orderExperience.js";
@@ -138,5 +141,118 @@ test("commission becomes a completed demo calculation only after paid client acc
     getPartnerCommissionStatus(state("closed"), { ...paid, balanceKopecks: 1 })
       .eligible,
     false,
+  );
+});
+
+test("service ownership follows the actor who must unblock the order", () => {
+  assert.deepEqual(getOrderServiceOwner(state("requested"), paid), {
+    role: "partner",
+    label: "GABER",
+  });
+  assert.equal(
+    getOrderServiceOwner(state("awaiting_factory"), paid).role,
+    "factory",
+  );
+  assert.equal(
+    getOrderServiceOwner(state("accepted"), { ...paid, advanceDueKopecks: 100 })
+      .role,
+    "partner",
+  );
+  assert.equal(getOrderServiceOwner(state("accepted"), paid).role, "factory");
+  assert.equal(
+    getOrderServiceOwner(state("ready"), { ...paid, balanceKopecks: 100 }).role,
+    "partner",
+  );
+  const disputed = state("disputed");
+  disputed.issue = { status: "open" };
+  assert.equal(getOrderServiceOwner(disputed, paid).role, "service");
+  disputed.issue.status = "response_proposed";
+  assert.equal(getOrderServiceOwner(disputed, paid).role, "client");
+  assert.equal(getOrderServiceOwner(state("closed"), paid).role, null);
+});
+
+test("due signal is planning guidance rather than a fabricated production calendar", () => {
+  const order = state("production");
+  assert.deepEqual(getOrderDueSignal(order, new Date("2026-12-12T12:00:00Z")), {
+    dueDate: "2026-12-15",
+    days: 3,
+    tone: "warning",
+    text: "До плановой даты 3 дн. Календарь производства не подтверждён.",
+  });
+  assert.equal(
+    getOrderDueSignal(order, new Date("2026-12-18T12:00:00Z")).tone,
+    "alert",
+  );
+  assert.match(
+    getOrderDueSignal(order, new Date("2026-12-18T12:00:00Z")).text,
+    /Нужна новая согласованная дата/,
+  );
+  assert.equal(
+    getOrderDueSignal(state("closed"), new Date("2026-12-18")),
+    null,
+  );
+});
+
+test("unread projection preserves bilateral privacy and excludes own messages", () => {
+  const order = state("offered");
+  order.messages = [
+    {
+      role: "partner",
+      note: "Клиенту",
+      channel: "client_partner",
+      at: "2026-11-01T10:00:00.000Z",
+    },
+    {
+      role: "partner",
+      note: "Фабрике",
+      channel: "factory_partner",
+      at: "2026-11-01T10:01:00.000Z",
+    },
+    {
+      role: "factory",
+      note: "Общее",
+      channel: "shared",
+      at: "2026-11-01T10:02:00.000Z",
+    },
+    {
+      role: "client",
+      note: "Своё",
+      channel: "client_partner",
+      at: "2026-11-01T10:03:00.000Z",
+    },
+  ];
+  assert.deepEqual(
+    getUnreadOrderMessages(order, "client").map((message) => message.note),
+    ["Клиенту", "Общее"],
+  );
+  assert.deepEqual(
+    getUnreadOrderMessages(order, "client", "2026-11-01T10:00:00.000Z").map(
+      (message) => message.note,
+    ),
+    ["Общее"],
+  );
+  assert.deepEqual(
+    getUnreadOrderMessages(order, "factory").map((message) => message.note),
+    ["Фабрике"],
+  );
+  assert.equal(getUnreadOrderMessages(order, "partner").length, 2);
+});
+
+test("dispute guidance and partner response cover the complete service loop", () => {
+  const order = state("disputed");
+  order.issue = { status: "open" };
+  assert.match(
+    getNextOrderAction(order, "partner", paid),
+    /предложите решение/i,
+  );
+  assert.match(getNextOrderAction(order, "client", paid), /Фабрика или GABER/);
+  order.issue.status = "response_proposed";
+  assert.match(
+    getNextOrderAction(order, "client", paid),
+    /примите его или верните/i,
+  );
+  assert.match(
+    getNextOrderAction(order, "partner", paid),
+    /Ожидается подтверждение/,
   );
 });

@@ -83,6 +83,29 @@ jobs:
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
         run: bash scripts/verify-postgres-staging.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install project and isolated PostgreSQL test driver
+        run: |
+          npm ci
+          # pg is used only by the CI test; do not alter the tracked
+          # application dependency graph or package-lock.json.
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund pg@8.16.3
+          npm run verify:source
+      - name: Prepare disposable HTTP E2E server role and fixture organisations
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: |
+          docker exec -e "PGPASSWORD=$GABER_TEST_PG_PASSWORD" -i \
+            "$(docker ps --filter 'ancestor=postgres:17' --format '{{.ID}}' | head -n 1)" \
+            psql -X -v ON_ERROR_STOP=1 -U postgres -d gaber_staging \
+            < server/tests/postgres-http-e2e-fixtures.sql
+      - name: Run actual HTTP to PostgreSQL multi-tenant three-role E2E
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: node server/tests/postgres-http-e2e.mjs
 
   # Real installed Chromium against compiled Vite preview. This is a local
   # browser UX smoke test, NOT identity/payment/production E2E.

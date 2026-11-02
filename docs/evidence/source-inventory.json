@@ -3,7 +3,7 @@
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "7ec782cafdb3535a3d3f087cc637f4feec97af4d"
+      "sha": "26f248aa5293b4f882ec83cdee2afa3896c34996"
     },
     {
       "path": ".gitignore",
@@ -36,6 +36,10 @@
     {
       "path": "docs/E2E-ROLE-ACCEPTANCE.md",
       "sha": "38d3398b56d7be433a1f19e3b5a883bf525e1e71"
+    },
+    {
+      "path": "docs/HTTP-POSTGRES-E2E-CONTRACT.md",
+      "sha": "e08375c1a63863330b2e907f154c703cbf79a42a"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
@@ -272,6 +276,14 @@
     {
       "path": "server/postgresOrderRepository.js",
       "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+    },
+    {
+      "path": "server/tests/postgres-http-e2e-fixtures.sql",
+      "sha": "3171cd39c7cf3a520af0f8ffef8258515f5e8936"
+    },
+    {
+      "path": "server/tests/postgres-http-e2e.mjs",
+      "sha": "7289bde7d7eca216c488431efb999bdd1bae3a88"
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",

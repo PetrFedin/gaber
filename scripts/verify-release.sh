@@ -32,7 +32,7 @@ if [ "$required_node" != "$installed_node" ]; then
 fi
 printf 'GABER_RELEASE_GATE_START sha=%s node=%s\n' "$head_sha" "$installed_node"
 npm ci
-npm run verify:source
+npm run verify:repository
 npm test
 npm run build
 if [ -n "$(git status --porcelain --untracked-files=all)" ]; then

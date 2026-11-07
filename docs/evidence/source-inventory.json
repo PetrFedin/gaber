@@ -2,8 +2,16 @@
   "schemaVersion": "gaber/source-inventory/1",
   "files": [
     {
+      "path": ".editorconfig",
+      "sha": "1014ba78880c899e842b397cb89a878be4671f7d"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha": "8eaae48ebd43ac1e7d2baa6ca3d017d235b864f0"
+    },
+    {
       "path": ".github/workflows/ci.yml",
-      "sha": "26f248aa5293b4f882ec83cdee2afa3896c34996"
+      "sha": "e1eafb62aa6f88942467844d611903853ef4baee"
     },
     {
       "path": ".gitignore",
@@ -18,8 +26,12 @@
       "sha": "7c0f7627018fe7c3f79894dc9195a6f855a33215"
     },
     {
+      "path": "CONTRIBUTING.md",
+      "sha": "35aab5cb512e1e267f7223a02c1080f60ec1438f"
+    },
+    {
       "path": "README.md",
-      "sha": "0dc396cc86ab1b9ff4062b9bd97a6485c1c404c5"
+      "sha": "2e432ca58141a16ee35d4569cb15e690a53edacd"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
@@ -42,6 +54,10 @@
       "sha": "e08375c1a63863330b2e907f154c703cbf79a42a"
     },
     {
+      "path": "docs/INDEX.md",
+      "sha": "ba3b41c5dfd9d508146e08a9c82c1fea966c8d2e"
+    },
+    {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
       "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
     },
@@ -50,16 +66,24 @@
       "sha": "02a0ef4e9142000d2ba2b70413a55974d23f1bdc"
     },
     {
+      "path": "docs/PROJECT-STRUCTURE.md",
+      "sha": "daf7796ad6f21fec4453c1426173f80ce85cee3e"
+    },
+    {
       "path": "docs/RELEASE-REVIEW-GATES.md",
       "sha": "d46151ee0698ed6b2d7b0fa9d521c6e513de21ce"
     },
     {
       "path": "docs/REPRODUCIBILITY.md",
-      "sha": "e552fb35704635b4646d56163852aa43e959745d"
+      "sha": "349a3a6510d9b1b54b2df1f8e7ef31224f7e1e9e"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "sha": "d4b19c28e30b452ac756a53b06d2a4db9987b501"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
-      "sha": "0836632e1b1c5de6784bff8fccccb7e9527ae020"
+      "sha": "08628303d54b6c0160ad112502e0fb4a338e8f4d"
     },
     {
       "path": "docs/VERIFIED-CANDIDATE-2026-11-01.md",
@@ -99,7 +123,7 @@
     },
     {
       "path": "docs/project-map-v0.4.16.md",
-      "sha": "f9b84bca875cf827f5ca49ffffe3f93acbff361c"
+      "sha": "54ad9d598a4d04ae92c171534ecd027de395aea7"
     },
     {
       "path": "docs/project-recovery-2026-10-19.md",
@@ -107,7 +131,7 @@
     },
     {
       "path": "docs/roadmap.md",
-      "sha": "84411a2ea47d3cd26cdb0578a637f44c9e509c0a"
+      "sha": "3ccd9e9e2c11a073483e7d4af87de51aa0e85fa9"
     },
     {
       "path": "docs/technical-specification-v1.md",
@@ -143,7 +167,7 @@
     },
     {
       "path": "docs/verification-v0.4.17.md",
-      "sha": "148171f7dfa7383d307f9418fdcff647f46ccb87"
+      "sha": "148e4798acf00342f5d43d8d796ccdff115941aa"
     },
     {
       "path": "docs/verification-v0.4.18.md",
@@ -187,7 +211,7 @@
     },
     {
       "path": "package.json",
-      "sha": "64c382798323a3a262d6e969b14d4daa8bf9d871"
+      "sha": "599e366286017809e3b052c980578a5bd362ea0e"
     },
     {
       "path": "public/favicon.svg",
@@ -203,7 +227,11 @@
     },
     {
       "path": "scripts/verify-release.sh",
-      "sha": "1f8e63677c2f86a711f54da8ad1056548d5d78b7"
+      "sha": "b851aaf99dc76af708cbd7d195dff7395432fecf"
+    },
+    {
+      "path": "scripts/verify-repository.mjs",
+      "sha": "21246afbed94d44a1734012e163e48b2f52806a2"
     },
     {
       "path": "scripts/verify-source.mjs",
@@ -675,7 +703,7 @@
     },
     {
       "path": "tests/preview-layout.test.js",
-      "sha": "14493f8d77195d2e72cea3d203ac1a9a9b0baf9d"
+      "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
     },
     {
       "path": "tests/production-schedule.test.js",
@@ -692,6 +720,10 @@
     {
       "path": "tests/render-smoke.mjs",
       "sha": "b10ac3a7cab93459b57dba73cd5759322d91f5a7"
+    },
+    {
+      "path": "tests/repository-structure.test.js",
+      "sha": "207adea23569b935789e731ecdad704e7f5a5a00"
     },
     {
       "path": "tests/role-interactions-e2e.test.js",

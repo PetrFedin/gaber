@@ -36,9 +36,9 @@ jobs:
       - name: Dependency install
         id: install
         run: npm ci
-      - name: Verify source inventory
+      - name: Verify inventory and repository structure
         id: source
-        run: npm run verify:source
+        run: npm run verify:repository
       - name: Node domain, engineering and API regression tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
         run: npm run test:node
@@ -93,7 +93,7 @@ jobs:
           # pg is used only by the CI test; do not alter the tracked
           # application dependency graph or package-lock.json.
           npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund pg@8.16.3
-          npm run verify:source
+          npm run verify:repository
       - name: Prepare disposable HTTP E2E server role and fixture organisations
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
@@ -126,6 +126,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Verify inventory and repository structure
+        run: npm run verify:repository
       - name: Build the exact browser candidate
         run: npm run build
       - name: Test actual Chromium roles and viewport overflow at 375, 768 and 1440

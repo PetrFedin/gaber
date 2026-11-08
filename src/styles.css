@@ -19,3 +19,29 @@
 @media(max-width:1100px){.header nav{gap:15px;font-size:12px}.header-actions .nav-icon span{display:none}.formula-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.costing-summary{grid-template-columns:1fr}.costing-summary article{padding:20px}.formula-grid,.assembly-grid{grid-template-columns:1fr}.collection-grid{grid-template-columns:1fr}.rates-section .section-top{flex-wrap:wrap}.technical-actions .button{flex:1}.studio-panel{padding-bottom:30px}.category-switch button{flex:1 1 40%}.costing-page,.technical-page{overflow:hidden}}
 .configuration-details{margin:20px 0;border-top:1px solid #dedfd5;border-bottom:1px solid #dedfd5;padding:15px 0}.configuration-details summary{font-size:13px;font-weight:500;cursor:pointer}.configuration-details .spec-list{margin-bottom:0}.category-switch{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}.category-switch button{min-height:40px;font-size:12px}.category-switch button:last-child{grid-column:1/-1}
+
+/* Качество изображения и проверка перед заказом. Токены и шрифты — из общей темы. */
+.fq{position:absolute;left:16px;top:12px;bottom:12px;z-index:6;max-width:calc(100% - 32px);display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}.fq>*{pointer-events:auto}.fq-toggle{flex:none}
+.fq-toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:22px;background:var(--paper);font-size:12px;color:var(--green)}
+.fq-toggle svg:last-child{transition:transform .2s}.fq-flip{transform:rotate(180deg)}
+.fq-panel{margin-top:8px;width:min(310px,calc(100vw - 32px));min-height:0;overflow-y:auto;padding:14px 16px 16px;border:1px solid var(--line);border-radius:6px;background:var(--paper);box-shadow:0 8px 28px rgba(48,58,49,.12)}
+.fq-lead{font-size:12px;line-height:1.5;color:var(--muted);margin-bottom:6px}
+.fq-panel h4{margin:14px 0 6px;font-size:12px;font-weight:600;color:#303a31;display:flex;justify-content:space-between;gap:8px}
+.fq-panel h4 small{font-weight:400;color:var(--muted);font-size:11px}
+.fq-row{display:flex;flex-wrap:wrap;gap:6px}
+.fq-chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid #ced3c1;border-radius:22px;font-size:12px;color:#303a31;background:transparent;text-decoration:none}
+.fq-chip:hover:not(:disabled){background:#eef0e6}
+.fq-chip[aria-pressed=true]{background:#e3e8db;border-color:#a9b19e}
+.fq-wide{width:100%;margin-top:14px}
+.fq-tick{color:var(--green)}
+.fq-dot{width:6px;height:6px;border-radius:50%;border:1px solid #a9b19e}
+.fq-note{font-size:11px;line-height:1.5;color:var(--muted);margin-top:6px}
+.fq-error{color:#8a3b2a}
+.fq-honest{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;line-height:1.55;color:#4a5547}
+.fq-honest summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--green)}
+.fq-honest p{margin-top:6px}
+.fq-modal{position:fixed;inset:0;z-index:60;background:rgba(32,38,32,.62);display:grid;place-items:center;padding:16px}
+.fq-modal-card{background:var(--paper);border-radius:6px;padding:12px;max-width:min(1100px,100%);max-height:100%;overflow:auto}
+.fq-modal-card img{width:100%;height:auto;border-radius:3px;display:block}
+.fq-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+@media(prefers-reduced-motion:reduce){.fq-toggle svg:last-child{transition:none}}

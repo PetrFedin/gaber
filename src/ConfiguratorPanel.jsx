@@ -1,15 +1,424 @@
-import React,{useState} from 'react';
-import {families,fabrics,colors,getFamily,getColor,bounds,isHead,isBed,isChair,dimensions} from './domain.js';
-export function MaterialInspector({config}){const [zoom,setZoom]=useState(2),[light,setLight]=useState({x:35,y:30});const f=fabrics.find(x=>x.id===config.fabric);return <div className="material-inspector"><div className={`macro-surface ${f.texture}`} style={{'--swatch':getColor(config).hex,'--zoom':zoom,backgroundSize:`${zoom*8}px ${zoom*8}px`}} onPointerMove={e=>{const b=e.currentTarget.getBoundingClientRect();setLight({x:(e.clientX-b.left)/b.width*100,y:(e.clientY-b.top)/b.height*100});}}><div style={{background:`radial-gradient(circle at ${light.x}% ${light.y}%, #ffffff66,transparent 48%),linear-gradient(120deg,transparent,#0005)`}}/><span>{f.collection} / ×{zoom}</span></div><label className="range-field">Увеличение фактуры<input aria-label="Увеличение фактуры" type="range" min="1" max="6" step="1" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label><p className="helper">Проведите по образцу: изменяется освещение. Цифровая фактура показывает характер поверхности; это не симуляция деформации ткани.</p></div>;}
-const select=(label,key,items,c,change)=><label className="advanced-field" key={key}><span>{label}</span><select aria-label={label} value={c[key]} onChange={e=>change({[key]:e.target.value,...(key==='mechanism'&&e.target.value==='recliner'?{storage:false,layout:'straight'}:{}),...(key==='arm'&&e.target.value==='none'?{woodArms:false}:{})})}>{items.map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>;
-const slider=(label,key,min,max,c,change,step=1)=><label className="advanced-field" key={key}><span>{label}<b>{c[key]} {['pillows','panels','moduleCount'].includes(key)?'шт.':'см'}</b></span><input aria-label={label} type="range" min={min} max={max} step={step} value={c[key]} onChange={e=>change({[key]:+e.target.value})}/><small>{min} — {max}</small></label>;
-const toggle=(label,key,c,change,disabled=false)=><label className="option-toggle" key={key}><span>{label}</span><input type="checkbox" checked={c[key]} disabled={disabled} onChange={e=>change({[key]:e.target.checked})}/></label>;
-const colorSelect=(label,key,c,change)=>select(label,key,[['inherit','Как основная обивка'],...colors.map(x=>[x.id,x.name])],c,change);
-export default function ConfiguratorPanel({config:c,step,change,start,onTechnical,onCosting}){const head=isHead(c),bed=isBed(c),family=getFamily(c),dim=dimensions(c);return <><div className="panel-heading"><span className="eyebrow">GABER / ATELIER 02</span><h2>{{composition:'Архитектура предмета',dimensions:'Индивидуальная посадка',fabric:'Цвет и тактильность',details:'Продуман до шва',room:'В вашем пространстве',technical:'От идеи к сборке'}[step]}</h2><p>{family.description}</p></div>
-{step==='composition'&&<><div className="category-switch">{families.map(f=><button key={f.id} className={c.category===f.id?'active':''} onClick={()=>start(f.id)}>{f.name}</button>)}</div>{c.category==='sofa'&&<>{select('Композиция','layout',[['straight','Прямая / модульная'],['left','Шезлонг слева'],['right','Шезлонг справа']],c,p=>change({...p,width:p.layout==='straight'?c.width:Math.max(220,c.width)}))}{slider('Модули','moduleCount',2,5,c,change)}</>}{select('Характер формы','shape',[['rounded','Мягкие округлые линии'],['linear','Геометричная форма'],['organic','Плавная органическая форма']],c,change)}{select('Форма спинки / изголовья','backShape',[['straight','Прямая'],['arched','Арочная'],['winged','С боковыми крыльями']],c,change)}{(head||bed)&&slider('Панели изголовья','panels',3,8,c,change)}{!head&&!bed&&select('Трансформация','mechanism',(c.category==='chairbed'?[]:[['none','Без механизма']]).concat([['fold','Раскладной'],['slide','Выкатной']],c.category==='chairbed'?[]:[['recliner','Реклайнер']]),c,change)}{!head&&toggle('Внутреннее хранение','storage',c,change,c.mechanism==='recliner')}<p className="helper">Совместимость опций проверяется по правилам прототипа. Артикулы механизмов и допустимые нагрузки согласовывает фабрика.</p></>}
-{step==='dimensions'&&<>{slider('Ширина','width',c.layout!=='straight'?Math.max(220,family.min):family.min,family.max,c,change,family.step)}{slider('Глубина','depth',...bounds(c).depth,c,change)}{slider('Высота','height',...bounds(c).height,c,change)}{!head&&!bed&&slider('Толщина спинки','backDepth',15,40,c,change)}{!head&&<>{slider('Количество подушек','pillows',0,8,c,change)}{slider('Высота подушек','pillowHeight',20,65,c,change)}{slider('Ширина подушек','pillowWidth',25,70,c,change)}{select('Форма подушек','pillowShape',[['square','Квадратная'],['lumbar','Поясничная'],['bolster','Валик']],c,change)}</>}<p className="helper">Габариты — цифровой эскиз. Размер спального места, высоту сиденья, зазоры и пронос проверяет технолог.</p></>}
-{step==='fabric'&&<><label className="advanced-field"><span>Материал</span><select aria-label="Материал" value={c.fabric} onChange={e=>change({fabric:e.target.value})}>{fabrics.map(f=><option key={f.id} value={f.id}>{f.name} · {f.collection}</option>)}</select></label><div className="color-grid">{colors.map(x=><button key={x.id} className={`color-button ${c.color===x.id?'selected':''}`} aria-label={x.name} title={x.name} style={{'--swatch':x.hex}} onClick={()=>change({color:x.id})}/>)}</div><MaterialInspector config={c}/>{!head&&!bed&&colorSelect('Цвет сиденья','seatColor',c,change)}{colorSelect('Цвет спинки','backColor',c,change)}{!head&&!bed&&colorSelect('Цвет подлокотников','armColor',c,change)}{Array.from({length:c.pillows},(_,i)=><label className="advanced-field" key={i}><span>Подушка {i+1}</span><select aria-label={`Цвет подушки ${i+1}`} value={c.pillowColors[i]} onChange={e=>change({pillowColors:c.pillowColors.map((v,j)=>j===i?e.target.value:v)})}><option value="inherit">Как основная обивка</option>{colors.map(x=><option value={x.id} key={x.id}>{x.name}</option>)}</select></label>)}</>}
-{step==='details'&&<>{!head&&!bed&&select('Подлокотники','arm',[['rounded','Округлые'],['slim','Тонкие'],['none','Без подлокотников']],c,change)}{!head&&select('Опоры','legs',[['wood','Дерево'],['black','Металл · графит'],['brass','Латунь'],['none','Без ножек / цоколь']],c,change)}{select('Наполнение','comfort',[['soft','Мягкое'],['balanced','Сбалансированное'],['firm','Упругое']],c,change)}{select('Швы','seam',[['single','Одинарная строчка'],['double','Двойная строчка'],['piping','Контрастный кант'],['none','Скрытый шов']],c,change)}{select('Чехлы','covers',[['fixed','Несъёмная обивка'],['removable','Съёмные чехлы']],c,change)}{!head&&!bed&&toggle('Дерево в подлокотниках','woodArms',c,change,c.arm==='none')}{toggle('Встроенная зарядка USB','charging',c,change)}{toggle('Встроенные светильники','lamps',c,change)}<button className="button outline full" onClick={onCosting}>Как считается стоимость ↗</button></>}
-{step==='room'&&<>{select('Сцена интерьера','room',[['studio','Предметная студия'],['apartment','Квартира · светлая гостиная'],['house','Частный дом · тёплое дерево'],['loft','Лофт · графит и бетон'],['hotel','Отель · мягкая спальня']],c,change)}{c.room!=='studio'&&<>{slider('Ширина комнаты','roomWidth',250,1000,c,change,10)}{slider('Глубина комнаты','roomDepth',250,1000,c,change,10)}<div className="callout-soft"><strong>{dim.width+120<=c.roomWidth&&dim.depth+100<=c.roomDepth?'Габариты помещаются с условными проходами':'Проверьте свободные проходы'}</strong><p>Эскиз: по 60 см сбоку и 100 см спереди. Двери, окна, другие предметы и нормы доступности здесь не проверяются.</p></div></>}<p className="helper">Сцены созданы из 3D-геометрии. Загрузка фото и автоматическая примерка в реальную комнату — следующий этап.</p></>}
-{step==='technical'&&<>{toggle('Разнесённый вид узлов','exploded',c,change)}{!head&&c.mechanism!=='none'&&toggle('Показать трансформацию','expanded',c,change)}<p className="helper">Разнесение и трансформация иллюстрируют идею устройства. Кинематика механизма не является инженерной моделью.</p><button className="button dark full" onClick={onTechnical}>Чертёж и план сборки ↗</button><button className="button outline full" onClick={onCosting}>Нормы и себестоимость ↗</button></>}
-</>;}
+import React, {useState} from 'react';
+import {
+  families,
+  fabrics,
+  colors,
+  getFamily,
+  getColor,
+  bounds,
+  isHead,
+  isBed,
+  isChair,
+  dimensions
+} from './domain.js';
+export function MaterialInspector({config}) {
+  const [zoom, setZoom] = useState(2),
+    [light, setLight] = useState({x: 35, y: 30});
+  const f = fabrics.find((x) => x.id === config.fabric);
+  return (
+    <div className="material-inspector">
+      <div
+        className={`macro-surface ${f.texture}`}
+        style={{
+          '--swatch': getColor(config).hex,
+          '--zoom': zoom,
+          backgroundSize: `${zoom * 8}px ${zoom * 8}px`
+        }}
+        onPointerMove={(e) => {
+          const b = e.currentTarget.getBoundingClientRect();
+          setLight({x: ((e.clientX - b.left) / b.width) * 100, y: ((e.clientY - b.top) / b.height) * 100});
+        }}
+      >
+        <div
+          style={{
+            background: `radial-gradient(circle at ${light.x}% ${light.y}%, #ffffff66,transparent 48%),linear-gradient(120deg,transparent,#0005)`
+          }}
+        />
+        <span>
+          {f.collection} / ×{zoom}
+        </span>
+      </div>
+      <label className="range-field">
+        Увеличение фактуры
+        <input
+          aria-label="Увеличение фактуры"
+          type="range"
+          min="1"
+          max="6"
+          step="1"
+          value={zoom}
+          onChange={(e) => setZoom(+e.target.value)}
+        />
+      </label>
+      <p className="helper">
+        Проведите по образцу: изменяется освещение. Цифровая фактура показывает характер поверхности; это не
+        симуляция деформации ткани.
+      </p>
+    </div>
+  );
+}
+const select = (label, key, items, c, change) => (
+  <label className="advanced-field" key={key}>
+    <span>{label}</span>
+    <select
+      aria-label={label}
+      value={c[key]}
+      onChange={(e) =>
+        change({
+          [key]: e.target.value,
+          ...(key === 'mechanism' && e.target.value === 'recliner'
+            ? {storage: false, layout: 'straight'}
+            : {}),
+          ...(key === 'arm' && e.target.value === 'none' ? {woodArms: false} : {})
+        })
+      }
+    >
+      {items.map(([id, name]) => (
+        <option key={id} value={id}>
+          {name}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+const slider = (label, key, min, max, c, change, step = 1) => (
+  <label className="advanced-field" key={key}>
+    <span>
+      {label}
+      <b>
+        {c[key]} {['pillows', 'panels', 'moduleCount'].includes(key) ? 'шт.' : 'см'}
+      </b>
+    </span>
+    <input
+      aria-label={label}
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={c[key]}
+      onChange={(e) => change({[key]: +e.target.value})}
+    />
+    <small>
+      {min} — {max}
+    </small>
+  </label>
+);
+const toggle = (label, key, c, change, disabled = false) => (
+  <label className="option-toggle" key={key}>
+    <span>{label}</span>
+    <input
+      type="checkbox"
+      checked={c[key]}
+      disabled={disabled}
+      onChange={(e) => change({[key]: e.target.checked})}
+    />
+  </label>
+);
+const colorSelect = (label, key, c, change) =>
+  select(label, key, [['inherit', 'Как основная обивка'], ...colors.map((x) => [x.id, x.name])], c, change);
+export default function ConfiguratorPanel({config: c, step, change, start, onTechnical, onCosting}) {
+  const head = isHead(c),
+    bed = isBed(c),
+    family = getFamily(c),
+    dim = dimensions(c);
+  return (
+    <>
+      <div className="panel-heading">
+        <span className="eyebrow">GABER / ATELIER 02</span>
+        <h2>
+          {
+            {
+              composition: 'Архитектура предмета',
+              dimensions: 'Индивидуальная посадка',
+              fabric: 'Цвет и тактильность',
+              details: 'Продуман до шва',
+              room: 'В вашем пространстве',
+              technical: 'От идеи к сборке'
+            }[step]
+          }
+        </h2>
+        <p>{family.description}</p>
+      </div>
+      {step === 'composition' && (
+        <>
+          <div className="category-switch">
+            {families.map((f) => (
+              <button key={f.id} className={c.category === f.id ? 'active' : ''} onClick={() => start(f.id)}>
+                {f.name}
+              </button>
+            ))}
+          </div>
+          {c.category === 'sofa' && (
+            <>
+              {select(
+                'Композиция',
+                'layout',
+                [
+                  ['straight', 'Прямая / модульная'],
+                  ['left', 'Шезлонг слева'],
+                  ['right', 'Шезлонг справа']
+                ],
+                c,
+                (p) => change({...p, width: p.layout === 'straight' ? c.width : Math.max(220, c.width)})
+              )}
+              {slider('Модули', 'moduleCount', 2, 5, c, change)}
+            </>
+          )}
+          {select(
+            'Характер формы',
+            'shape',
+            [
+              ['rounded', 'Мягкие округлые линии'],
+              ['linear', 'Геометричная форма'],
+              ['organic', 'Плавная органическая форма']
+            ],
+            c,
+            change
+          )}
+          {select(
+            'Форма спинки / изголовья',
+            'backShape',
+            [
+              ['straight', 'Прямая'],
+              ['arched', 'Арочная'],
+              ['winged', 'С боковыми крыльями']
+            ],
+            c,
+            change
+          )}
+          {(head || bed) && slider('Панели изголовья', 'panels', 3, 8, c, change)}
+          {!head &&
+            !bed &&
+            select(
+              'Трансформация',
+              'mechanism',
+              (c.category === 'chairbed' ? [] : [['none', 'Без механизма']]).concat(
+                [
+                  ['fold', 'Раскладной'],
+                  ['slide', 'Выкатной']
+                ],
+                c.category === 'chairbed' ? [] : [['recliner', 'Реклайнер']]
+              ),
+              c,
+              change
+            )}
+          {!head && toggle('Внутреннее хранение', 'storage', c, change, c.mechanism === 'recliner')}
+          <p className="helper">
+            Совместимость опций проверяется по правилам прототипа. Артикулы механизмов и допустимые нагрузки
+            согласовывает фабрика.
+          </p>
+        </>
+      )}
+      {step === 'dimensions' && (
+        <>
+          {slider(
+            'Ширина',
+            'width',
+            c.layout !== 'straight' ? Math.max(220, family.min) : family.min,
+            family.max,
+            c,
+            change,
+            family.step
+          )}
+          {slider('Глубина', 'depth', ...bounds(c).depth, c, change)}
+          {slider('Высота', 'height', ...bounds(c).height, c, change)}
+          {!head && !bed && slider('Толщина спинки', 'backDepth', 15, 40, c, change)}
+          {!head && (
+            <>
+              {slider('Количество подушек', 'pillows', 0, 8, c, change)}
+              {slider('Высота подушек', 'pillowHeight', 20, 65, c, change)}
+              {slider('Ширина подушек', 'pillowWidth', 25, 70, c, change)}
+              {select(
+                'Форма подушек',
+                'pillowShape',
+                [
+                  ['square', 'Квадратная'],
+                  ['lumbar', 'Поясничная'],
+                  ['bolster', 'Валик']
+                ],
+                c,
+                change
+              )}
+            </>
+          )}
+          <p className="helper">
+            Габариты — цифровой эскиз. Размер спального места, высоту сиденья, зазоры и пронос проверяет
+            технолог.
+          </p>
+        </>
+      )}
+      {step === 'fabric' && (
+        <>
+          <label className="advanced-field">
+            <span>Материал</span>
+            <select aria-label="Материал" value={c.fabric} onChange={(e) => change({fabric: e.target.value})}>
+              {fabrics.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name} · {f.collection}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="color-grid">
+            {colors.map((x) => (
+              <button
+                key={x.id}
+                className={`color-button ${c.color === x.id ? 'selected' : ''}`}
+                aria-label={x.name}
+                title={x.name}
+                style={{'--swatch': x.hex}}
+                onClick={() => change({color: x.id})}
+              />
+            ))}
+          </div>
+          <MaterialInspector config={c} />
+          {!head && !bed && colorSelect('Цвет сиденья', 'seatColor', c, change)}
+          {colorSelect('Цвет спинки', 'backColor', c, change)}
+          {!head && !bed && colorSelect('Цвет подлокотников', 'armColor', c, change)}
+          {Array.from({length: c.pillows}, (_, i) => (
+            <label className="advanced-field" key={i}>
+              <span>Подушка {i + 1}</span>
+              <select
+                aria-label={`Цвет подушки ${i + 1}`}
+                value={c.pillowColors[i]}
+                onChange={(e) =>
+                  change({pillowColors: c.pillowColors.map((v, j) => (j === i ? e.target.value : v))})
+                }
+              >
+                <option value="inherit">Как основная обивка</option>
+                {colors.map((x) => (
+                  <option value={x.id} key={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </>
+      )}
+      {step === 'details' && (
+        <>
+          {!head &&
+            !bed &&
+            select(
+              'Подлокотники',
+              'arm',
+              [
+                ['rounded', 'Округлые'],
+                ['slim', 'Тонкие'],
+                ['none', 'Без подлокотников']
+              ],
+              c,
+              change
+            )}
+          {!head &&
+            select(
+              'Опоры',
+              'legs',
+              [
+                ['wood', 'Дерево'],
+                ['black', 'Металл · графит'],
+                ['brass', 'Латунь'],
+                ['none', 'Без ножек / цоколь']
+              ],
+              c,
+              change
+            )}
+          {select(
+            'Наполнение',
+            'comfort',
+            [
+              ['soft', 'Мягкое'],
+              ['balanced', 'Сбалансированное'],
+              ['firm', 'Упругое']
+            ],
+            c,
+            change
+          )}
+          {select(
+            'Швы',
+            'seam',
+            [
+              ['single', 'Одинарная строчка'],
+              ['double', 'Двойная строчка'],
+              ['piping', 'Контрастный кант'],
+              ['none', 'Скрытый шов']
+            ],
+            c,
+            change
+          )}
+          {select(
+            'Чехлы',
+            'covers',
+            [
+              ['fixed', 'Несъёмная обивка'],
+              ['removable', 'Съёмные чехлы']
+            ],
+            c,
+            change
+          )}
+          {!head && !bed && toggle('Дерево в подлокотниках', 'woodArms', c, change, c.arm === 'none')}
+          {toggle('Встроенная зарядка USB', 'charging', c, change)}
+          {toggle('Встроенные светильники', 'lamps', c, change)}
+          <button className="button outline full" onClick={onCosting}>
+            Как считается стоимость ↗
+          </button>
+        </>
+      )}
+      {step === 'room' && (
+        <>
+          {select(
+            'Сцена интерьера',
+            'room',
+            [
+              ['studio', 'Предметная студия'],
+              ['apartment', 'Квартира · светлая гостиная'],
+              ['house', 'Частный дом · тёплое дерево'],
+              ['loft', 'Лофт · графит и бетон'],
+              ['hotel', 'Отель · мягкая спальня']
+            ],
+            c,
+            change
+          )}
+          {c.room !== 'studio' && (
+            <>
+              {slider('Ширина комнаты', 'roomWidth', 250, 1000, c, change, 10)}
+              {slider('Глубина комнаты', 'roomDepth', 250, 1000, c, change, 10)}
+              <div className="callout-soft">
+                <strong>
+                  {dim.width + 120 <= c.roomWidth && dim.depth + 100 <= c.roomDepth
+                    ? 'Габариты помещаются с условными проходами'
+                    : 'Проверьте свободные проходы'}
+                </strong>
+                <p>
+                  Эскиз: по 60 см сбоку и 100 см спереди. Двери, окна, другие предметы и нормы доступности
+                  здесь не проверяются.
+                </p>
+              </div>
+            </>
+          )}
+          <p className="helper">
+            Сцены созданы из 3D-геометрии. Загрузка фото и автоматическая примерка в реальную комнату —
+            следующий этап.
+          </p>
+        </>
+      )}
+      {step === 'technical' && (
+        <>
+          {toggle('Разнесённый вид узлов', 'exploded', c, change)}
+          {!head && c.mechanism !== 'none' && toggle('Показать трансформацию', 'expanded', c, change)}
+          <p className="helper">
+            Разнесение и трансформация иллюстрируют идею устройства. Кинематика механизма не является
+            инженерной моделью.
+          </p>
+          <button className="button dark full" onClick={onTechnical}>
+            Чертёж и план сборки ↗
+          </button>
+          <button className="button outline full" onClick={onCosting}>
+            Нормы и себестоимость ↗
+          </button>
+        </>
+      )}
+    </>
+  );
+}

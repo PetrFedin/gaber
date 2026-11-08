@@ -59,6 +59,8 @@ import {
 } from './domain.js';
 import {readProjects, writeProjects, publicLink, configFromHash, newId} from './storage.js';
 
+const HERO_CONFIG = initialConfig();
+const HERO_DIM = dimensions(HERO_CONFIG);
 const steps = [
   {id: 'composition', label: 'Композиция', icon: Layers},
   {id: 'dimensions', label: 'Размеры', icon: Ruler},
@@ -383,6 +385,9 @@ function App() {
           </a>
         </nav>
         <div className="header-actions">
+          <span className="demo-badge" title="Цены и данные демонстрационные, сервер не подключён">
+            Демо
+          </span>
           <button
             className={`nav-icon ${route === 'projects' ? 'active' : ''}`}
             onClick={() => go('projects')}
@@ -435,9 +440,24 @@ function App() {
             </div>
             <div className="hero-stage">
               <span className="hero-index">01 — LINEA</span>
-              <Scene config={initialConfig()} hero />
+              <Scene config={HERO_CONFIG} hero />
               <div className="hero-stage-bottom">
-                <span>Тактильность в каждой линии</span>
+                <dl className="hero-plate">
+                  <div>
+                    <dt>Изделие</dt>
+                    <dd>Диван Linea</dd>
+                  </div>
+                  <div>
+                    <dt>Габарит</dt>
+                    <dd>
+                      {HERO_DIM.width} × {HERO_DIM.depth} × {HERO_DIM.height} см
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Ткань</dt>
+                    <dd>{getFabric(HERO_CONFIG).name}</dd>
+                  </div>
+                </dl>
                 <button
                   className="round-button"
                   aria-label="Открыть конструктор Linea"
@@ -446,7 +466,6 @@ function App() {
                   <ArrowUpRight size={24} />
                 </button>
               </div>
-              <span className="stage-watermark">создано вами</span>
             </div>
           </section>
           <section className="collection-section">
@@ -524,10 +543,6 @@ function App() {
                 </button>
               );
             })}
-            <div className="step-bottom">
-              <span className="tiny-dot" />
-              Ваше пространство для идей
-            </div>
           </aside>
           <section className="studio-center">
             <div className="studio-top">
@@ -636,7 +651,7 @@ function App() {
           <aside className="studio-panel">{renderPanel()}</aside>
           <div className="studio-price">
             <div>
-              <span className="price-label">Предварительная цена · демо</span>
+              <span className="price-label">Предварительная цена</span>
               <strong>{calculation ? money(calculation.price) : 'Проверьте параметры'}</strong>
               <button className="text-button" onClick={() => setModal({type: 'summary'})}>
                 Что входит <ChevronRight size={14} />
@@ -685,7 +700,6 @@ function App() {
                   <span>{f.collection}</span>
                 </div>
                 <div>
-                  <span className="eyebrow">ЦИФРОВОЙ ОБРАЗЕЦ</span>
                   <h2>{f.name}</h2>
                   <p>{f.desc}</p>
                   <button
@@ -806,7 +820,7 @@ function App() {
                         {compareIds.includes(p.id) ? <Check size={14} /> : <Plus size={14} />}Сравнить
                       </button>
                     </div>
-                    <small>{date(p.createdAt)} · демонстрационный расчёт</small>
+                    <small>{date(p.createdAt)}</small>
                   </div>
                 </article>
               ))}
@@ -878,7 +892,6 @@ function App() {
                 </h1>
                 <p>Изображение, комплектация и расчёт — в одном контексте.</p>
               </div>
-              <span className="mode-tag">GABER / DEMO</span>
             </div>
             {factoryTab === 'catalog' ? (
               <div className="catalog-admin">
@@ -921,7 +934,7 @@ function App() {
                     <small>Демонстрационные решения</small>
                   </article>
                   <article>
-                    <span>Сумма запросов · демо</span>
+                    <span>Сумма запросов</span>
                     <strong>{money(requested.reduce((s, p) => s + p.estimate.price, 0))}</strong>
                     <small>Не выручка и не продажи</small>
                   </article>
@@ -945,7 +958,7 @@ function App() {
                           <tr>
                             <th>Изделие</th>
                             <th>Конфигурация</th>
-                            <th>Цена · демо</th>
+                            <th>Цена</th>
                             <th>Статус</th>
                             <th />
                           </tr>
@@ -1037,7 +1050,7 @@ function App() {
                         </div>
                       </div>
                       <div>
-                        <h3>Нормативная калькуляция · демо</h3>
+                        <h3>Нормативная калькуляция</h3>
                         <div className="bom-list">
                           {active.estimate.rows.map((r) => (
                             <div key={r.id}>
@@ -1052,7 +1065,7 @@ function App() {
                           ))}
                         </div>
                         <div className="cost-total">
-                          <span>Себестоимость · демо</span>
+                          <span>Себестоимость</span>
                           <strong>{money(active.estimate.cost)}</strong>
                         </div>
                         <div className="discount-row">
@@ -1078,7 +1091,7 @@ function App() {
                                   <strong>{money(e.finalPrice)}</strong>
                                 </div>
                                 <div>
-                                  <small>Валовая маржа · демо</small>
+                                  <small>Валовая маржа</small>
                                   <strong>{e.margin.toFixed(1)}%</strong>
                                 </div>
                               </div>
@@ -1095,7 +1108,7 @@ function App() {
                           <button
                             className="button outline"
                             onClick={() =>
-                              updateProject(active.id, {status: 'changes'}, 'Запрошены уточнения · демо')
+                              updateProject(active.id, {status: 'changes'}, 'Запрошены уточнения')
                             }
                           >
                             На уточнение
@@ -1210,7 +1223,7 @@ function App() {
               </dl>
               <ConfigurationDetails config={config} />
               <div className="summary-price">
-                <span>Предварительная цена · демо</span>
+                <span>Предварительная цена</span>
                 <strong>{calculation ? money(calculation.price) : 'Параметры требуют проверки'}</strong>
               </div>
               <p className="helper">
@@ -1276,7 +1289,7 @@ function App() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Расчёт · демо</dt>
+                  <dt>Расчёт</dt>
                   <dd>{money(active.quote?.price ?? active.estimate.price)}</dd>
                 </div>
               </dl>

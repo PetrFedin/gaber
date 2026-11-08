@@ -21,7 +21,7 @@ export default function CostingPage({config, profile, onChange}) {
     <main className="page costing-page">
       <div className="page-top">
         <div>
-          <span className="eyebrow">ПРОЗРАЧНАЯ ЭКОНОМИКА / DEMO</span>
+          <span className="eyebrow">ПРОЗРАЧНАЯ ЭКОНОМИКА</span>
           <h1>Из чего складывается цена</h1>
           <p>Редактируемые нормы, источники ставок и полный путь расчёта.</p>
         </div>
@@ -45,7 +45,7 @@ export default function CostingPage({config, profile, onChange}) {
         <article>
           <small>Без доставки, монтажа и налогов</small>
           <strong>{money(e.profit)}</strong>
-          <span>Валовая прибыль · демо</span>
+          <span>Валовая прибыль</span>
         </article>
       </div>
       <div className="formula-grid">

@@ -527,7 +527,7 @@ const Scene = forwardRef(function Scene({config, onSelect, hero = false, view, o
         c.width = 540;
         c.height = 360;
         const ctx = c.getContext('2d');
-        ctx.fillStyle = '#eeebe4';
+        ctx.fillStyle = '#f3eee4';
         ctx.fillRect(0, 0, 540, 360);
         ctx.drawImage(r.renderer.domElement, 0, 0, 540, 360);
         return c.toDataURL('image/webp', 0.65);
@@ -602,7 +602,7 @@ const Scene = forwardRef(function Scene({config, onSelect, hero = false, view, o
           out.width = W;
           out.height = H;
           const ctx = out.getContext('2d');
-          ctx.fillStyle = '#eeebe4';
+          ctx.fillStyle = '#f3eee4';
           ctx.fillRect(0, 0, W, H);
           for (let i = 0; i < passes; i++) {
             r.camera.setViewOffset(W, H, halton(i + 1, 2) - 0.5, halton(i + 1, 3) - 0.5, W, H);
@@ -667,8 +667,8 @@ const Scene = forwardRef(function Scene({config, onSelect, hero = false, view, o
         renderer.shadowMap.type = THREE.PCFShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.12;
-        renderer.setClearColor('#eeebe4', 0);
-      } else renderer.setClearColor(new THREE.Color('#eeebe4'), 0);
+        renderer.setClearColor('#f3eee4', 0);
+      } else renderer.setClearColor(new THREE.Color('#f3eee4'), 0);
       element.appendChild(renderer.domElement);
       renderer.domElement.setAttribute(
         'aria-label',

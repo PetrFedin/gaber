@@ -1,29 +1,23 @@
 import {normalize} from './domain.js';
-const KEY = 'gaber.projects.v1';
 export function newId() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return [...bytes].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
-export function readProjects() {
+// Офлайн-запас: хранится только черновик текущей конфигурации. Заявки и проекты живут на сервере.
+const DRAFT = 'gaber.draft.v1';
+export function readDraft() {
   try {
-    const data = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(data)
-      ? data
-          .filter(
-            (p) =>
-              typeof p.id === 'string' &&
-              normalize(p.config) &&
-              ['draft', 'requested', 'approved', 'changes'].includes(p.status)
-          )
-          .slice(0, 100)
-          .map((p) => ({...p, config: normalize(p.config)}))
-      : [];
+    return normalize(JSON.parse(localStorage.getItem(DRAFT)));
   } catch {
-    return [];
+    return null;
   }
 }
-export function writeProjects(projects) {
-  localStorage.setItem(KEY, JSON.stringify(projects.slice(0, 100)));
+export function writeDraft(config) {
+  try {
+    localStorage.setItem(DRAFT, JSON.stringify(config));
+  } catch {
+    /* хранилище недоступно: черновик просто не сохранится офлайн */
+  }
 }
 export function publicLink(config) {
   const data = btoa(unescape(encodeURIComponent(JSON.stringify(config))));

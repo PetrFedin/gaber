@@ -360,9 +360,11 @@ export default function ConfiguratorPanel({config: c, step, change, start, onTec
           {!head && !bed && toggle('Дерево в подлокотниках', 'woodArms', c, change, c.arm === 'none')}
           {toggle('Встроенная зарядка USB', 'charging', c, change)}
           {toggle('Встроенные светильники', 'lamps', c, change)}
-          <button className="button outline full" onClick={onCosting}>
-            Как считается стоимость ↗
-          </button>
+          {onCosting && (
+            <button className="button outline full" onClick={onCosting}>
+              Как считается стоимость ↗
+            </button>
+          )}
         </>
       )}
       {step === 'room' && (
@@ -414,9 +416,11 @@ export default function ConfiguratorPanel({config: c, step, change, start, onTec
           <button className="button dark full" onClick={onTechnical}>
             Чертёж и план сборки ↗
           </button>
-          <button className="button outline full" onClick={onCosting}>
-            Нормы и себестоимость ↗
-          </button>
+          {onCosting && (
+            <button className="button outline full" onClick={onCosting}>
+              Нормы и себестоимость ↗
+            </button>
+          )}
         </>
       )}
     </>

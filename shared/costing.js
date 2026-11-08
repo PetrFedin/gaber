@@ -1,4 +1,15 @@
 import {validate, getFabric, dimensions, CATALOG_VERSION} from './domain.js';
+// Закупочные цены тканей — внутренние данные, в публичный каталог (domain.js) не входят.
+export const fabricBasePrices = {
+  linen: 1800,
+  boucle: 2400,
+  velvet: 2900,
+  chenille: 2200,
+  microfiber: 1600,
+  corduroy: 2600,
+  leather: 4200,
+  felt: 2000
+};
 export const rateDefinitions = [
   ['labor', 'Час производства', '₽/ч', 650],
   ['frame', 'Каркас: базовая норма', '₽/м²', 3700],
@@ -31,7 +42,7 @@ export function defaultProfile() {
     sources: Object.fromEntries(
       rateDefinitions.map(([k]) => [k, 'Демонстрационная ставка · заменить данными фабрики'])
     ),
-    fabricPrices: {},
+    fabricPrices: {...fabricBasePrices},
     fabricSources: {}
   };
 }
@@ -46,14 +57,6 @@ export function validProfile(p) {
     ) &&
     Object.values(p.fabricPrices || {}).every((n) => Number.isFinite(n) && n >= 0 && n < 1000000)
   );
-}
-export function readProfile() {
-  try {
-    const p = JSON.parse(localStorage.getItem('gaber.costing.v2'));
-    return validProfile(p) ? p : defaultProfile();
-  } catch {
-    return defaultProfile();
-  }
 }
 const round = (n) => Math.round(n * 10) / 10;
 export function estimate(c, discount = 0, profile = defaultProfile()) {
@@ -106,7 +109,7 @@ export function estimate(c, discount = 0, profile = defaultProfile()) {
     `Обивка ${f.collection} · с отходами ${r.waste}%`,
     fabricMeters,
     'пог. м',
-    profile.fabricPrices[f.id] ?? f.price,
+    profile.fabricPrices[f.id] ?? fabricBasePrices[f.id],
     profile.fabricSources[f.id] || 'Демонстрационная цена ткани'
   );
   add('frame', 'Каркас / основа', round(area * complexity), 'м² нормы', r.frame);
@@ -184,3 +187,17 @@ export function estimate(c, discount = 0, profile = defaultProfile()) {
     footprint: dimensions(c)
   };
 }
+
+// Скидка поверх сохранённой калькуляции: себестоимость не меняется, меняются выручка и маржа.
+export function applyDiscount(e, discount) {
+  if (!Number.isFinite(discount) || discount < 0 || discount > 30) throw Error('Скидка: от 0 до 30%');
+  const finalPrice = Math.round(e.price * (1 - discount / 100)),
+    margin = finalPrice ? ((finalPrice - e.cost) / finalPrice) * 100 : 0;
+  return {...e, discount, finalPrice, profit: finalPrice - e.cost, margin, requiresApproval: margin < 35};
+}
+// Что видит клиент: только цена и версия каталога, без себестоимости, маржи и норм.
+export const publicQuote = (e) => ({
+  price: e.price,
+  catalogVersion: e.catalogVersion,
+  illustrative: true
+});

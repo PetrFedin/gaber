@@ -7,15 +7,23 @@
     "dev": "vite --port 4173",
     "dev:lan": "vite --host 0.0.0.0 --port 4173",
     "build": "vite build",
-    "test": "node --test tests/*.test.js && node tests/render-smoke.mjs",
-    "format": "prettier --write src tests vite.config.js index.html",
-    "format:check": "prettier --check src tests vite.config.js index.html"
+    "test": "node --env-file-if-exists=.env --test tests/*.test.js && node tests/render-smoke.mjs",
+    "format": "prettier --write src tests shared server vite.config.js index.html",
+    "format:check": "prettier --check src tests shared server vite.config.js index.html",
+    "server": "node --env-file-if-exists=.env server/index.js",
+    "db:up": "docker compose --env-file .env -f server/docker-compose.yml up -d",
+    "db:migrate": "node --env-file-if-exists=.env -e \"import('./server/db.js').then(async d=>{const p=d.createPool(process.env.DATABASE_URL);console.log(await (await import('./server/migrate.js')).migrate(p));await p.end()})\"",
+    "db:seed": "node --env-file-if-exists=.env server/seed.js"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
     "@fontsource/golos-text": "^5.3.0",
     "@fontsource/manrope": "^5.3.0",
     "@google/model-viewer": "^4.4.0",
+    "argon2": "^0.45.2",
+    "fastify": "^5.12.8",
     "lucide-react": "^0.468.0",
+    "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.186.1"

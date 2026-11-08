@@ -12,13 +12,24 @@ try {
   const {default: CostingPage} = await server.ssrLoadModule('/src/CostingPage.jsx');
   const {default: Panel} = await server.ssrLoadModule('/src/ConfiguratorPanel.jsx');
   const {families, initialConfig} = await server.ssrLoadModule('/src/domain.js');
-  const {defaultProfile} = await server.ssrLoadModule('/src/costing.js');
+  const {defaultProfile, estimate, rateDefinitions} = await server.ssrLoadModule('/shared/costing.js');
   let n = 0;
   for (const f of families) {
     const c = initialConfig(f.id);
     for (const [Component, props] of [
       [TechnicalPage, {config: c}],
-      [CostingPage, {config: c, profile: defaultProfile(), onChange() {}}],
+      [
+        CostingPage,
+        {
+          config: c,
+          profile: defaultProfile(),
+          calc: estimate(c),
+          definitions: rateDefinitions.map(([k, l, u]) => [k, l, u]),
+          canEdit: true,
+          onChange() {},
+          onSave() {}
+        }
+      ],
       ...['composition', 'dimensions', 'fabric', 'details', 'room', 'technical'].map((step) => [
         Panel,
         {config: c, step, change() {}, start() {}}

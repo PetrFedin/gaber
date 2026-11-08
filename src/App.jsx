@@ -9,6 +9,8 @@ import {
   X,
   RotateCcw,
   Maximize2,
+  LogIn,
+  LogOut,
   Move3D,
   Layers,
   SlidersHorizontal,
@@ -41,7 +43,7 @@ import ConfiguratorPanel, {MaterialInspector} from './ConfiguratorPanel.jsx';
 import ConfigurationDetails from './ConfigurationDetails.jsx';
 import CostingPage from './CostingPage.jsx';
 import TechnicalPage from './TechnicalPage.jsx';
-import {readProfile, validProfile} from './costing.js';
+import {api} from './api.js';
 import {
   initialConfig,
   families,
@@ -50,14 +52,13 @@ import {
   getFamily,
   getFabric,
   getColor,
-  estimate,
   money,
   validate,
   dimensions,
   csv,
   CATALOG_VERSION
 } from './domain.js';
-import {readProjects, writeProjects, publicLink, configFromHash, newId} from './storage.js';
+import {readDraft, writeDraft, publicLink, configFromHash, newId} from './storage.js';
 
 const steps = [
   {id: 'composition', label: 'Композиция', icon: Layers},
@@ -74,6 +75,8 @@ const statusLabels = {
   changes: 'Нужны уточнения'
 };
 const statusTone = {draft: 'muted', requested: 'amber', approved: 'green', changes: 'amber'};
+const isStaff = (u) => u?.role === 'manager' || u?.role === 'technologist';
+const roleLabels = {client: 'Клиент', manager: 'Менеджер', technologist: 'Технолог'};
 const discountSnapshot = (e, discount) => {
   const finalPrice = Math.round(e.price * (1 - discount / 100)),
     margin = finalPrice ? ((finalPrice - e.cost) / finalPrice) * 100 : 0;
@@ -165,25 +168,118 @@ function Modal({title, children, onClose}) {
     </dialog>
   );
 }
-function App() {
-  const [profile, setProfile] = useState(readProfile);
-  function updateProfile(p) {
-    if (!validProfile(p)) return;
+function AuthForm({onDone}) {
+  const [mode, setMode] = useState('login'),
+    [email, setEmail] = useState(''),
+    [password, setPassword] = useState(''),
+    [name, setName] = useState(''),
+    [error, setError] = useState(''),
+    [busy, setBusy] = useState(false);
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
     try {
-      localStorage.setItem('gaber.costing.v2', JSON.stringify(p));
-      setProfile(p);
-    } catch {
-      notify('Не удалось сохранить ставки в браузере');
+      onDone(mode === 'login' ? await api.login(email, password) : await api.register(email, password, name));
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
     }
   }
+  return (
+    <form onSubmit={submit} className="auth-form">
+      {mode === 'register' && (
+        <label className="advanced-field">
+          <span>Имя</span>
+          <input value={name} maxLength={80} autoComplete="name" onChange={(e) => setName(e.target.value)} />
+        </label>
+      )}
+      <label className="advanced-field">
+        <span>Почта</span>
+        <input
+          type="email"
+          required
+          value={email}
+          autoComplete="email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+      <label className="advanced-field">
+        <span>Пароль{mode === 'register' ? ' · не короче 10 символов' : ''}</span>
+        <input
+          type="password"
+          required
+          minLength={mode === 'register' ? 10 : 1}
+          value={password}
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </label>
+      {error && (
+        <div className="inline-warning" role="alert">
+          <AlertCircle size={16} />
+          {error}
+        </div>
+      )}
+      <div className="modal-actions">
+        <button
+          type="button"
+          className="button outline"
+          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+        >
+          {mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт'}
+        </button>
+        <button className="button dark" disabled={busy}>
+          {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+        </button>
+      </div>
+      <p className="micro-note">
+        Регистрация создаёт аккаунт клиента. Сотрудников фабрики добавляют вне сайта. Данные в проекте
+        демонстрационные: не вводите конфиденциальную информацию.
+      </p>
+    </form>
+  );
+}
+function AccessGate({user, onLogin}) {
+  return (
+    <main className="page">
+      <Empty
+        title="Раздел для сотрудников фабрики"
+        description={
+          user
+            ? 'Себестоимость, нормы и заявки доступны менеджеру и технологу. Ваша роль — клиент.'
+            : 'Войдите аккаунтом менеджера или технолога, чтобы увидеть себестоимость, нормы и заявки.'
+        }
+        action={user ? undefined : 'Войти'}
+        onAction={onLogin}
+      />
+    </main>
+  );
+}
+function App() {
+  // user: undefined — ещё проверяем сессию, null — гость.
+  const [user, setUser] = useState(undefined);
+  const staff = isStaff(user);
+  const [quotePrice, setQuotePrice] = useState(null),
+    [priceOffline, setPriceOffline] = useState(false);
+  const [factory, setFactory] = useState([]),
+    [costing, setCosting] = useState({
+      profile: null,
+      saved: null,
+      definitions: [],
+      canEdit: false,
+      calc: null
+    });
+  const saveKey = useRef(null);
+  const [editing, setEditing] = useState(null);
   const [route, setRoute] = useState(() =>
     location.hash.startsWith('#studio') ? 'studio' : location.hash.slice(1) || 'home'
   );
-  const [config, setConfig] = useState(() => configFromHash() || initialConfig());
+  const [config, setConfig] = useState(() => configFromHash() || readDraft() || initialConfig());
   const [step, setStep] = useState('composition');
   const [history, setHistory] = useState([]),
     [future, setFuture] = useState([]),
-    [projects, setProjects] = useState(readProjects);
+    [projects, setProjects] = useState([]);
   const [toast, setToast] = useState(''),
     [modal, setModal] = useState(null),
     [mobileNav, setMobileNav] = useState(false),
@@ -206,8 +302,14 @@ function App() {
   }, [config.category]);
   const family = getFamily(config),
     errors = validate(config),
-    calculation = errors.length ? null : estimate(config, 0, profile),
     dim = dimensions(config);
+  const priceLabel = errors.length
+    ? 'Проверьте параметры'
+    : quotePrice != null
+      ? money(quotePrice)
+      : priceOffline
+        ? 'Цена недоступна без сервера'
+        : 'Считаем…';
   useEffect(() => {
     const f = () => {
       const next = location.hash.split('?')[0].slice(1) || 'home';
@@ -227,6 +329,102 @@ function App() {
     return () => window.removeEventListener('hashchange', f);
   }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
+  // Офлайн-запас: только черновик текущей конфигурации.
+  useEffect(() => {
+    if (!errors.length) writeDraft(config);
+  }, [config]);
+  // Сессия: httpOnly-cookie, поэтому состояние входа спрашиваем у сервера.
+  useEffect(() => {
+    api
+      .me()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
+  // Данные кабинета зависят от входа и роли.
+  async function loadData(u) {
+    if (!u) {
+      setProjects([]);
+      setFactory([]);
+      return;
+    }
+    try {
+      setProjects(await api.projects());
+      setFactory(isStaff(u) ? await api.factoryRequests() : []);
+    } catch {
+      notify('Не удалось загрузить проекты с сервера');
+    }
+  }
+  useEffect(() => {
+    if (user !== undefined) loadData(user);
+  }, [user]);
+  // Публичная цена приходит с сервера; себестоимости и норм в клиенте нет.
+  useEffect(() => {
+    if (errors.length) return setQuotePrice(null);
+    const ctrl = new AbortController(),
+      t = setTimeout(() => {
+        api
+          .quote(config, ctrl.signal)
+          .then((q) => {
+            setQuotePrice(q.price);
+            setPriceOffline(false);
+          })
+          .catch((e) => {
+            if (e.name === 'AbortError') return;
+            setQuotePrice(null);
+            setPriceOffline(true);
+          });
+      }, 200);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [config]);
+  // Внутренняя страница расчёта: данные только для персонала.
+  useEffect(() => {
+    if (route !== 'costing' || !staff) return;
+    api
+      .profile()
+      .then((r) =>
+        setCosting((c) => ({
+          ...c,
+          profile: r.profile,
+          saved: r.profile,
+          definitions: r.definitions,
+          canEdit: r.canEdit
+        }))
+      )
+      .catch((e) => notify(e.message));
+  }, [route, staff]);
+  useEffect(() => {
+    if (route !== 'costing' || !staff || !costing.profile || errors.length) return;
+    const ctrl = new AbortController(),
+      t = setTimeout(() => {
+        api
+          .estimate(config, costing.profile, ctrl.signal)
+          .then((calc) => setCosting((c) => ({...c, calc})))
+          .catch((e) => e.name !== 'AbortError' && notify(e.message));
+      }, 250);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [route, staff, config, costing.profile]);
+  async function saveProfile() {
+    try {
+      const saved = await api.saveProfile(costing.profile);
+      setCosting((c) => ({...c, profile: saved, saved}));
+      notify('Нормы сохранены на сервере');
+    } catch (e) {
+      notify(e.message);
+    }
+  }
+  async function signOut() {
+    await api.logout().catch(() => {});
+    setUser(null);
+    setSelectedProject(null);
+    setCosting({profile: null, saved: null, definitions: [], canEdit: false, calc: null});
+    notify('Вы вышли из аккаунта');
+  }
   function notify(message) {
     setToast(message);
     clearTimeout(toastTimer.current);
@@ -255,53 +453,74 @@ function App() {
     setFuture((f) => f.slice(1));
   }
   function start(category = 'sofa') {
+    setEditing(null);
     setConfig(initialConfig(category));
     setHistory([]);
     setFuture([]);
     setStep('composition');
     go('studio');
   }
-  function persist(next) {
+  const imageOf = () => {
+    const img = sceneRef.current?.snapshot();
+    // Сервер принимает только растровые снимки умеренного размера; SVG-режим остаётся без картинки.
+    return typeof img === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(img) && img.length <= 700000
+      ? img
+      : null;
+  };
+  // Идемпотентное создание: один и тот же клик при повторе уходит с тем же ключом.
+  async function save(status = 'draft', u = user) {
+    if (errors.length) return notify(errors[0]);
+    if (!u) return setModal({type: 'auth', then: status});
+    const image = imageOf(),
+      sig = JSON.stringify([config, status, image?.length]);
+    if (saveKey.current?.sig !== sig) saveKey.current = {sig, key: newId()};
     try {
-      writeProjects(next);
-      setProjects(next);
+      await api.createProject({config, image, submit: status === 'requested'}, saveKey.current.key);
+      saveKey.current = null;
+      await loadData(u);
+      notify(
+        status === 'requested'
+          ? 'Заявка отправлена. Фабрика увидит её в своём кабинете.'
+          : 'Вариант сохранён в вашем аккаунте'
+      );
+      setModal(null);
+    } catch (e) {
+      notify(
+        e.offline
+          ? 'Сервер недоступен. Черновик сохранён на этом устройстве, отправьте заявку позже.'
+          : e.details?.[0] || e.message
+      );
+    }
+  }
+  async function run(promise, okMessage) {
+    try {
+      await promise;
+      await loadData(user);
+      notify(okMessage);
       return true;
-    } catch {
-      notify('Не удалось сохранить: хранилище браузера недоступно или заполнено. Экспортируйте проект.');
+    } catch (e) {
+      notify(e.message);
       return false;
     }
   }
-  function save(status = 'draft') {
+  // Правка проекта в статусе draft/changes: новая неизменяемая версия, затем, при желании, отправка.
+  async function saveVersion(submit) {
     if (errors.length) return notify(errors[0]);
-    const now = new Date().toISOString(),
-      id = newId(),
-      project = {
-        id,
-        name: `${family.collection} · вариант ${projects.filter((p) => p.config.category === config.category).length + 1}`,
-        config: structuredClone(config),
-        estimate: calculation,
-        image: sceneRef.current?.snapshot() || null,
-        status,
-        createdAt: now,
-        catalogVersion: CATALOG_VERSION,
-        events: [
-          {date: now, label: status === 'requested' ? 'Демонстрационная заявка создана' : 'Вариант сохранён'}
-        ]
-      };
-    if (persist([project, ...projects])) {
-      notify(
-        status === 'requested'
-          ? 'Заявка появилась в демо-кабинете фабрики на этом устройстве'
-          : 'Вариант сохранён на этом устройстве'
-      );
+    try {
+      await api.addVersion(editing, config, imageOf());
+      if (submit) await api.submit(editing);
+      await loadData(user);
+      notify(submit ? 'Новая версия отправлена фабрике' : 'Новая версия сохранена');
+      if (submit) setEditing(null);
       setModal(null);
+    } catch (e) {
+      notify(e.details?.[0] || e.message);
     }
   }
-  function updateProject(id, patch, label) {
-    const next = projects.map((p) =>
-      p.id === id ? {...p, ...patch, events: [...p.events, {date: new Date().toISOString(), label}]} : p
-    );
-    if (persist(next)) notify(label);
+  const submitDraft = (id) => run(api.submit(id), 'Заявка отправлена');
+  async function decide(p, decision) {
+    const okMessage = decision === 'approved' ? 'Предложение подготовлено' : 'Запрошены уточнения';
+    return run(api.decide(p.id, {decision, discount, comment: comment.trim() || undefined}), okMessage);
   }
   async function share() {
     try {
@@ -321,7 +540,8 @@ function App() {
           mode: 'demonstration',
           catalogVersion: CATALOG_VERSION,
           config: p?.config || config,
-          estimate: p?.estimate || calculation
+          price: p ? (p.quote?.price ?? p.price) : quotePrice,
+          ...(p?.estimate ? {estimate: p.estimate} : {})
         },
         null,
         2
@@ -329,7 +549,7 @@ function App() {
     );
   }
   function bom(p) {
-    const e = p.estimate || estimate(p.config);
+    const e = p.estimate;
     download(
       `gaber-bom-${p.id.slice(0, 8)}.csv`,
       csv([
@@ -342,8 +562,8 @@ function App() {
       'text/csv;charset=utf-8'
     );
   }
-  const active = projects.find((p) => p.id === selectedProject) || null;
-  const requested = projects.filter((p) => p.status !== 'draft');
+  const active = (route === 'factory' ? factory : projects).find((p) => p.id === selectedProject) || null;
+  const requested = factory;
   const visibleProjects = projects.filter(
     (p) =>
       (filter === 'all' || p.config.category === filter) &&
@@ -356,7 +576,7 @@ function App() {
       change={change}
       start={start}
       onTechnical={() => go('technical')}
-      onCosting={() => go('costing')}
+      onCosting={staff ? () => go('costing') : undefined}
     />
   );
   return (
@@ -378,9 +598,11 @@ function App() {
           <a href="#materials" className={route === 'materials' ? 'active' : ''}>
             Материалы
           </a>
-          <a href="#costing" className={route === 'costing' ? 'active' : ''}>
-            Себестоимость
-          </a>
+          {staff && (
+            <a href="#costing" className={route === 'costing' ? 'active' : ''}>
+              Себестоимость
+            </a>
+          )}
         </nav>
         <div className="header-actions">
           <button
@@ -391,13 +613,33 @@ function App() {
             <span>Мои проекты</span>
             {projects.length > 0 && <b>{projects.length}</b>}
           </button>
-          <button
-            className={`factory-link ${route === 'factory' ? 'active' : ''}`}
-            onClick={() => go('factory')}
-          >
-            <Factory size={16} />
-            <span>Фабрика</span>
-          </button>
+          {staff && (
+            <button
+              className={`factory-link ${route === 'factory' ? 'active' : ''}`}
+              onClick={() => go('factory')}
+            >
+              <Factory size={16} />
+              <span>Фабрика</span>
+            </button>
+          )}
+          {user ? (
+            <button
+              className="nav-icon"
+              onClick={signOut}
+              aria-label="Выйти"
+              title={`${user.email} · ${roleLabels[user.role]}`}
+            >
+              <LogOut size={17} />
+              <span>Выйти</span>
+            </button>
+          ) : (
+            user === null && (
+              <button className="nav-icon" aria-label="Войти" onClick={() => setModal({type: 'auth'})}>
+                <LogIn size={17} />
+                <span>Войти</span>
+              </button>
+            )
+          )}
           <button
             className="menu-toggle icon-button"
             aria-label="Открыть меню"
@@ -637,7 +879,7 @@ function App() {
           <div className="studio-price">
             <div>
               <span className="price-label">Предварительная цена · демо</span>
-              <strong>{calculation ? money(calculation.price) : 'Проверьте параметры'}</strong>
+              <strong>{priceLabel}</strong>
               <button className="text-button" onClick={() => setModal({type: 'summary'})}>
                 Что входит <ChevronRight size={14} />
               </button>
@@ -755,7 +997,7 @@ function App() {
           {!projects.length ? (
             <Empty
               title="Здесь начнётся ваша коллекция"
-              description="Соберите первый предмет и сохраните его. Проекты хранятся в браузере на этом устройстве."
+              description="Соберите первый предмет и сохраните его. Проекты хранятся в вашем аккаунте на сервере."
               action="Открыть конструктор"
               onAction={() => start()}
             />
@@ -794,7 +1036,7 @@ function App() {
                       {p.config.width} см · {getFabric(p.config).name} · {getColor(p.config).name}
                     </p>
                     <div className="project-card-bottom">
-                      <strong>{money(p.quote?.price ?? p.estimate.price)}</strong>
+                      <strong>{money(p.quote?.price ?? p.price)}</strong>
                       <button
                         className={`text-button ${compareIds.includes(p.id) ? 'checked' : ''}`}
                         onClick={() =>
@@ -828,12 +1070,13 @@ function App() {
             </div>
           )}
           <p className="page-disclaimer">
-            Демонстрационный кабинет без регистрации. Проекты и заявки доступны только в этом браузере. Не
-            вводите персональные или конфиденциальные данные.
+            Проекты и заявки хранятся на сервере в вашем аккаунте. Цены демонстрационные. Не вводите
+            персональные или конфиденциальные данные.
           </p>
         </main>
       )}
-      {route === 'factory' && (
+      {route === 'factory' && !staff && <AccessGate user={user} onLogin={() => setModal({type: 'auth'})} />}
+      {route === 'factory' && staff && (
         <main className="factory-layout">
           <aside className="factory-sidebar">
             <span className="eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</span>
@@ -861,8 +1104,8 @@ function App() {
             ))}
             <div className="factory-notice">
               <Eye size={18} />
-              <p>Демо-режим</p>
-              <small>Переключение кабинетов не является авторизацией. Данные демонстрационные.</small>
+              <p>{roleLabels[user?.role]}</p>
+              <small>Вы вошли как {user?.email}. Нормы и данные демонстрационные.</small>
             </div>
           </aside>
           <section className="factory-content">
@@ -922,7 +1165,7 @@ function App() {
                   </article>
                   <article>
                     <span>Сумма запросов · демо</span>
-                    <strong>{money(requested.reduce((s, p) => s + p.estimate.price, 0))}</strong>
+                    <strong>{money(requested.reduce((s, p) => s + p.price, 0))}</strong>
                     <small>Не выручка и не продажи</small>
                   </article>
                 </div>
@@ -934,7 +1177,7 @@ function App() {
                   {!requested.length ? (
                     <Empty
                       title="Очередь пока свободна"
-                      description="Отправьте демонстрационную заявку из конструктора. Она появится здесь на этом устройстве."
+                      description="Отправьте демонстрационную заявку из конструктора. Она появится здесь после отправки клиентом."
                       action="Создать первую заявку"
                       onAction={() => go('studio')}
                     />
@@ -962,7 +1205,7 @@ function App() {
                               <td>
                                 {p.config.width} см / {getFabric(p.config).collection}
                               </td>
-                              <td>{money(p.quote?.price ?? p.estimate.price)}</td>
+                              <td>{money(p.quote?.price ?? p.price)}</td>
                               <td>
                                 <span className={`status ${statusTone[p.status]}`}>
                                   {statusLabels[p.status]}
@@ -1091,39 +1334,35 @@ function App() {
                             </>
                           );
                         })()}
+                        <label className="advanced-field">
+                          <span>Комментарий клиенту</span>
+                          <input
+                            value={comment}
+                            maxLength={1000}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Виден клиенту"
+                          />
+                        </label>
                         <div className="order-actions">
                           <button
                             className="button outline"
-                            onClick={() =>
-                              updateProject(active.id, {status: 'changes'}, 'Запрошены уточнения · демо')
-                            }
+                            disabled={active.status !== 'requested'}
+                            onClick={() => decide(active, 'changes')}
                           >
                             На уточнение
                           </button>
                           <button
                             className="button dark"
-                            onClick={() =>
-                              updateProject(
-                                active.id,
-                                {
-                                  status: 'approved',
-                                  quote: {
-                                    discount,
-                                    price: discountSnapshot(active.estimate, discount).finalPrice,
-                                    margin: discountSnapshot(active.estimate, discount).margin,
-                                    createdAt: new Date().toISOString()
-                                  }
-                                },
-                                'Демонстрационное предложение подготовлено'
-                              )
-                            }
+                            disabled={active.status !== 'requested'}
+                            onClick={() => decide(active, 'approved')}
                           >
                             Подготовить предложение <Check size={16} />
                           </button>
                         </div>
                         <p className="helper">
-                          Это симуляция процесса. Она не запускает производство и не подтверждает реальные
-                          цены.
+                          Решение записывается на сервере в историю заявки. Оно не запускает производство и не
+                          подтверждает реальные цены: ставки демонстрационные. При марже ниже 35% предложение
+                          подтверждает технолог.
                         </p>
                       </div>
                     </div>
@@ -1134,7 +1373,19 @@ function App() {
           </section>
         </main>
       )}
-      {route === 'costing' && <CostingPage config={config} profile={profile} onChange={updateProfile} />}
+      {route === 'costing' && !staff && <AccessGate user={user} onLogin={() => setModal({type: 'auth'})} />}
+      {route === 'costing' && staff && (
+        <CostingPage
+          config={config}
+          profile={costing.profile}
+          calc={costing.calc}
+          definitions={costing.definitions}
+          canEdit={costing.canEdit}
+          dirty={costing.profile !== costing.saved}
+          onChange={(p) => setCosting((c) => ({...c, profile: p}))}
+          onSave={saveProfile}
+        />
+      )}
       {route === 'technical' && <TechnicalPage config={config} />}
       <footer className="footer">
         <span>
@@ -1157,22 +1408,33 @@ function App() {
       {modal && (
         <Modal
           title={
-            modal.type === 'summary'
-              ? 'Ваш предмет'
-              : modal.type === 'project'
-                ? active?.name || 'Проект'
-                : modal.type === 'compare'
-                  ? 'Сравните свои идеи'
-                  : modal.type === 'delete'
-                    ? 'Удалить вариант?'
-                    : modal.type === 'material'
-                      ? 'Материал крупным планом'
-                      : modal.type === 'share'
-                        ? 'Ссылка на конфигурацию'
-                        : 'О демонстрационной версии'
+            modal.type === 'auth'
+              ? 'Вход в GABER'
+              : modal.type === 'summary'
+                ? 'Ваш предмет'
+                : modal.type === 'project'
+                  ? active?.name || 'Проект'
+                  : modal.type === 'compare'
+                    ? 'Сравните свои идеи'
+                    : modal.type === 'delete'
+                      ? 'Удалить вариант?'
+                      : modal.type === 'material'
+                        ? 'Материал крупным планом'
+                        : modal.type === 'share'
+                          ? 'Ссылка на конфигурацию'
+                          : 'О демонстрационной версии'
           }
           onClose={() => setModal(null)}
         >
+          {modal.type === 'auth' && (
+            <AuthForm
+              onDone={async (u) => {
+                setUser(u);
+                setModal(null);
+                if (modal.then) await save(modal.then, u);
+              }}
+            />
+          )}
           {modal.type === 'summary' && (
             <>
               <div className="summary-intro">
@@ -1211,22 +1473,24 @@ function App() {
               <ConfigurationDetails config={config} />
               <div className="summary-price">
                 <span>Предварительная цена · демо</span>
-                <strong>{calculation ? money(calculation.price) : 'Параметры требуют проверки'}</strong>
+                <strong>{priceLabel}</strong>
               </div>
               <p className="helper">
                 Пример включает изделие, работы и упаковку по демонстрационным нормам. Доставка, монтаж и
                 налоги не рассчитаны. Итоговую стоимость и конструкцию должна подтвердить фабрика.
               </p>
               <div className="technical-actions">
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setModal(null);
-                    go('costing');
-                  }}
-                >
-                  Подробная калькуляция ↗
-                </button>
+                {staff && (
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      setModal(null);
+                      go('costing');
+                    }}
+                  >
+                    Подробная калькуляция ↗
+                  </button>
+                )}
                 <button
                   className="text-button"
                   onClick={() => {
@@ -1238,19 +1502,24 @@ function App() {
                 </button>
               </div>
               <div className="modal-actions">
-                <button className="button outline" disabled={errors.length > 0} onClick={() => save()}>
-                  Сохранить вариант
+                <button
+                  className="button outline"
+                  disabled={errors.length > 0}
+                  onClick={() => (editing ? saveVersion(false) : save())}
+                >
+                  {editing ? 'Сохранить версию' : 'Сохранить вариант'}
                 </button>
                 <button
                   className="button dark"
                   disabled={errors.length > 0}
-                  onClick={() => save('requested')}
+                  onClick={() => (editing ? saveVersion(true) : save('requested'))}
                 >
-                  Создать демо-заявку <ArrowRight size={17} />
+                  Отправить заявку <ArrowRight size={17} />
                 </button>
               </div>
               <p className="micro-note">
-                Демо-заявка сохраняется в этом браузере. Сообщение фабрике не отправляется.
+                Заявка сохраняется на сервере и появляется в кабинете фабрики. Цена демонстрационная, фабрика
+                её ещё не подтвердила.
               </p>
             </>
           )}
@@ -1277,7 +1546,7 @@ function App() {
                 </div>
                 <div>
                   <dt>Расчёт · демо</dt>
-                  <dd>{money(active.quote?.price ?? active.estimate.price)}</dd>
+                  <dd>{money(active.quote?.price ?? active.price)}</dd>
                 </div>
               </dl>
               <ConfigurationDetails config={active.config} />
@@ -1298,6 +1567,7 @@ function App() {
                   className="button dark"
                   onClick={() => {
                     setConfig(structuredClone(active.config));
+                    setEditing(['draft', 'changes'].includes(active.status) ? active.id : null);
                     setModal(null);
                     setHistory([]);
                     setFuture([]);
@@ -1311,11 +1581,11 @@ function App() {
                 <button
                   className="text-button full"
                   onClick={() => {
-                    updateProject(active.id, {status: 'requested'}, 'Демонстрационная заявка создана');
+                    submitDraft(active.id);
                     setModal(null);
                   }}
                 >
-                  Передать в демо-кабинет фабрики <ArrowRight size={16} />
+                  Отправить заявку фабрике <ArrowRight size={16} />
                 </button>
               )}
             </>
@@ -1333,7 +1603,7 @@ function App() {
                     </p>
                     <p>{getFabric(p.config).name}</p>
                     <p>{getColor(p.config).name}</p>
-                    <strong>{money(p.quote?.price ?? p.estimate.price)}</strong>
+                    <strong>{money(p.quote?.price ?? p.price)}</strong>
                     <small>Демонстрационная цена</small>
                   </article>
                 ))}
@@ -1341,15 +1611,17 @@ function App() {
           )}
           {modal.type === 'delete' && (
             <>
-              <p>Вариант и его локальная история будут удалены с этого устройства.</p>
+              <p>
+                Вариант будет удалён из вашего аккаунта. Отправленные на рассмотрение заявки удалить нельзя.
+              </p>
               <div className="modal-actions">
                 <button className="button outline" onClick={() => setModal(null)}>
                   Оставить
                 </button>
                 <button
                   className="button dark"
-                  onClick={() => {
-                    if (persist(projects.filter((p) => p.id !== modal.id))) {
+                  onClick={async () => {
+                    if (await run(api.remove(modal.id), 'Вариант удалён')) {
                       setCompareIds((ids) => ids.filter((id) => id !== modal.id));
                       setModal(null);
                     }
@@ -1396,8 +1668,9 @@ function App() {
                 деталей, предварительная калькуляция и связанные демо-кабинеты.
               </p>
               <p>
-                Все цены, нормы и материалы демонстрационные. Проекты хранятся локально. Вход, серверные роли,
-                база заказов и реальные данные фабрики ещё не подключены.
+                Все цены, нормы и материалы демонстрационные. Проекты и заявки хранятся на сервере: есть вход
+                по почте и паролю, роли клиента, менеджера и технолога. Себестоимость и нормы клиенту не
+                отдаются. Реальных данных фабрики в системе пока нет.
               </p>
               <p>
                 Демо-переключение кабинетов не защищает данные. Не используйте эту версию для реальных заказов

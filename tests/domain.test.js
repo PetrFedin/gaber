@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialConfig, estimate, validate, normalize, csv, dimensions, families} from '../src/domain.js';
+import {initialConfig, estimate, validate, normalize, csv, dimensions, families} from '../shared/domain.js';
 test('all families produce consistent BOM and margin', () => {
   for (const f of families) {
     const c = initialConfig(f.id),
@@ -77,7 +77,7 @@ test('every costed accessory adds an explicit line and increases cost', () => {
   assert.ok(estimate({...base, backDepth: 40}).cost > e.cost);
   assert.ok(estimate({...base, pillowHeight: 65}).cost > e.cost);
 });
-import {defaultProfile, validProfile} from '../src/costing.js';
+import {defaultProfile, validProfile} from '../shared/costing.js';
 test('editable profile feeds price, records sources and preserves snapshots', () => {
   const c = initialConfig(),
     p = defaultProfile(),

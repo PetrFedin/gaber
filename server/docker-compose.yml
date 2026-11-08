@@ -1,0 +1,18 @@
+# Локальная PostgreSQL для разработки GABER. Порт и пароль берутся из .env (см. .env.example).
+# Запуск из корня репозитория: docker compose --env-file .env -f server/docker-compose.yml up -d
+name: gaber
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gaber-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gaber
+      POSTGRES_PASSWORD: ${GABER_PG_PASSWORD:?задайте GABER_PG_PASSWORD в .env}
+      POSTGRES_DB: gaber
+    ports:
+      - '127.0.0.1:${GABER_PG_PORT:-55481}:5432'
+    volumes:
+      - gaber_pgdata:/var/lib/postgresql/data
+volumes:
+  gaber_pgdata:

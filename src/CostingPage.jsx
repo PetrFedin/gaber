@@ -1,6 +1,5 @@
 import React from 'react';
 import {fabrics, money, getFamily, csv} from './domain.js';
-import {rateDefinitions, defaultProfile, estimate} from './costing.js';
 function download(name, data, type) {
   const u = URL.createObjectURL(new Blob([data], {type})),
     a = document.createElement('a');
@@ -9,8 +8,23 @@ function download(name, data, type) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(u), 1000);
 }
-export default function CostingPage({config, profile, onChange}) {
-  const e = estimate(config, 0, profile);
+// Внутренняя страница: calc, profile и definitions приходят с сервера только для менеджера и технолога.
+export default function CostingPage({
+  config,
+  profile,
+  calc: e,
+  definitions,
+  onChange,
+  onSave,
+  dirty,
+  canEdit
+}) {
+  if (!profile || !e)
+    return (
+      <main className="page costing-page">
+        <p className="page-disclaimer">Загружаем нормы и расчёт с сервера…</p>
+      </main>
+    );
   const change = (key, value, source = false) =>
     onChange({
       ...profile,
@@ -100,23 +114,22 @@ export default function CostingPage({config, profile, onChange}) {
           <div>
             <h2>Нормы фабрики</h2>
             <p>
-              Изменения сохраняются на этом устройстве и сразу влияют на текущий конструктор. Сохранённые
-              проекты сохраняют прежний снимок расчёта.
+              {canEdit
+                ? 'Правки видны в расчёте сразу, но действуют для заказов только после сохранения на сервере. Сохранённые версии проектов сохраняют прежний снимок расчёта.'
+                : 'Нормы может менять только технолог. Вы видите действующие ставки сервера.'}
             </p>
           </div>
-          <button
-            className="button outline"
-            onClick={() => {
-              if (confirm('Вернуть демонстрационные ставки?')) onChange(defaultProfile());
-            }}
-          >
-            Сбросить
-          </button>
+          {canEdit && (
+            <button className="button dark" disabled={!dirty} onClick={onSave}>
+              {dirty ? 'Сохранить нормы' : 'Сохранено'}
+            </button>
+          )}
         </div>
         <label className="advanced-field">
           <span>Название профиля</span>
           <input
             value={profile.name}
+            disabled={!canEdit}
             maxLength={100}
             onChange={(ev) => onChange({...profile, name: ev.target.value})}
           />
@@ -132,12 +145,13 @@ export default function CostingPage({config, profile, onChange}) {
               </tr>
             </thead>
             <tbody>
-              {rateDefinitions.map(([key, name, unit]) => (
+              {definitions.map(([key, name, unit]) => (
                 <tr key={key}>
                   <td>{name}</td>
                   <td>
                     <input
                       aria-label={name}
+                      disabled={!canEdit}
                       type="number"
                       min="0"
                       max={key === 'targetMargin' ? 89 : ['waste', 'overhead'].includes(key) ? 99 : 999999}
@@ -162,6 +176,7 @@ export default function CostingPage({config, profile, onChange}) {
                   <td>
                     <input
                       aria-label={`Источник: ${name}`}
+                      disabled={!canEdit}
                       maxLength={200}
                       value={profile.sources[key] || ''}
                       onChange={(ev) => change(key, ev.target.value, true)}
@@ -175,10 +190,12 @@ export default function CostingPage({config, profile, onChange}) {
                   <td>
                     <input
                       aria-label={`Цена ткани ${f.collection}`}
+                      disabled={!canEdit}
                       type="number"
                       min="0"
                       max="999999"
-                      value={profile.fabricPrices[f.id] ?? f.price}
+                      value={profile.fabricPrices[f.id] ?? ''}
+                      placeholder="базовая"
                       onChange={(ev) => {
                         const n = +ev.target.value;
                         if (n >= 0 && n < 1000000)
@@ -190,6 +207,7 @@ export default function CostingPage({config, profile, onChange}) {
                   <td>
                     <input
                       aria-label={`Источник ткани ${f.collection}`}
+                      disabled={!canEdit}
                       maxLength={200}
                       value={profile.fabricSources[f.id] || ''}
                       placeholder="Прайс поставщика и дата · пока демо"

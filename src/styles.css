@@ -3291,3 +3291,19 @@ tr.active {
     transition: none;
   }
 }
+
+/* Телефон: панель проверки — нижний лист, чтобы модель оставалась видна сверху. */
+@media (max-width: 700px) {
+  .fq {
+    z-index: 45;
+  }
+  .fq-panel {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 46vh;
+    z-index: 40;
+  }
+}

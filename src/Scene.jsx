@@ -8,6 +8,7 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {
   LIGHT_PRESETS,
   QUALITY,
@@ -379,6 +380,7 @@ function addRoom(group, c, simplified = false) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
     mesh.position.set(x, y, z);
     mesh.receiveShadow = true;
+    mesh.userData.room = true;
     group.add(mesh);
   };
   const rw = c.roomWidth / 100,
@@ -529,6 +531,32 @@ const Scene = forwardRef(function Scene({config, onSelect, hero = false, view, o
         ctx.fillRect(0, 0, 540, 360);
         ctx.drawImage(r.renderer.domElement, 0, 0, 540, 360);
         return c.toDataURL('image/webp', 0.65);
+      },
+      // GLB только мебели, в метрах: комната и человек в файл не попадают.
+      // Размер в метрах нужен, чтобы в AR изделие встало в натуральную величину.
+      async exportGLB() {
+        const r = runtime.current;
+        if (!r || !r.model) throw new Error('Модель ещё не готова');
+        const hidden = [];
+        r.model.traverse((o) => {
+          if (o.userData.room && o.visible) {
+            o.visible = false;
+            hidden.push(o);
+          }
+        });
+        [r.rig?.standing, r.rig?.seated].forEach((o) => {
+          if (o?.visible) {
+            o.visible = false;
+            hidden.push(o);
+          }
+        });
+        try {
+          const glb = await new GLTFExporter().parseAsync(r.model, {binary: true, onlyVisible: true});
+          return new Blob([glb], {type: 'model/gltf-binary'});
+        } finally {
+          hidden.forEach((o) => (o.visible = true));
+          r.invalidate();
+        }
       },
       canSit() {
         return !!runtime.current?.rig?.seated;

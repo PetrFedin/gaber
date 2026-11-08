@@ -1,5 +1,17 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ShieldCheck, Camera, User, Armchair, ZoomIn, Check, X, Download, ChevronDown} from 'lucide-react';
+import {
+  ShieldCheck,
+  Camera,
+  User,
+  Armchair,
+  ZoomIn,
+  Check,
+  X,
+  Download,
+  ChevronDown,
+  Home
+} from 'lucide-react';
+import ArPreview from './ArPreview.jsx';
 import {LIGHT_PRESETS, QUALITY} from './fidelity.js';
 
 const ANGLES = [
@@ -18,6 +30,8 @@ export default function QualityDock({sceneRef, view, setView, inspected, categor
   const [progress, setProgress] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [error, setError] = useState('');
+  const [arBlob, setArBlob] = useState(null);
+  const [arBusy, setArBusy] = useState(false);
   const closeRef = useRef(null);
   const canSit = CAN_SIT.includes(category);
 
@@ -47,6 +61,18 @@ export default function QualityDock({sceneRef, view, setView, inspected, categor
     addEventListener('keydown', esc);
     return () => removeEventListener('keydown', esc);
   }, [photo]);
+
+  const showAr = async () => {
+    setError('');
+    setArBusy(true);
+    try {
+      setArBlob(await sceneRef.current.exportGLB());
+    } catch (e) {
+      setError(e.message || 'Не удалось подготовить модель');
+    } finally {
+      setArBusy(false);
+    }
+  };
 
   const shoot = async () => {
     setError('');
@@ -168,6 +194,10 @@ export default function QualityDock({sceneRef, view, setView, inspected, categor
             <Camera size={14} />
             {progress === null ? 'Фото 2400 × 1600' : `Съёмка ${Math.round(progress * 100)}%`}
           </button>
+          <button className="fq-chip fq-wide" disabled={arBusy} onClick={showAr}>
+            <Home size={14} />
+            {arBusy ? 'Готовим модель…' : 'Дома у себя (AR)'}
+          </button>
           {error && (
             <p className="fq-note fq-error" role="alert">
               {error}
@@ -190,6 +220,8 @@ export default function QualityDock({sceneRef, view, setView, inspected, categor
           </details>
         </div>
       )}
+
+      {arBlob && <ArPreview blob={arBlob} name={name} onClose={() => setArBlob(null)} />}
 
       {photo && (
         <div

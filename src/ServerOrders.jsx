@@ -193,6 +193,74 @@ function OrderCard({order, role, busy, onRun, holdDisabled}) {
   );
 }
 
+/** Подтверждение входа вторым фактором: подключение приложения-аутентификатора или ввод текущего кода. */
+function MfaPanel({user, onChange, setError}) {
+  const [secret, setSecret] = useState(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const enrolled = user.mfa.enrolled;
+  async function run(fn) {
+    setBusy(true);
+    setError('');
+    try {
+      await fn();
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const refresh = async () => onChange((await serverApi.me()).user);
+  return (
+    <section className="server-mfa" role="region" aria-label="Подтверждение входа">
+      <h2>Подтвердите вход кодом</h2>
+      <p>
+        Для роли «{ROLE_LABELS[user.role]}» записи в заказ требуют второго фактора. Откройте приложение-аутентификатор
+        {enrolled ? ' и введите текущий шестизначный код.' : ', добавьте ключ ниже и введите код из приложения.'}
+      </p>
+      {!enrolled && !secret && (
+        <button className="button outline" disabled={busy} onClick={() => run(async () => setSecret(await serverApi.mfaEnroll()))}>
+          Подключить аутентификатор
+        </button>
+      )}
+      {!enrolled && secret && (
+        <dl className="server-facts">
+          <div>
+            <dt>Ключ для приложения</dt>
+            <dd>{secret.secret.match(/.{1,4}/g).join(' ')}</dd>
+          </div>
+          <div>
+            <dt>Ссылка otpauth</dt>
+            <dd className="server-uri">{secret.uri}</dd>
+          </div>
+        </dl>
+      )}
+      {(enrolled || secret) && (
+        <form
+          className="server-action"
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(async () => {
+              await (enrolled ? serverApi.mfaVerify(code.trim()) : serverApi.mfaConfirm(code.trim()));
+              setCode('');
+              await refresh();
+            });
+          }}
+        >
+          <label className="advanced-field">
+            Код из приложения
+            <input value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} onChange={(e) => setCode(e.target.value)} />
+          </label>
+          <button className="button dark" disabled={busy || code.trim().length !== 6}>
+            {enrolled ? 'Проверить код' : 'Подтвердить и подключить'}
+          </button>
+        </form>
+      )}
+      <p className="helper">В режиме разработки сервер может считать вторую проверку пройденной: тогда этот блок не показывается.</p>
+    </section>
+  );
+}
+
 function LoginForm({onDone, busy, setBusy, setError}) {
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -328,9 +396,13 @@ export default function ServerOrders({config, holdDisabled: holdOverride}) {
       {user === null && <LoginForm
           onDone={(u) => {
             setUser(u);
-            serverApi.me().then((r) => setServerInfo(r.server)).catch(() => {});
+            serverApi.me().then((r) => {
+              setUser(r.user ?? u);
+              setServerInfo(r.server);
+            }).catch(() => {});
           }}
           busy={busy} setBusy={setBusy} setError={setError} />}
+      {user?.mfa?.required && !user.mfa.verified && <MfaPanel user={user} onChange={setUser} setError={setError} />}
       {user && role === 'client' && (
         <section className="server-create">
           <h2>Новый заказ из конструктора</h2>

@@ -45,6 +45,7 @@ import ProjectStorageTools from "./ProjectStorageTools.jsx";
 import OrderWorkspace from "./OrderWorkspace.jsx";
 import ServerOrders from "./ServerOrders.jsx";
 import FurnitureMark from "./FurnitureMarks.jsx";
+import { readDraft, writeDraft, stripConfigFromUrl } from "./draftStorage.js";
 import DesignKit from "./DesignKit.jsx";
 import OperationsPage from "./OperationsPage.jsx";
 import { readProfile, validProfile } from "./costing.js";
@@ -224,8 +225,15 @@ function App() {
         : location.hash.slice(1) || "home",
   );
   const [config, setConfig] = useState(
-    () => configFromHash() || initialConfig(),
+    () => {
+      const fromLink = configFromHash();
+      if (fromLink) stripConfigFromUrl();
+      return fromLink || readDraft() || initialConfig();
+    },
   );
+  useEffect(() => {
+    if (!validate(config).length) writeDraft(config);
+  }, [config]);
   const [step, setStep] = useState("composition");
   const [history, setHistory] = useState([]),
     [future, setFuture] = useState([]),

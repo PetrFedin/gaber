@@ -92,6 +92,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--loden)}
 .server-orders .advanced-field input,.server-orders .advanced-field textarea,.server-orders .advanced-field select{width:100%;font-size:15px}
 .server-orders .page-top .server-session{max-width:100%}
 .server-orders section>h2{margin-top:32px}
+.server-orders .server-mfa{max-width:640px;display:grid;gap:16px;margin:24px 0;background:var(--paper);border:1px dashed var(--thread);border-radius:var(--r-md);padding:24px}
+.server-orders .server-uri{font-size:12px;word-break:break-all;font-weight:400}
 .server-orders .inline-warning{margin:16px 0}
 
 /* ---------- Главная: лист чертежа ---------- */

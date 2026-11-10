@@ -1,19 +1,22 @@
 import {createServer} from 'node:http';
 import {createOrderHttpHandler} from './orderHttpApi.js';
 import {createAuthHttpHandler, readCookie, originAllowed} from './auth/authHttp.js';
+import {createStaticHandler} from './staticFiles.js';
 
 /**
  * Единый HTTP-вход: /api/v1/auth/* (вход, cookie) и /api/v1/orders/* (журнал заказов).
  * Браузер аутентифицируется httpOnly-cookie: здесь она превращается в Bearer для существующего
  * адаптера заказов. Явный заголовок Authorization имеет приоритет (для не-браузерных клиентов).
  */
-export function createGaberHttpServer({journal, authService, allowedOrigins = [], secureCookie = false, clock = Date.now, serverInfo = {}}) {
+export function createGaberHttpServer({journal, authService, allowedOrigins = [], secureCookie = false, clock = Date.now, serverInfo = {}, staticDir = null}) {
+  const serveStatic = staticDir ? createStaticHandler(staticDir) : null;
   const orders = createOrderHttpHandler({journal, resolveSession: (t) => authService.resolveSession(t), clock});
   const auth = createAuthHttpHandler({service: authService, allowedOrigins, secureCookie, serverInfo});
   return createServer(async (req, res) => {
     // Заметный сигнал для клиентов и прокси: сервер работает с имитацией внешних полномочий.
     if (serverInfo.devSimulatedAuthority) res.setHeader('X-Gaber-Dev-Simulation', 'external-authority');
     if (await auth(req, res)) return;
+    if (serveStatic && (await serveStatic(req, res))) return;
     if (req.method !== 'GET' && req.method !== 'HEAD' && !originAllowed(req, allowedOrigins)) {
       res.writeHead(403, {'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store'});
       res.end(JSON.stringify({code: 'FORBIDDEN_ORIGIN', productionRelease: {allowed: false}}));

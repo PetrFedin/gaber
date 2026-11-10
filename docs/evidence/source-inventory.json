@@ -11,11 +11,11 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "e1eafb62aa6f88942467844d611903853ef4baee"
+      "sha": "75aeed474d24372f84c774eae40b8b7f5bfe07dd"
     },
     {
       "path": ".gitignore",
-      "sha": "f714736eab271a3f541560015318c1cc5438b6ba"
+      "sha": "8fe574267d724c64b252272f83dcfd21b43fc8cd"
     },
     {
       "path": ".nvmrc",
@@ -55,7 +55,7 @@
     },
     {
       "path": "docs/INDEX.md",
-      "sha": "ba3b41c5dfd9d508146e08a9c82c1fea966c8d2e"
+      "sha": "4a48df80a07875d5a731547f8656847e170d92d7"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
@@ -67,7 +67,7 @@
     },
     {
       "path": "docs/PROJECT-STRUCTURE.md",
-      "sha": "daf7796ad6f21fec4453c1426173f80ce85cee3e"
+      "sha": "2f054d34b7641a68b42d50c22486592798fc7647"
     },
     {
       "path": "docs/RELEASE-REVIEW-GATES.md",
@@ -78,8 +78,12 @@
       "sha": "349a3a6510d9b1b54b2df1f8e7ef31224f7e1e9e"
     },
     {
+      "path": "docs/SERVER-AUTH.md",
+      "sha": "e95176b6b28a3523b9f7a9a37a56c090ebc2d6bf"
+    },
+    {
       "path": "docs/STATUS.md",
-      "sha": "d4b19c28e30b452ac756a53b06d2a4db9987b501"
+      "sha": "33e34ae7ab96324cbf45e0464c88c0e592dc4561"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -207,11 +211,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha": "5f11bfdc41c2defd6512145052a6d8f3f0201806"
+      "sha": "59c85c5775fc6845b74f390e13fc4d3a830cdc10"
     },
     {
       "path": "package.json",
-      "sha": "599e366286017809e3b052c980578a5bd362ea0e"
+      "sha": "ccc416fce1778d7ad5946ae623f2d18bfa6a6664"
     },
     {
       "path": "public/favicon.svg",
@@ -242,12 +246,60 @@
       "sha": "8cdfd0ee08cef1138f70f434d9c93a6a57b50cc4"
     },
     {
+      "path": "server/auth/authHttp.js",
+      "sha": "ffb85a7ae2cb01f524b3b3dc0832d1646be3dcc4"
+    },
+    {
+      "path": "server/auth/authService.js",
+      "sha": "88fb3e3a315a4b0db3c26f4fa7b822dd0fae25fd"
+    },
+    {
+      "path": "server/auth/authStore.js",
+      "sha": "c135d9d2d3d8b6ab2763eccf056ddb2229c8dc66"
+    },
+    {
+      "path": "server/auth/passwords.js",
+      "sha": "f50fd95021e710f2b8451d855a61e90ed4e68e1f"
+    },
+    {
+      "path": "server/auth/principal.js",
+      "sha": "304fc122eadcd77772d36e79220e49d6ba5d2a9c"
+    },
+    {
+      "path": "server/config.js",
+      "sha": "dd19c6e3f346435d4b3607b31d9ab81041494cbd"
+    },
+    {
+      "path": "server/dev/dev.env.example",
+      "sha": "eda2ad778b26610e08bd139a0adadb4aabec245d"
+    },
+    {
+      "path": "server/dev/docker-compose.yml",
+      "sha": "b288c27145e27e305840f55908cd1318424ae825"
+    },
+    {
+      "path": "server/dev/seed-data.js",
+      "sha": "29aa1968fbe7aa8c74b00b8507568be2bea09052"
+    },
+    {
+      "path": "server/dev/setup.mjs",
+      "sha": "3773357452cf9ccc5d377a71e2e97dc7930e519b"
+    },
+    {
       "path": "server/factoryReviewPolicy.js",
       "sha": "967f58badeb54ed76a6f52fc8622d74e0979d239"
     },
     {
       "path": "server/factoryReviewService.js",
       "sha": "096559327f972581e76593918dfd822055b6b7cf"
+    },
+    {
+      "path": "server/httpServer.js",
+      "sha": "d2750136aa591433e8419c13819a50875e843d49"
+    },
+    {
+      "path": "server/index.js",
+      "sha": "320aa97fba21833e156babf1f85910a244a82fd8"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -278,6 +330,10 @@
       "sha": "5a2231897ec8cd8d36abd1ed01229ab3d46193d9"
     },
     {
+      "path": "server/migrations/008_auth_sessions_hold.sql",
+      "sha": "041ecb33dc2a2811255d4b00852b12b3bbc733b9"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
       "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
     },
@@ -304,6 +360,10 @@
     {
       "path": "server/postgresOrderRepository.js",
       "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+    },
+    {
+      "path": "server/tests/auth-http-e2e.mjs",
+      "sha": "ae0f7a77fc171c1a3f4e1510b9aa691ab77544ea"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -548,6 +608,10 @@
     {
       "path": "tests/assembly-links.test.js",
       "sha": "1ca6cd813c71d7a3b2bba5b712f77d4084b98ce3"
+    },
+    {
+      "path": "tests/auth-service.test.js",
+      "sha": "ecfc598cad06bf1405f5fd5da28f4b4cddb29b73"
     },
     {
       "path": "tests/chaise-structure.test.js",

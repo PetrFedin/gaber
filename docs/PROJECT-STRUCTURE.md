@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | src/ | React UI, Three.js, геометрия, конструкция, расчёты и локальный демо-журнал | tests/*.test.js, DOM-скрипты |
 | server/ | серверные политики, допуск команд, HTTP-адаптер, ролевые DTO, журнал | тесты server/ и tests/ |
-| server/migrations/ | последовательные staging SQL 001–007, не миграции production | scripts/verify-postgres-staging.sh |
+| server/auth/, server/httpServer.js, server/index.js, server/dev/ | вход, сессии, точка запуска, dev-база ([SERVER-AUTH](SERVER-AUTH.md)) | tests/auth-service.test.js, server/tests/auth-http-e2e.mjs |
+| server/migrations/ | последовательные staging SQL 001–008, не миграции production | scripts/verify-postgres-staging.sh |
 | server/tests/ | PostgreSQL/HTTP фикстуры и E2E-контракт | отдельный CI job postgres-staging |
 | tests/ | доменные, инженерные, ролевые и визуально-структурные регрессии | npm run test:node и test:ui |
 | scripts/ | контроль исходников, структуры, staging, браузера и релиза | npm run verify:repository |

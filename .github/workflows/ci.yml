@@ -106,7 +106,7 @@ jobs:
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
         run: node server/tests/postgres-http-e2e.mjs
-      - name: Server login, sessions and role isolation on PostgreSQL 17
+      - name: Server login, sessions, role isolation, payments and HOLD on PostgreSQL 17
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
           GABER_DEV_ADMIN_DATABASE_URL: postgres://postgres:gaber_ci_disposable_only@127.0.0.1:5432/gaber_staging
@@ -119,6 +119,7 @@ jobs:
           # Миграции 001-008 уже применены verify-postgres-staging.sh; setup создаёт роли и пользователей.
           node server/dev/setup.mjs
           node server/tests/auth-http-e2e.mjs
+          node server/tests/order-lifecycle-e2e.mjs
 
   # Real installed Chromium against compiled Vite preview. This is a local
   # browser UX smoke test, NOT identity/payment/production E2E.

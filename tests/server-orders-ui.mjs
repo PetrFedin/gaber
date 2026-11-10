@@ -28,7 +28,7 @@ try {
     'p@x.test': {id: 'U-p', email: 'p@x.test', role: 'partner', password: 'partner-pass-1'},
     'f@x.test': {id: 'U-f', email: 'f@x.test', role: 'factory', password: 'factory-pass-1', factoryId: 'FAB-T'}
   };
-  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfa = false;
+  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfa = false, externalHold = true, holdDisabled = true;
   const requests = [];
   const json = (status, body) => ({ok: status < 400, status, json: async () => body});
   globalThis.fetch = async (url, init = {}) => {
@@ -52,6 +52,7 @@ try {
     }
     const m = url.match(/^\/api\/v1\/orders\/([^/]+)\/commands$/);
     if (m && init.method === 'POST') {
+      if (externalHold && ['start', 'complete', 'quality_pass', 'ship', 'deliver', 'accept_delivery'].includes(body.type)) return json(403, {code: 'EXTERNAL_AUTHORITY_REQUIRED'});
       const mfaRoles = ['partner', 'factory'];
       if (mfaRoles.includes(session.role) && !mfa && !['message'].includes(body.type)) return json(403, {code: 'MFA_REQUIRED'});
       clock += 60000;
@@ -68,7 +69,7 @@ try {
     return json(404, {code: 'NOT_FOUND'});
   };
 
-  const render = async () => act(async () => root.render(React.createElement(ServerOrders, {config: initialConfig()})));
+  const render = async () => act(async () => root.render(React.createElement(ServerOrders, {config: initialConfig(), holdDisabled})));
   const text = () => document.body.textContent;
   const button = (label) => {
     const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === label);
@@ -163,13 +164,104 @@ try {
   assert.equal(state().stage, 'accepted');
   assert.equal(state().acceptedRevisionId, 'R1');
 
-  // отказ сервера показывается, а не молчит
-  await fill('Номер платёжного документа', 'PAY-1');
-  await fill('Сумма, ₽', '0');
+  // --- оплата: заявление клиента, учёт партнёром, остаток ---
+  const has = (label) => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === label);
+  const alertText = () => document.querySelector('[role=alert]')?.textContent ?? '';
+  await fill('Сумма, ₽', 'abc');
+  await fill('Номер платёжного документа', 'CLAIM-1');
   await click('Сообщить об оплате');
-  assert.match(text(), /недоступно для текущего этапа|Не удалось/);
+  assert.match(alertText(), /Проверьте поле «Сумма, ₽»/);
+  assert.equal(requests.filter((r) => r.body?.type === 'report_payment').length, 0, 'неверная сумма не уходит на сервер');
+  await fill('Сумма, ₽', '1050,03');
+  await click('Сообщить об оплате');
+  assert.equal(state().paymentClaims[0].amountKopecks, 105003);
+  assert.match(text(), /Заявлено клиентом: 1\s050,03/);
+  assert.match(text(), /Учтено партнёром \(не банк\)0,00/);
+  await logout();
+  await login('p@x.test', 'partner-pass-1');
+  await fill('Сумма, ₽', '1050,03');
+  await fill('Номер платёжного документа', 'BANK-1');
+  await click('Записать оплату');
+  assert.equal(state().payments[0].amountKopecks, 105003);
+  assert.match(text(), /Учтено: 1\s050,03/);
+  await logout();
+  await login('c@x.test', 'client-pass-1');
+  assert.match(text(), /Аванс к оплате0,00/);
+  assert.match(text(), /Остаток к оплате1\s050,02/);
+  await logout();
+
+  // --- PRODUCTION HOLD: кнопки закрытых этапов не показываются, причина объяснена ---
+  await login('f@x.test', 'factory-pass-1');
+  assert.equal(has('Начать производство'), false, 'при HOLD кнопка производства скрыта');
+  assert.match(text(), /PRODUCTION HOLD/);
+  assert.doesNotMatch(text(), /Учтено|Заявлено клиентом|Остаток к оплате/, 'фабрика не видит платежи');
+  await logout();
+  // если интерфейс всё же отправит закрытую команду, отказ сервера объяснён
+  holdDisabled = false;
+  await render();
+  await login('f@x.test', 'factory-pass-1');
+  await click('Начать производство');
+  assert.match(alertText(), /PRODUCTION HOLD/);
+  assert.equal(state().stage, 'accepted');
+
+  // --- этапы за HOLD: формы и данные проверены по настоящему редьюсеру (сервер в памяти без HOLD) ---
+  externalHold = false;
+  await click('Начать производство');
+  assert.equal(state().stage, 'production');
+  await click('Производство завершено');
+  await fillIn('Контроль качества пройден', 'Номер акта', 'QC-1');
+  await click('Контроль качества пройден');
+  assert.equal(state().stage, 'ready');
+  await logout();
+  await login('p@x.test', 'partner-pass-1');
+  await fill('Сумма, ₽', '1050,02');
+  await fill('Номер платёжного документа', 'BANK-2');
+  await click('Записать оплату');
+  assert.equal(state().payments.length, 2);
+  await logout();
+  await login('f@x.test', 'factory-pass-1');
+  await fill('Перевозчик', 'ТК Демо');
+  await fill('Трек-номер', 'TRK-1');
+  await fillIn('Отгрузить', 'Номер документа', 'SHIP-1');
+  await click('Отгрузить');
+  assert.equal(state().stage, 'shipped');
+  assert.equal(state().shipment.carrier, 'ТК Демо');
+  await logout();
+  await login('c@x.test', 'client-pass-1');
+  await fill('Описание проблемы', 'Повреждена обивка');
+  await click('Сообщить о проблеме');
+  assert.equal(state().stage, 'disputed');
+  await logout();
+  await login('f@x.test', 'factory-pass-1');
+  await fill('Предложение по решению', 'Заменим чехол');
+  await click('Ответить на проблему');
+  assert.equal(state().issue.status, 'response_proposed');
+  await logout();
+  await login('c@x.test', 'client-pass-1');
+  await fill('Почему не подходит', 'Нужна замена целиком');
+  await click('Отклонить решение');
+  assert.equal(state().issue.status, 'open');
+  await logout();
+  await login('p@x.test', 'partner-pass-1');
+  await fill('Предложение по решению', 'Заменим обивку целиком');
+  await click('Ответить на проблему');
+  await logout();
+  await login('c@x.test', 'client-pass-1');
+  await click('Подтвердить решение');
+  assert.equal(state().stage, 'shipped');
+  await logout();
+  await login('f@x.test', 'factory-pass-1');
+  await fillIn('Доставлено', 'Номер документа', 'DLV-1');
+  await click('Доставлено');
+  assert.equal(state().stage, 'delivered');
+  await logout();
+  await login('c@x.test', 'client-pass-1');
+  await click('Принять доставку');
+  assert.equal(state().stage, 'closed');
+  await logout();
 
   // отказ из-за устаревшей версии
+  await login('c@x.test', 'client-pass-1');
   const stale = {orderId: state().projectId, type: 'message', payload: {note: 'x', channel: 'shared'}, expectedVersion: 1, revisionId: 'R1'};
   const {serverApi} = await vite.ssrLoadModule('/src/serverApi.js');
   await assert.rejects(serverApi.command(stale), {code: 'STALE_ORDER_VERSION'});

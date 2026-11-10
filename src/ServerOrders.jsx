@@ -13,6 +13,8 @@ const CHANNELS = {
   factory: [['factory_partner', 'Фабрика и GABER'], ['shared', 'Общий канал']],
   partner: [['client_partner', 'Клиент и GABER'], ['factory_partner', 'Фабрика и GABER'], ['shared', 'Общий канал']]
 };
+// Эти команды журнал сервера закрывает как действия внешнего полномочия (PRODUCTION HOLD).
+export const HOLD_TYPES = new Set(['start', 'complete', 'quality_pass', 'ship', 'deliver', 'accept_delivery']);
 const text = (name, label, extra = {}) => ({name, label, ...extra});
 const money = (name, label) => text(name, label, {kind: 'money', placeholder: '₽'});
 
@@ -86,6 +88,8 @@ function ActionForm({action, order, role, busy, onRun}) {
       const raw = values[f.name] ?? '';
       payload[f.name] = f.kind === 'money' ? kopecks(raw) : f.kind === 'percent' ? Math.round(Number(String(raw).replace(',', '.')) * 100) : String(raw).trim();
     }
+    const bad = (action.fields ?? []).find((f) => (f.kind === 'money' || f.kind === 'percent') && !Number.isFinite(payload[f.name]));
+    if (bad) return onRun(null, null, `Проверьте поле «${bad.label}»: нужно число.`);
     if (action.withConfig) payload.config = order.config;
     const revisionId = action.rev === 'spec' ? order.factoryTask?.specId : action.rev === 'current' ? order.revisionId : undefined;
     onRun({type: action.type, payload, revisionId});
@@ -128,10 +132,12 @@ function MessageForm({role, order, busy, onRun}) {
   );
 }
 
-function OrderCard({order, role, busy, onRun}) {
+function OrderCard({order, role, busy, onRun, holdDisabled}) {
   const family = getFamily(order.config ?? {}) ?? null;
   const fabric = order.config ? getFabric(order.config) : null;
-  const actions = ACTIONS[role].filter((a) => a.when(order));
+  const all = ACTIONS[role].filter((a) => a.when(order));
+  const actions = holdDisabled ? all.filter((a) => !HOLD_TYPES.has(a.type)) : all;
+  const held = holdDisabled ? all.filter((a) => HOLD_TYPES.has(a.type)) : [];
   return (
     <article className="server-order">
       <header>
@@ -148,11 +154,28 @@ function OrderCard({order, role, busy, onRun}) {
         <div><dt>Версия журнала</dt><dd>{order.version}</dd></div>
         {order.offer && <div><dt>Цена предложения</dt><dd>{rub(order.offer.priceKopecks)}</dd></div>}
         {order.finance?.advanceDueKopecks != null && <div><dt>Аванс к оплате</dt><dd>{rub(order.finance.advanceDueKopecks)}</dd></div>}
+        {order.finance?.localRecordedKopecks != null && <div><dt>Учтено партнёром (не банк)</dt><dd>{rub(order.finance.localRecordedKopecks)}</dd></div>}
+        {order.finance?.balanceKopecks != null && <div><dt>Остаток к оплате</dt><dd>{rub(order.finance.balanceKopecks)}</dd></div>}
         {role === 'factory' && order.factoryTask && <div><dt>Стоимость у фабрики</dt><dd>{rub(order.factoryTask.factoryCostKopecks)}</dd></div>}
         {role === 'factory' && order.dueDate && <div><dt>Срок</dt><dd>{order.dueDate}</dd></div>}
         {role === 'partner' && order.economics && <div><dt>Цена клиенту / у фабрики</dt><dd>{rub(order.economics.customerPriceKopecks)} / {rub(order.economics.factoryCostKopecks)}</dd></div>}
         {role === 'partner' && <div><dt>Фабрика</dt><dd>{order.assignedFactoryId ?? 'не назначена'}</dd></div>}
       </dl>
+      {(order.paymentClaims?.length > 0 || order.payments?.length > 0) && (
+        <ul className="server-messages" aria-label="Платежи">
+          {(order.payments ?? []).map((p, i) => (
+            <li key={'p' + i}><b>Учтено:</b> {rub(p.amountKopecks)} · {p.reference}</li>
+          ))}
+          {(order.paymentClaims ?? []).map((p, i) => (
+            <li key={'c' + i}><b>Заявлено клиентом:</b> {rub(p.amountKopecks)} · {p.reference}</li>
+          ))}
+        </ul>
+      )}
+      {held.length > 0 && (
+        <p className="inline-warning" role="note">
+          PRODUCTION HOLD: этап «{held.map((a) => a.label).join(', ')}» закрыт для этой роли. Журнал сервера требует внешнего подтверждения (банк, допуск производства, перевозчик), его в системе пока нет.
+        </p>
+      )}
       {order.messages?.length > 0 && (
         <ul className="server-messages" aria-label="Сообщения">
           {order.messages.map((m, i) => (
@@ -163,7 +186,7 @@ function OrderCard({order, role, busy, onRun}) {
       <p className="helper">Данные демонстрационные. Запись подтверждает только журнал сервера; оплата и производство не подтверждены.</p>
       <div className="server-actions">
         {actions.map((a) => (
-          <ActionForm key={a.type} action={a} order={order} role={role} busy={busy} onRun={(cmd) => onRun(cmd)} />
+          <ActionForm key={a.type} action={a} order={order} role={role} busy={busy} onRun={(cmd, after, localError) => onRun(cmd, after, localError)} />
         ))}
         <MessageForm role={role} order={order} busy={busy} onRun={onRun} />
       </div>
@@ -206,7 +229,7 @@ function LoginForm({onDone, busy, setBusy, setError}) {
 }
 
 /** Рабочее пространство заказов на сервере: вход, список и действия по ролям. Источник истины — журнал сервера. */
-export default function ServerOrders({config}) {
+export default function ServerOrders({config, holdDisabled = true}) {
   const [user, setUser] = useState(undefined);
   const [orders, setOrders] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -232,7 +255,8 @@ export default function ServerOrders({config}) {
     if (user) refresh();
     else setOrders([]);
   }, [user, refresh]);
-  async function run(order, cmd, after) {
+  async function run(order, cmd, after, localError) {
+    if (!cmd) return setError(localError);
     setBusy(true);
     setError('');
     setNote('');
@@ -304,7 +328,7 @@ export default function ServerOrders({config}) {
           <h2>{role === 'client' ? 'Мои заказы' : role === 'factory' ? 'Назначенные заказы' : 'Все заказы оператора'}</h2>
           {orders.length === 0 && <p className="helper">Заказов пока нет.</p>}
           {orders.map((o) => (
-            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} onRun={(cmd, after) => run(o, cmd, after)} />
+            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} holdDisabled={holdDisabled} onRun={(cmd, after, localError) => run(o, cmd, after, localError)} />
           ))}
         </section>
       )}

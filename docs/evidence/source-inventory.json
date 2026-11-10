@@ -11,7 +11,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "75aeed474d24372f84c774eae40b8b7f5bfe07dd"
+      "sha": "2364b245ae38633b2015243cdd4860a2eb06d134"
     },
     {
       "path": ".gitignore",
@@ -79,7 +79,7 @@
     },
     {
       "path": "docs/SERVER-AUTH.md",
-      "sha": "e5a989d6365c2ce06e4dbd2c424acfb122c58bdf"
+      "sha": "6100dc9038659f6c09bf5de6f0328a5b82c18fc0"
     },
     {
       "path": "docs/STATUS.md",
@@ -215,7 +215,7 @@
     },
     {
       "path": "package.json",
-      "sha": "b2e7e99e5c498fc7b3875eb7ac248c24f4ddcaab"
+      "sha": "1610ff28cab6383a1abaef5fb6f1b9023c261ad8"
     },
     {
       "path": "public/favicon.svg",
@@ -366,6 +366,10 @@
       "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
     },
     {
+      "path": "server/tests/order-lifecycle-e2e.mjs",
+      "sha": "7d5716e6c2830beb612fd1a08a93272aa41c5102"
+    },
+    {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
       "sha": "3171cd39c7cf3a520af0f8ffef8258515f5e8936"
     },
@@ -447,7 +451,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "14fe47733ff6f014edf3a24cfca2cde95d87903b"
+      "sha": "42c450cac3da823be2df12c30f5ff60db6ccfe2a"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -575,7 +579,7 @@
     },
     {
       "path": "src/serverApi.js",
-      "sha": "db044db7874c7492dc7e40e201a59d4814295fc6"
+      "sha": "0c73b167adfe771cc2e300a3e9a03d49de6ffcfb"
     },
     {
       "path": "src/serverOrders.css",
@@ -807,7 +811,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "5cdc2e7c9bc5f114c1e5ecf116668f7fac761981"
+      "sha": "af0da8085573d5918e0d7cb04e08574d76fa65f9"
     },
     {
       "path": "tests/storage.test.js",

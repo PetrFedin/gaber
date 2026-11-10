@@ -137,6 +137,16 @@ try {
   // Роль фабрики берётся из учётной записи, привязка к организации из базы
   check((await admin.query('SELECT factory_id FROM gaber_auth.users WHERE role=$1', ['factory'])).rows[0].factory_id, DEV_FACTORY, 'factoryId из учётной записи');
 
+  // --- список заказов: только то, что роль вправе читать ---
+  const listOf = async (cookie) => strict.call('GET', '/api/v1/orders', {cookie});
+  check((await listOf(undefined)).status, 401, 'список без cookie 401');
+  const la = await listOf(a.cookie);
+  check(la.body.orders.map((o) => o.orderId), [ORDER], 'клиент видит свой заказ');
+  check((await listOf(b.cookie)).body.orders.filter((o) => o.orderId === ORDER).length, 0, 'чужой клиент не видит заказ в списке');
+  ok(!JSON.stringify(la.body).includes('economics') && !JSON.stringify(la.body).includes('factoryCostKopecks'), 'в списке клиента нет экономики');
+  check((await listOf(partner)).body.orders.some((o) => o.orderId === ORDER), true, 'партнёр видит заказ tenant');
+  check((await listOf(factory)).body.orders.some((o) => o.orderId === ORDER), false, 'неназначенная фабрика не видит заказ в списке');
+
   // --- MFA: без реального MFA запись партнёра отклоняется политикой, с dev-флагом проходит ---
   const nomfa = await command(strict, partner, ORDER, 'assign_factory', {factoryId: DEV_FACTORY}, 1, 'ASSIGN-NOMFA-' + run);
   check(nomfa.status, 403, 'без MFA партнёр не назначает фабрику');
@@ -144,6 +154,7 @@ try {
   check((await command(dev, partnerDev, ORDER, 'assign_factory', {factoryId: DEV_FACTORY}, 1, 'ASSIGN-' + run)).status, 201, 'с dev-флагом MFA назначение проходит');
   check((await readOrder(strict, factory)).status, 200, 'назначенная фабрика читает заказ');
   check((await readOrder(strict, a.cookie)).status, 200, 'клиент по-прежнему читает свой заказ');
+  check((await listOf(factory)).body.orders.some((o) => o.orderId === ORDER), true, 'назначенная фабрика видит заказ в списке');
 
   // --- завершение, истечение, блокировка ---
   const out = await strict.call('POST', '/api/v1/auth/logout', {cookie: a.cookie});

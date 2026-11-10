@@ -2,7 +2,23 @@
 const id=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(x);
 export function createPostgresOrderRepository({pool}){
  if(typeof pool?.connect!=='function')throw TypeError('INVALID_DB_POOL');
- return {async withOrderTransaction({tenantId,orderId},work){
+ return {
+ /** Read-only список идентификаторов заказов tenant под RLS; права на каждый заказ проверяет журнал. */
+ async listOrderIds({tenantId,limit=50}){
+  if(!id(tenantId)||!Number.isInteger(limit)||limit<1||limit>100)throw TypeError('INVALID_SCOPE');
+  const c=await pool.connect();
+  try{
+   await c.query('BEGIN READ ONLY');
+   await c.query("SELECT set_config('app.tenant_id',$1,true)",[tenantId]);
+   const q=await c.query(`SELECT r.order_id FROM gaber_orders.order_resources r
+    LEFT JOIN gaber_orders.order_heads h ON h.tenant_id=r.tenant_id AND h.order_id=r.order_id
+    WHERE r.tenant_id=$1 ORDER BY h.updated_at DESC NULLS LAST,r.order_id LIMIT $2`,[tenantId,limit]);
+   await c.query('COMMIT');
+   return q.rows.map(r=>r.order_id);
+  }catch(e){try{await c.query('ROLLBACK');}catch{}throw e;}
+  finally{c.release();}
+ },
+ async withOrderTransaction({tenantId,orderId},work){
   if(!id(tenantId)||!id(orderId)||typeof work!=='function')throw TypeError('INVALID_SCOPE');
   for(let attempt=0;attempt<3;attempt++){
    const c=await pool.connect();let started=false;

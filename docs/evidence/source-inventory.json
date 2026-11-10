@@ -79,11 +79,11 @@
     },
     {
       "path": "docs/SERVER-AUTH.md",
-      "sha": "e95176b6b28a3523b9f7a9a37a56c090ebc2d6bf"
+      "sha": "e5a989d6365c2ce06e4dbd2c424acfb122c58bdf"
     },
     {
       "path": "docs/STATUS.md",
-      "sha": "33e34ae7ab96324cbf45e0464c88c0e592dc4561"
+      "sha": "63a81a1f39f050d7736c7d9e933a506dc65f232c"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -215,7 +215,7 @@
     },
     {
       "path": "package.json",
-      "sha": "ccc416fce1778d7ad5946ae623f2d18bfa6a6664"
+      "sha": "b2e7e99e5c498fc7b3875eb7ac248c24f4ddcaab"
     },
     {
       "path": "public/favicon.svg",
@@ -295,7 +295,7 @@
     },
     {
       "path": "server/httpServer.js",
-      "sha": "d2750136aa591433e8419c13819a50875e843d49"
+      "sha": "a4a16a04b113b80e023c869fead85bf9b402a318"
     },
     {
       "path": "server/index.js",
@@ -347,7 +347,7 @@
     },
     {
       "path": "server/orderJournalWiring.js",
-      "sha": "dd9519af3c92874ec761ff6afd56d719c543dbfc"
+      "sha": "0f9222926dc80da43209138c91fb49e6fbb3b26e"
     },
     {
       "path": "server/orderReadModel.js",
@@ -359,11 +359,11 @@
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+      "sha": "c010a983ae4ff44ad042dccafa4a8d6072dfcaa7"
     },
     {
       "path": "server/tests/auth-http-e2e.mjs",
-      "sha": "ae0f7a77fc171c1a3f4e1510b9aa691ab77544ea"
+      "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -379,7 +379,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "60bbdd429d896e243755889e25508e79b4d5710c"
+      "sha": "dc9d359016dfa9e93b18f8f81bbb6cf5c296e31c"
     },
     {
       "path": "src/ClientOfferAssurance.jsx",
@@ -444,6 +444,10 @@
     {
       "path": "src/Scene.jsx",
       "sha": "c009ba98a20ba934cb99dda0ed3fa186e0e58fcd"
+    },
+    {
+      "path": "src/ServerOrders.jsx",
+      "sha": "14fe47733ff6f014edf3a24cfca2cde95d87903b"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -568,6 +572,14 @@
     {
       "path": "src/productionSchedule.js",
       "sha": "33bf83b1fef35c0511cf72ac9a478d2e60b914b0"
+    },
+    {
+      "path": "src/serverApi.js",
+      "sha": "db044db7874c7492dc7e40e201a59d4814295fc6"
+    },
+    {
+      "path": "src/serverOrders.css",
+      "sha": "6d7ab7b763f2f3d56e49b728b4aac1e9c5701d9f"
     },
     {
       "path": "src/softLayout.js",
@@ -794,6 +806,10 @@
       "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
     },
     {
+      "path": "tests/server-orders-ui.mjs",
+      "sha": "5cdc2e7c9bc5f114c1e5ecf116668f7fac761981"
+    },
+    {
       "path": "tests/storage.test.js",
       "sha": "b47e4cf6219d0137a102eaeef58a223b207d5e0c"
     },
@@ -815,7 +831,7 @@
     },
     {
       "path": "vite.config.js",
-      "sha": "93e68980d67dc83faa655301b19991f73721704f"
+      "sha": "de6a6f0ec5f0dece6d2a1eba1efdb9803355d3c3"
     }
   ]
 }

@@ -19,6 +19,23 @@ export function createGaberHttpServer({journal, authService, allowedOrigins = []
     }
     const sid = readCookie(req);
     if (sid && !req.headers.authorization) req.headers.authorization = 'Bearer ' + sid;
+    // Список заказов, доступных текущему пользователю (роль-DTO, без чужих заказов).
+    if (new URL(req.url, 'http://localhost').pathname === '/api/v1/orders') {
+      const send = (status, body) => {
+        res.writeHead(status, {'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff'});
+        res.end(JSON.stringify({productionRelease: {allowed: false}, ...body}));
+      };
+      if (req.method !== 'GET') return send(405, {code: 'METHOD_NOT_ALLOWED'});
+      try {
+        const token = String(req.headers.authorization ?? '').match(/^Bearer ([A-Za-z0-9_-]{32,256})$/)?.[1];
+        const principal = token ? await authService.resolveSession(token) : null;
+        if (!principal) return send(401, {code: 'SESSION_REQUIRED'});
+        const result = await journal.list({principal});
+        return send(result.accepted ? 200 : 401, result.accepted ? {ok: true, orders: result.orders} : {code: result.code});
+      } catch {
+        return send(503, {code: 'SERVER_OPERATION_FAILED'});
+      }
+    }
     return orders(req, res);
   });
 }

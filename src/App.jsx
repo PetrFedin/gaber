@@ -41,6 +41,7 @@ import CostingPage from "./CostingPage.jsx";
 import TechnicalPage from "./TechnicalPage.jsx";
 import ProjectStorageTools from "./ProjectStorageTools.jsx";
 import OrderWorkspace from "./OrderWorkspace.jsx";
+import ServerOrders from "./ServerOrders.jsx";
 import OperationsPage from "./OperationsPage.jsx";
 import { readProfile, validProfile } from "./costing.js";
 import {
@@ -272,6 +273,7 @@ function App() {
           "projects",
           "factory",
           "partner",
+          "orders",
           "materials",
           "costing",
           "technical",
@@ -477,6 +479,9 @@ function App() {
           </a>
           <a href="#partner" className={route === "partner" ? "active" : ""}>
             Партнёр GABER
+          </a>
+          <a href="#orders" className={route === "orders" ? "active" : ""}>
+            Заказы · сервер
           </a>
         </nav>
         <div className="header-actions">
@@ -1126,6 +1131,7 @@ function App() {
           />
         </>
       )}
+      {route === "orders" && <ServerOrders config={config} />}
       {["projects", "factory", "partner"].includes(route) && (
         <OrderWorkspace
           key={route + ":" + (selectedProject ?? "")}

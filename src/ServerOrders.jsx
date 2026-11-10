@@ -1,0 +1,313 @@
+import React, {useCallback, useEffect, useState} from 'react';
+import {getFamily, getFabric} from './domain.js';
+import {ORDER_STAGES} from './orderWorkflow.js';
+import {serverApi, errorText, randomId} from './serverApi.js';
+import './serverOrders.css';
+
+const ROLE_LABELS = {client: 'Клиент', factory: 'Фабрика', partner: 'Партнёр GABER'};
+const kopecks = (v) => Math.round(Number(String(v).replace(/\s/g, '').replace(',', '.')) * 100);
+const rub = (k) =>
+  k == null ? '—' : new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB'}).format(k / 100);
+const CHANNELS = {
+  client: [['client_partner', 'Клиент и GABER'], ['shared', 'Общий канал']],
+  factory: [['factory_partner', 'Фабрика и GABER'], ['shared', 'Общий канал']],
+  partner: [['client_partner', 'Клиент и GABER'], ['factory_partner', 'Фабрика и GABER'], ['shared', 'Общий канал']]
+};
+const text = (name, label, extra = {}) => ({name, label, ...extra});
+const money = (name, label) => text(name, label, {kind: 'money', placeholder: '₽'});
+
+/**
+ * Действия по роли и этапу. Это подсказки интерфейса: решение всегда принимает сервер
+ * (проверка роли, MFA, этапа, реестра фабрик), а он вернёт понятный код отказа.
+ */
+const ACTIONS = {
+  client: [
+    {type: 'accept', label: 'Принять предложение', rev: 'current', when: (o) => o.stage === 'offered'},
+    {type: 'request_change', label: 'Запросить изменение', rev: 'current', when: (o) => ['offered', 'accepted'].includes(o.stage), fields: [text('note', 'Что необходимо изменить')]},
+    {type: 'report_payment', label: 'Сообщить об оплате', rev: 'current', when: (o) => ['accepted', 'production', 'quality', 'ready'].includes(o.stage), fields: [money('amountKopecks', 'Сумма, ₽'), text('reference', 'Номер платёжного документа')]},
+    {type: 'accept_delivery', label: 'Принять доставку', rev: 'current', when: (o) => o.stage === 'delivered'},
+    {type: 'report_issue', label: 'Сообщить о проблеме', rev: 'current', when: (o) => ['shipped', 'delivered'].includes(o.stage), fields: [text('note', 'Описание проблемы')]},
+    {type: 'reject_resolution', label: 'Отклонить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed', fields: [text('note', 'Почему не подходит')]},
+    {type: 'confirm_resolution', label: 'Подтвердить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed'}
+  ],
+  partner: [
+    {type: 'assign_factory', label: 'Назначить фабрику', when: (o) => !o.assignedFactoryId && ['requested', 'awaiting_factory', 'factory_changes'].includes(o.stage), fields: [text('factoryId', 'Код фабрики из реестра')]},
+    {
+      type: 'prepare_spec',
+      label: 'Подготовить ТЗ и расчёт',
+      when: (o) => ['requested', 'change_requested', 'factory_changes', 'offered'].includes(o.stage),
+      fields: [
+        text('technicalNote', 'Техническое задание', {long: true}),
+        money('customerPriceKopecks', 'Цена клиенту, ₽'),
+        money('factoryCostKopecks', 'Стоимость у фабрики, ₽'),
+        money('platformCommissionKopecks', 'Комиссия GABER, ₽'),
+        money('logisticsKopecks', 'Логистика, ₽'),
+        money('taxKopecks', 'Налоги, ₽'),
+        money('otherCostsKopecks', 'Прочие затраты, ₽'),
+        text('advanceBps', 'Аванс, % от цены', {kind: 'percent'}),
+        text('dueDate', 'Срок (ГГГГ-ММ-ДД)'),
+        text('note', 'Комментарий к предложению')
+      ],
+      withConfig: true
+    },
+    {type: 'offer', label: 'Опубликовать предложение клиенту', rev: 'spec', when: (o) => o.stage === 'factory_confirmed', fields: [text('note', 'Комментарий клиенту')]},
+    {type: 'record_payment', label: 'Записать оплату', rev: 'current', when: (o) => ['accepted', 'production', 'quality', 'ready'].includes(o.stage), fields: [money('amountKopecks', 'Сумма, ₽'), text('reference', 'Номер платёжного документа')]},
+    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open', fields: [text('note', 'Предложение по решению')]}
+  ],
+  factory: [
+    {type: 'confirm_spec', label: 'Подтвердить ТЗ', rev: 'spec', when: (o) => o.stage === 'awaiting_factory', fields: [text('reference', 'Номер подтверждения'), text('note', 'Комментарий')]},
+    {type: 'return_spec', label: 'Вернуть ТЗ на доработку', rev: 'spec', when: (o) => o.stage === 'awaiting_factory', fields: [text('note', 'Что нужно исправить')]},
+    {type: 'start', label: 'Начать производство', rev: 'current', when: (o) => o.stage === 'accepted'},
+    {type: 'complete', label: 'Производство завершено', rev: 'current', when: (o) => o.stage === 'production'},
+    {type: 'quality_pass', label: 'Контроль качества пройден', rev: 'current', when: (o) => o.stage === 'quality', fields: [text('reference', 'Номер акта')]},
+    {type: 'ship', label: 'Отгрузить', rev: 'current', when: (o) => o.stage === 'ready', fields: [text('carrier', 'Перевозчик'), text('tracking', 'Трек-номер'), text('reference', 'Номер документа')]},
+    {type: 'deliver', label: 'Доставлено', rev: 'current', when: (o) => o.stage === 'shipped', fields: [text('reference', 'Номер документа')]},
+    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open', fields: [text('note', 'Предложение по решению')]}
+  ]
+};
+
+function Field({field, value, onChange}) {
+  const Tag = field.long ? 'textarea' : 'input';
+  return (
+    <label className="advanced-field">
+      {field.label}
+      <Tag value={value ?? ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+}
+
+function ActionForm({action, order, role, busy, onRun}) {
+  const [values, setValues] = useState({});
+  const set = (name, v) => setValues((s) => ({...s, [name]: v}));
+  const submit = (e) => {
+    e.preventDefault();
+    const payload = {};
+    for (const f of action.fields ?? []) {
+      const raw = values[f.name] ?? '';
+      payload[f.name] = f.kind === 'money' ? kopecks(raw) : f.kind === 'percent' ? Math.round(Number(String(raw).replace(',', '.')) * 100) : String(raw).trim();
+    }
+    if (action.withConfig) payload.config = order.config;
+    const revisionId = action.rev === 'spec' ? order.factoryTask?.specId : action.rev === 'current' ? order.revisionId : undefined;
+    onRun({type: action.type, payload, revisionId});
+  };
+  return (
+    <form className="server-action" onSubmit={submit}>
+      {(action.fields ?? []).map((f) => (
+        <Field key={f.name} field={f} value={values[f.name]} onChange={(v) => set(f.name, v)} />
+      ))}
+      <button className="button dark" disabled={busy}>{action.label}</button>
+    </form>
+  );
+}
+
+function MessageForm({role, order, busy, onRun}) {
+  const [note, setNote] = useState('');
+  const [channel, setChannel] = useState(CHANNELS[role][0][0]);
+  return (
+    <form
+      className="server-action"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onRun({type: 'message', payload: {note: note.trim(), channel}, revisionId: order.revisionId ?? undefined}, () => setNote(''));
+      }}
+    >
+      <label className="advanced-field">
+        Канал
+        <select value={channel} onChange={(e) => setChannel(e.target.value)}>
+          {CHANNELS[role].map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+      </label>
+      <label className="advanced-field">
+        Сообщение
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} />
+      </label>
+      <button className="button outline" disabled={busy || !note.trim()}>Отправить сообщение</button>
+    </form>
+  );
+}
+
+function OrderCard({order, role, busy, onRun}) {
+  const family = getFamily(order.config ?? {}) ?? null;
+  const fabric = order.config ? getFabric(order.config) : null;
+  const actions = ACTIONS[role].filter((a) => a.when(order));
+  return (
+    <article className="server-order">
+      <header>
+        <div>
+          <span className="eyebrow">{order.orderId}</span>
+          <h3>{order.name}</h3>
+          <p>
+            {family?.name ?? 'Изделие'} · {order.config?.width}×{order.config?.depth}×{order.config?.height} см{fabric ? ` · ${fabric.name}` : ''}
+          </p>
+        </div>
+        <span className="status amber">{ORDER_STAGES[order.stage] ?? order.stage}</span>
+      </header>
+      <dl className="server-facts">
+        <div><dt>Версия журнала</dt><dd>{order.version}</dd></div>
+        {order.offer && <div><dt>Цена предложения</dt><dd>{rub(order.offer.priceKopecks)}</dd></div>}
+        {order.finance?.advanceDueKopecks != null && <div><dt>Аванс к оплате</dt><dd>{rub(order.finance.advanceDueKopecks)}</dd></div>}
+        {role === 'factory' && order.factoryTask && <div><dt>Стоимость у фабрики</dt><dd>{rub(order.factoryTask.factoryCostKopecks)}</dd></div>}
+        {role === 'factory' && order.dueDate && <div><dt>Срок</dt><dd>{order.dueDate}</dd></div>}
+        {role === 'partner' && order.economics && <div><dt>Цена клиенту / у фабрики</dt><dd>{rub(order.economics.customerPriceKopecks)} / {rub(order.economics.factoryCostKopecks)}</dd></div>}
+        {role === 'partner' && <div><dt>Фабрика</dt><dd>{order.assignedFactoryId ?? 'не назначена'}</dd></div>}
+      </dl>
+      {order.messages?.length > 0 && (
+        <ul className="server-messages" aria-label="Сообщения">
+          {order.messages.map((m, i) => (
+            <li key={i}><b>{ROLE_LABELS[m.role] ?? m.role}:</b> {m.note}</li>
+          ))}
+        </ul>
+      )}
+      <p className="helper">Данные демонстрационные. Запись подтверждает только журнал сервера; оплата и производство не подтверждены.</p>
+      <div className="server-actions">
+        {actions.map((a) => (
+          <ActionForm key={a.type} action={a} order={order} role={role} busy={busy} onRun={(cmd) => onRun(cmd)} />
+        ))}
+        <MessageForm role={role} order={order} busy={busy} onRun={onRun} />
+      </div>
+    </article>
+  );
+}
+
+function LoginForm({onDone, busy, setBusy, setError}) {
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  return (
+    <form
+      className="server-login"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setError('');
+        try {
+          onDone(mode === 'login' ? await serverApi.login(email, password) : await serverApi.register(email, password));
+        } catch (err) {
+          setError(errorText(err));
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <h2>{mode === 'login' ? 'Вход' : 'Регистрация клиента'}</h2>
+      <label className="advanced-field">Почта<input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+      <label className="advanced-field">Пароль<input type="password" required autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      <div className="server-actions">
+        <button className="button dark" disabled={busy}>{mode === 'login' ? 'Войти' : 'Зарегистрироваться'}</button>
+        <button type="button" className="button outline" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+          {mode === 'login' ? 'Создать аккаунт клиента' : 'Уже есть аккаунт'}
+        </button>
+      </div>
+      <p className="helper">Регистрация создаёт только клиента. Фабрики и партнёры заводятся администратором. Не вводите конфиденциальные данные: система не готова к реальным заказам.</p>
+    </form>
+  );
+}
+
+/** Рабочее пространство заказов на сервере: вход, список и действия по ролям. Источник истины — журнал сервера. */
+export default function ServerOrders({config}) {
+  const [user, setUser] = useState(undefined);
+  const [orders, setOrders] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [note, setNote] = useState('');
+  const [name, setName] = useState('');
+  const role = user?.role;
+  const refresh = useCallback(async () => {
+    try {
+      setOrders(await serverApi.listOrders());
+    } catch (e) {
+      if (e.status === 401) setUser(null);
+      setError(errorText(e));
+    }
+  }, []);
+  useEffect(() => {
+    serverApi.me().then(setUser).catch((e) => {
+      setUser(null);
+      if (e.code === 'SERVER_UNAVAILABLE') setError(errorText(e));
+    });
+  }, []);
+  useEffect(() => {
+    if (user) refresh();
+    else setOrders([]);
+  }, [user, refresh]);
+  async function run(order, cmd, after) {
+    setBusy(true);
+    setError('');
+    setNote('');
+    try {
+      await serverApi.command({orderId: order.orderId, expectedVersion: order.version, ...cmd});
+      after?.();
+      setNote('Готово: действие записано в журнал заказа.');
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      await refresh();
+      setBusy(false);
+    }
+  }
+  async function createOrder() {
+    setBusy(true);
+    setError('');
+    setNote('');
+    try {
+      const orderId = randomId('ORD');
+      await serverApi.command({orderId, type: 'create', expectedVersion: 0, payload: {projectId: orderId, name: name.trim() || 'Заказ из конструктора', config}});
+      setName('');
+      setNote('Заказ создан на сервере.');
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      await refresh();
+      setBusy(false);
+    }
+  }
+  return (
+    <main className="page server-orders">
+      <div className="page-top">
+        <div>
+          <span className="eyebrow">ЗАКАЗЫ НА СЕРВЕРЕ · ДЕМО · PRODUCTION HOLD</span>
+          <h1>Заказы</h1>
+          <p>Клиент, партнёр GABER и фабрика работают с одним журналом на сервере. Каждая роль видит только свои данные.</p>
+        </div>
+        {user && (
+          <div className="server-session">
+            <span>{user.email} · {ROLE_LABELS[user.role]}</span>
+            <button className="button outline" onClick={refresh} disabled={busy}>Обновить</button>
+            <button
+              className="button outline"
+              onClick={async () => {
+                await serverApi.logout().catch(() => {});
+                setUser(null);
+                setNote('Вы вышли.');
+              }}
+            >
+              Выйти
+            </button>
+          </div>
+        )}
+      </div>
+      {error && <div className="inline-warning" role="alert">{error}</div>}
+      {note && <div className="small-note" role="status">{note}</div>}
+      {user === undefined && <p className="helper">Проверяем сессию…</p>}
+      {user === null && <LoginForm onDone={setUser} busy={busy} setBusy={setBusy} setError={setError} />}
+      {user && role === 'client' && (
+        <section className="server-create">
+          <h2>Новый заказ из конструктора</h2>
+          <label className="advanced-field">Название заказа<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+          <button className="button dark" disabled={busy} onClick={createOrder}>Создать заказ на сервере</button>
+        </section>
+      )}
+      {user && (
+        <section>
+          <h2>{role === 'client' ? 'Мои заказы' : role === 'factory' ? 'Назначенные заказы' : 'Все заказы оператора'}</h2>
+          {orders.length === 0 && <p className="helper">Заказов пока нет.</p>}
+          {orders.map((o) => (
+            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} onRun={(cmd, after) => run(o, cmd, after)} />
+          ))}
+        </section>
+      )}
+    </main>
+  );
+}

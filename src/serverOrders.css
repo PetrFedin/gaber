@@ -1,0 +1,11 @@
+.server-orders .server-session{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.server-orders .server-login,.server-orders .server-create{max-width:480px;display:grid;gap:12px;margin:16px 0}
+.server-orders .server-order{border:1px solid rgba(0,0,0,.18);border-radius:12px;padding:16px;margin:14px 0;display:grid;gap:12px}
+.server-orders .server-order header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.server-orders .server-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:0}
+.server-orders .server-facts dt{font-size:12px;opacity:.75}
+.server-orders .server-facts dd{margin:0;font-weight:600}
+.server-orders .server-messages{margin:0;padding-left:18px;font-size:14px}
+.server-orders .server-actions{display:flex;flex-wrap:wrap;gap:12px}
+.server-orders .server-action{display:grid;gap:8px;min-width:240px;flex:1 1 260px;border-top:1px solid rgba(0,0,0,.12);padding-top:10px}
+.server-orders .server-action .button{min-height:44px}

@@ -28,17 +28,25 @@ try {
     'p@x.test': {id: 'U-p', email: 'p@x.test', role: 'partner', password: 'partner-pass-1'},
     'f@x.test': {id: 'U-f', email: 'f@x.test', role: 'factory', password: 'factory-pass-1', factoryId: 'FAB-T'}
   };
-  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfa = false, externalHold = true, holdProp;
+  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfaVerified = false, autoVerify = false, enrolled = false, pendingSecret = false, externalHold = true, holdProp;
   const requests = [];
   const json = (status, body) => ({ok: status < 400, status, json: async () => body});
   globalThis.fetch = async (url, init = {}) => {
     const body = init.body ? JSON.parse(init.body) : undefined;
     requests.push({url, method: init.method, body});
-    if (url === '/api/v1/auth/me') return json(200, {user: session && {id: session.id, email: session.email, role: session.role}, server: {devSimulatedAuthority: !externalHold}});
+    const mfaOf = (u) => ({required: u.role !== 'client', enrolled: u.role === 'partner' && enrolled, verified: mfaVerified});
+    if (url === '/api/v1/auth/me') return json(200, {user: session && {id: session.id, email: session.email, role: session.role, mfa: mfaOf(session)}, server: {devSimulatedAuthority: !externalHold}});
+    if (url === '/api/v1/auth/mfa/enroll') { pendingSecret = true; return json(200, {secret: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', uri: 'otpauth://totp/GABER:p?secret=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'}); }
+    if (url === '/api/v1/auth/mfa/confirm' || url === '/api/v1/auth/mfa/verify') {
+      if (body.code !== '123456') return json(401, {code: 'BAD_CODE'});
+      enrolled = true; mfaVerified = true;
+      return json(200, {ok: true});
+    }
     if (url === '/api/v1/auth/login') {
       const u = users[body.email];
       if (!u || u.password !== body.password) return json(401, {code: 'BAD_CREDENTIALS'});
       session = u;
+      mfaVerified = autoVerify;
       return json(200, {user: {id: u.id, email: u.email, role: u.role}});
     }
     if (url === '/api/v1/auth/logout') { session = null; return json(200, {ok: true}); }
@@ -54,7 +62,7 @@ try {
     if (m && init.method === 'POST') {
       if (externalHold && ['start', 'complete', 'quality_pass', 'ship', 'deliver', 'accept_delivery'].includes(body.type)) return json(403, {code: 'EXTERNAL_AUTHORITY_REQUIRED'});
       const mfaRoles = ['partner', 'factory'];
-      if (mfaRoles.includes(session.role) && !mfa && !['message'].includes(body.type)) return json(403, {code: 'MFA_REQUIRED'});
+      if (mfaRoles.includes(session.role) && !mfaVerified && !['message'].includes(body.type)) return json(403, {code: 'MFA_REQUIRED'});
       clock += 60000;
       const command = {id: body.requestId, at: new Date(clock).toISOString(), role: session.role, type: body.type, payload: body.payload, expectedVersion: body.expectedVersion, ...(body.revisionId ? {revisionId: body.revisionId} : {})};
       try {
@@ -128,9 +136,21 @@ try {
   await click('Назначить фабрику');
   assert.match(text(), /многофакторная проверка/);
   assert.equal(state().assignedFactoryId, null);
-  mfa = true; // dev-режим сервера
+  // интерфейс предлагает пройти MFA: подключение аутентификатора, неверный и верный код
+  assert.match(text(), /Подтвердите вход кодом/);
+  await click('Подключить аутентификатор');
+  assert.match(text(), /ABCD EFGH IJKL MNOP/);
+  assert.match(text(), /otpauth:\/\/totp\/GABER/);
+  await fill('Код из приложения', '000000');
+  await click('Подтвердить и подключить');
+  assert.match(text(), /Код не подошёл/);
+  assert.equal(state().assignedFactoryId, null);
+  await fill('Код из приложения', '123456');
+  await click('Подтвердить и подключить');
+  assert.doesNotMatch(text(), /Подтвердите вход кодом/, 'после подтверждения блок MFA исчезает');
   await click('Назначить фабрику');
   assert.equal(state().assignedFactoryId, 'FAB-T');
+  autoVerify = true; // дальше сценарий не повторяет ввод кода
 
   // ТЗ и расчёт: рубли переводятся в копейки на клиенте, проверка на сервере
   const spec = {'Техническое задание': 'Каркас, наполнитель, швы', 'Цена клиенту, ₽': '2100,05', 'Стоимость у фабрики, ₽': '1000,01', 'Комиссия GABER, ₽': '400,01', 'Логистика, ₽': '100', 'Налоги, ₽': '50', 'Прочие затраты, ₽': '1', 'Аванс, % от цены': '50', 'Срок (ГГГГ-ММ-ДД)': '2027-02-01', 'Комментарий к предложению': 'Цена после проверки'};

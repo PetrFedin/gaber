@@ -10,18 +10,18 @@
     "verify:source": "node scripts/verify-source.mjs --check",
     "snapshot:source": "node scripts/verify-source.mjs --write",
     "test:node": "node --test tests/*.test.js",
-    "test:ui": "node tests/render-smoke.mjs && node tests/design-experience-ui.mjs && node tests/client-experience-ui.mjs && node tests/project-storage-ui.mjs && node tests/factory-editor-ui.mjs && node tests/order-workspace-ui.mjs && node tests/operations-workspace-ui.mjs && node tests/order-finance-ui.mjs && node tests/server-orders-ui.mjs",
+    "test:ui": "node tests/render-smoke.mjs && node tests/design-experience-ui.mjs && node tests/client-experience-ui.mjs && node tests/project-storage-ui.mjs && node tests/factory-editor-ui.mjs && node tests/order-workspace-ui.mjs && node tests/operations-workspace-ui.mjs && node tests/order-finance-ui.mjs && node tests/server-orders-ui.mjs && node tests/draft-and-boundary-ui.mjs",
     "verify:repository": "npm run verify:source && node scripts/verify-repository.mjs",
     "server": "node --env-file=server/dev/dev.env server/index.js",
     "dev:db": "docker compose --env-file server/dev/dev.env -f server/dev/docker-compose.yml up -d",
     "dev:setup": "node --env-file=server/dev/dev.env server/dev/setup.mjs",
-    "test:auth-e2e": "node --env-file-if-exists=server/dev/dev.env server/tests/auth-http-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-lifecycle-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-simulated-lifecycle-e2e.mjs"
+    "test:auth-e2e": "node --env-file-if-exists=server/dev/dev.env server/tests/auth-http-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-lifecycle-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-simulated-lifecycle-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/mfa-e2e.mjs"
   },
   "dependencies": {
-    "@fontsource/golos-text": "^5.3.0",
-    "@fontsource/manrope": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/onest": "^5.3.1",
+    "@fontsource/prata": "^5.3.0",
     "argon2": "^0.45.2",
-    "lucide-react": "^0.468.0",
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

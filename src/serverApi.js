@@ -34,6 +34,11 @@ export const serverApi = {
   register: (email, password, name, f) =>
     request('POST', '/api/v1/auth/register', {email, password, ...(name ? {name} : {})}, f).then((r) => r.user),
   logout: (f) => request('POST', '/api/v1/auth/logout', {}, f),
+  // MFA: подключение приложения-аутентификатора и проверка кода текущей сессии.
+  mfaEnroll: (f) => request('POST', '/api/v1/auth/mfa/enroll', {}, f),
+  mfaConfirm: (code, f) => request('POST', '/api/v1/auth/mfa/confirm', {code}, f),
+  mfaVerify: (code, f) => request('POST', '/api/v1/auth/mfa/verify', {code}, f),
+  // Возвращает {user, server}; user.mfa = {required, enrolled, verified}.
   listOrders: (f) => request('GET', '/api/v1/orders', undefined, f).then((r) => r.orders),
   // revisionId передаётся только если он нужен команде.
   command: ({orderId, type, payload, expectedVersion, revisionId, requestId = randomId('REQ')}, f) =>
@@ -63,6 +68,11 @@ export const ERROR_TEXT = {
   FACTORY_NOT_APPROVED: 'Фабрика отсутствует в доверенном реестре или приостановлена.',
   FACTORY_ASSIGNMENT_REQUIRED: 'Сначала назначьте фабрику.',
   FORBIDDEN_ORIGIN: 'Запрос отклонён: неизвестный источник.',
-  NO_VERIFIED_SESSION: 'Нужно войти.'
+  NO_VERIFIED_SESSION: 'Нужно войти.',
+  BAD_CODE: 'Код не подошёл. Проверьте время на телефоне и введите новый код: один и тот же код второй раз не принимается.',
+  MFA_NOT_CONFIGURED: 'На сервере не настроен ключ шифрования для MFA.',
+  ALREADY_ENROLLED: 'Аутентификатор уже подключён.',
+  NO_PENDING_ENROLLMENT: 'Сначала запросите секрет для подключения.',
+  NOT_ENROLLED: 'Аутентификатор не подключён.'
 };
 export const errorText = (e) => ERROR_TEXT[e?.code] ?? `Не удалось выполнить действие (${e?.code ?? 'ошибка'}).`;

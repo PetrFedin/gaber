@@ -31,7 +31,7 @@
     },
     {
       "path": "DESIGN.md",
-      "sha": "e462be54c98553f89bb147c58e0c94348e417cb0"
+      "sha": "0a1dd1fa5812ede8fed1ca31d77f55bac4c1a875"
     },
     {
       "path": "README.md",
@@ -215,11 +215,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha": "fb9350cda9d8904ceb37a950af7de9f5a56237b1"
+      "sha": "e379ae4315ad4b94b24da085981f7671f7fe38fd"
     },
     {
       "path": "package.json",
-      "sha": "d625e48596d6311e69466a7d31a17a8896afa0d6"
+      "sha": "48d6279b3b50c60f4f17c8468e65169ce066b6d3"
     },
     {
       "path": "public/favicon.svg",
@@ -399,7 +399,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "dc9d359016dfa9e93b18f8f81bbb6cf5c296e31c"
+      "sha": "c29d1b4e9228cd7466161872c37858ad1f69d134"
     },
     {
       "path": "src/ClientOfferAssurance.jsx",
@@ -538,6 +538,10 @@
       "sha": "7380cc74f1277be2b156f2f6c79d99ec1f61e459"
     },
     {
+      "path": "src/icons.jsx",
+      "sha": "a8bbf9945ed21f5aafec95fafa46c389aa983a1a"
+    },
+    {
       "path": "src/jointLayout.js",
       "sha": "57049541619a854e968bd6f26372c847272ec0f8"
     },
@@ -615,7 +619,7 @@
     },
     {
       "path": "src/theme.css",
-      "sha": "3a8804df5a6ec459926f90ec22ab8ce19529417d"
+      "sha": "0462461a3fab6f32eccaa254c2197c656837c76e"
     },
     {
       "path": "src/traceability.js",

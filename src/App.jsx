@@ -33,7 +33,7 @@ import {
   Ruler,
   Eye,
   Trash2,
-} from "lucide-react";
+} from "./icons.jsx";
 import Scene from "./Scene.jsx";
 import ConfiguratorPanel, { MaterialInspector } from "./ConfiguratorPanel.jsx";
 import ConfigurationDetails from "./ConfigurationDetails.jsx";
@@ -543,7 +543,23 @@ function App() {
               <span className="hero-index">01 — LINEA</span>
               <Scene config={initialConfig()} hero />
               <div className="hero-stage-bottom">
-                <span>Габариты · материалы · конструкция</span>
+                <dl className="hero-plate">
+                  <div>
+                    <dt>Габариты</dt>
+                    <dd>
+                      {initialConfig().width} × {initialConfig().depth} ×{" "}
+                      {initialConfig().height} см
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Обивка</dt>
+                    <dd>{getFabric(initialConfig()).name}</dd>
+                  </div>
+                  <div>
+                    <dt>Лист</dt>
+                    <dd>Лекало 01</dd>
+                  </div>
+                </dl>
                 <button
                   className="round-button"
                   aria-label="Открыть конструктор Linea"

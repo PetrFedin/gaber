@@ -58,6 +58,11 @@ input[type=checkbox],input[type=radio]{accent-color:var(--loden)}
 .studio-steps>button{color:var(--ink-2);border-radius:var(--r-sm)}
 .studio-steps>button.active{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--line-strong)}
 
+/* Подсказка под шагами не накладывается на кнопки: кнопки крупнее, колонка прокручивается. */
+.studio-steps{overflow-y:auto}
+.studio-steps .step-bottom{position:static;margin-top:16px}
+@media (max-height:820px){.studio-steps .step-bottom{display:none}}
+
 /* Модальные окна и панели: без стеклянного размытия. */
 .modal{border-radius:var(--r-md);box-shadow:var(--e3)}
 
@@ -80,6 +85,41 @@ input[type=checkbox],input[type=radio]{accent-color:var(--loden)}
 .server-orders .page-top .server-session{max-width:100%}
 .server-orders section>h2{margin-top:32px}
 .server-orders .inline-warning{margin:16px 0}
+
+/* ---------- Главная: лист чертежа ---------- */
+.hero-stage{background-color:#efe8da;
+  background-image:linear-gradient(rgba(124,118,100,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(124,118,100,.16) 1px,transparent 1px),
+    linear-gradient(rgba(124,118,100,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(124,118,100,.1) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;background-position:-1px -1px}
+.hero-stage::before{inset:16px;width:auto;height:auto;right:16px;top:16px;border-radius:0;background:none;box-shadow:none;
+  border:1.5px dashed var(--line-strong);pointer-events:none;z-index:1}
+.hero-stage::after,.stage-watermark{display:none}
+.hero-index{color:var(--ink-2)}
+.hero-plate{margin:0;display:flex;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line-strong);border-radius:var(--r-sm);font-family:var(--mono)}
+.hero-plate>div{padding:8px 16px}
+.hero-plate>div+div{border-left:1px solid var(--line-strong)}
+.hero-plate dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero-plate dd{margin:4px 0 0;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap}
+.hero-stage-bottom{z-index:2}
+.hero-stage .scene-host{inset:8% 2% 18% 2%}
+.round-button{border-color:var(--line-strong);background:var(--paper)}
+.round-button:hover{background:var(--linen)}
+.round-button{flex:none;min-width:var(--hit)}
+@media (max-width:760px){
+  .hero-stage{display:flex;flex-direction:column;min-height:0;height:auto}
+  .hero-stage .hero-index{position:static;margin:28px 28px 0}
+  .hero-stage .scene-host{position:relative;inset:auto;width:100%;height:300px;flex:none}
+  .hero-stage .hero-stage-bottom{position:static;margin:0 28px 28px;left:auto;right:auto;bottom:auto}
+  .hero-plate>div:nth-child(3){border-left:0;border-top:1px solid var(--line-strong);flex:1 1 100%}
+  .hero-plate dd{white-space:normal}.hero-plate>div{padding:8px 12px}}
+
+/* Перечень возможностей: номера лекал вместо трёх одинаковых карточек. */
+.home-assurance{counter-reset:lekalo;background:var(--paper);border-top:1px dashed var(--line-strong);border-bottom:1px dashed var(--line-strong)}
+.home-assurance>div{counter-increment:lekalo;position:relative}
+.home-assurance>div::before{content:'ЛЕКАЛО 0' counter(lekalo);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.home-assurance strong{font-family:var(--serif);font-weight:400;font-size:20px;letter-spacing:-.01em}
+.stitch-icon{flex:none}
+.stitch-icon.accent{color:var(--thread)}
 
 /* ---------- Контраст и размеры по результатам аудита в браузере ---------- */
 .footer-dot{color:var(--thread)}

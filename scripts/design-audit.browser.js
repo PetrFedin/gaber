@@ -24,7 +24,8 @@ window.__audit = () => {
         if (c.a >= 1) break;
       }
     }
-    let base = {r: 243, g: 238, b: 228};
+    let base = parse(getComputedStyle(document.body).backgroundColor) || {r: 243, g: 238, b: 228};
+    if (base.a < 1) base = {r: 243, g: 238, b: 228};
     for (let i = layers.length - 1; i >= 0; i--) {
       const l = layers[i];
       base = {r: l.r * l.a + base.r * (1 - l.a), g: l.g * l.a + base.g * (1 - l.a), b: l.b * l.a + base.b * (1 - l.a)};
@@ -66,7 +67,16 @@ window.__audit = () => {
   };
   return {small: group(out.small), touch: group(out.touch), contrast: group(out.contrast), overflow: group(out.overflow), n: [out.small.length, out.touch.length, out.contrast.length, out.overflow.length]};
 };
+// Переходы отключаются на время аудита: в скрытой вкладке они не завершаются и цвета читаются «на полпути».
+window.__noMotion = () => {
+  if (document.getElementById('__audit-nomotion')) return;
+  const s = document.createElement('style');
+  s.id = '__audit-nomotion';
+  s.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+  document.head.appendChild(s);
+};
 window.__runAll = async (routes = ['home', 'studio', 'materials', 'partner', 'orders', 'projects', 'factory', 'costing', 'technical']) => {
+  window.__noMotion();
   const res = {};
   for (const r of routes) {
     location.hash = '#' + r;

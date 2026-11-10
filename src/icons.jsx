@@ -52,9 +52,9 @@ export const Ruler = make('Tape', (
 ));
 export const Palette = make('Swatch', (
   <>
-    <path d="M5 3.5h10l4 4v13H5z" />
-    <path d="M15 3.5v4h4" />
-    <path d="M8.5 12.5h7M8.5 16h7" strokeDasharray="2 2" />
+    <path d="M7 4h13v16H7z" />
+    <path d="M10 7.5h7v9h-7z" strokeDasharray="2 2" />
+    <path d="M2.5 8h4.5M2.5 12h4.5M2.5 16h4.5" />
   </>
 ));
 export const SlidersHorizontal = make('Button', (
@@ -72,9 +72,9 @@ export const Grid2X2 = make('Room', (
 ));
 export const Package = make('Pattern', (
   <>
-    <path d="M4 4h9l2 3.5-2 3.5H4z" />
-    <path d="M10 14h10v6H10z" />
-    <path d="M15 14v2.5M7 7.5h3" />
+    <path d="M4 20V6a2 2 0 0 1 2-2h6c0 4 3 6.5 8 6.5V20z" />
+    <path d="M9 9v8M9 9l-1.8 2.4M9 9l1.8 2.4" />
+    <path d="M4 15h3M15 20v-3" />
   </>
 ));
 export const Bookmark = make('Tag', (
@@ -162,3 +162,11 @@ export const UserRound = make('User', (
   </>
 ));
 export const X = make('Close', <path d="M5 5l14 14M19 5L5 19" />);
+
+export const Sun = make('Sun', (
+  <>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" />
+  </>
+));
+export const Moon = make('Moon', <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z" />);

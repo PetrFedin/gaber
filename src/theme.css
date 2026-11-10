@@ -1,4 +1,12 @@
 /* GABER «Лекало»: фирменный слой поверх базовых стилей. Правила и токены: DESIGN.md. */
+:root{--stage-paper:#efe8da;--grid-major:rgba(124,118,100,.16);--grid-minor:rgba(124,118,100,.1);--loden-hover:#243022;color-scheme:light}
+/* Тёмная тема «Вечернее ателье»: те же имена токенов, светлая заливка главной кнопки и тёплая бумага вместо чёрного. */
+:root[data-theme=dark]{color-scheme:dark;
+  --linen:#151812;--paper:#1d2119;--ink:#efeadd;--ink-2:#cbc6b6;--muted:#a8a393;--line:#353a2f;--line-strong:#85866f;
+  --loden:#b9c7a8;--loden-hover:#cdd9bf;--thread:#e58a70;--sage:#6f7f62;--clay:#b8946f;
+  --success:#7cc08a;--warning:#e0b05a;--error:#f0856f;--stage:#151812;--stage-paper:#1a1e16;
+  --grid-major:rgba(185,199,168,.14);--grid-minor:rgba(185,199,168,.07);
+  --e1:0 1px 2px rgba(0,0,0,.4);--e2:0 8px 24px rgba(0,0,0,.45);--e3:0 24px 64px rgba(0,0,0,.6)}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--linen);color:var(--ink);-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.01em;text-wrap:balance}
@@ -21,7 +29,7 @@ p{text-wrap:pretty}
 /* Кнопки: одна главная заливка loden, остальные контуром. */
 .button{min-height:var(--hit);font-weight:500;letter-spacing:0;border-radius:var(--r-sm)}
 .button.dark{background:var(--loden);color:var(--paper)}
-.button.dark:hover:not(:disabled){background:#243022}
+.button.dark:hover:not(:disabled){background:var(--loden-hover)}
 .button.outline{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
 .button.outline:hover:not(:disabled){background:var(--paper);border-color:var(--ink)}
 button:disabled{opacity:1;color:var(--muted);cursor:not-allowed}
@@ -87,9 +95,9 @@ input[type=checkbox],input[type=radio]{accent-color:var(--loden)}
 .server-orders .inline-warning{margin:16px 0}
 
 /* ---------- Главная: лист чертежа ---------- */
-.hero-stage{background-color:#efe8da;
-  background-image:linear-gradient(rgba(124,118,100,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(124,118,100,.16) 1px,transparent 1px),
-    linear-gradient(rgba(124,118,100,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(124,118,100,.1) 1px,transparent 1px);
+.hero-stage{background-color:var(--stage-paper);
+  background-image:linear-gradient(var(--grid-major) 1px,transparent 1px),linear-gradient(90deg,var(--grid-major) 1px,transparent 1px),
+    linear-gradient(var(--grid-minor) 1px,transparent 1px),linear-gradient(90deg,var(--grid-minor) 1px,transparent 1px);
   background-size:120px 120px,120px 120px,24px 24px,24px 24px;background-position:-1px -1px}
 .hero-stage::before{inset:16px;width:auto;height:auto;right:16px;top:16px;border-radius:0;background:none;box-shadow:none;
   border:1.5px dashed var(--line-strong);pointer-events:none;z-index:1}
@@ -145,5 +153,73 @@ input[type=file]{min-height:var(--hit);padding:8px;font-size:13px}
 .gaber-workspace select,.gaber-workspace input:not([type=file]){min-height:var(--hit);border-color:var(--line-strong);font-size:13px}
 /* Панель вида: кнопки переносятся, а не прячутся за прокруткой. */
 .viewport-tools>div{flex-wrap:wrap;overflow:visible}
+
+/* Шапка не переносит пункты на вторую строку: на средних ширинах сжимаются промежутки и скрывается подпись бренда. */
+.header nav a{white-space:nowrap}
+@media (max-width:1180px){.header nav{gap:16px}.header nav a{font-size:13px}.brand small{display:none}}
+/* Два блока страницы подряд (шапка кабинета и журнал заказов) не растягиваются до высоты экрана каждый. */
+.factory-page,.order-workspace{min-height:0}
+/* Планшет и узкий ноутбук (до 1000 px): пункты меню уходят под кнопку, чтобы шапка не выходила за экран. */
+@media (max-width:1000px){
+  .header{position:relative}
+  .header nav{display:none;position:absolute;top:100%;left:0;right:0;z-index:20;flex-direction:column;align-items:stretch;gap:0;
+    padding:8px 5% 16px;background:var(--paper);border-bottom:1px dashed var(--line-strong);box-shadow:var(--e2)}
+  .header nav.mobile-open{display:flex;flex-wrap:nowrap}
+  .header nav a{display:flex;align-items:center;min-height:var(--hit);flex:none;width:100%;font-size:15px}
+  .menu-toggle{display:grid!important}
+}
+/* Телефон: шапка помещается в 375 px. Кабинет фабрики доступен из меню и по ссылке, бренд и промежутки сжаты. */
+@media (max-width:520px){
+  .header{padding-inline:12px}
+  .brand{font-size:18px;letter-spacing:.08em;gap:8px}
+  .brand{min-height:var(--hit);align-items:center}
+  .brand-symbol{width:36px;height:36px;font-size:30px}
+  .header-actions{gap:2px}
+  .factory-link{display:none}
+  .demo-badge{padding:0 6px}
+}
+/* Поле выбора файла в стиле кнопки. */
+input[type=file]::file-selector-button{min-height:36px;margin-right:12px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
+  background:transparent;color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+input[type=file]::file-selector-button:hover{background:var(--paper)}
+
+/* Единая пометка демонстрационного режима: один бейдж в шапке вместо повторов в каждом поле. */
+.demo-badge{min-height:var(--hit);padding:0 12px;border:1px dashed var(--thread);border-radius:var(--r-sm);background:transparent;
+  color:var(--thread);font-family:var(--mono);font-size:11px;letter-spacing:.08em;white-space:nowrap}
+.demo-badge:hover{background:color-mix(in srgb,var(--thread) 10%,transparent)}
+@media (max-width:760px){.demo-badge{padding:0 8px;letter-spacing:.04em}}
+
+/* ---------- 3D-сцена: заглушка-контур и плавное появление ---------- */
+.hero-stage>.furniture-mark{position:absolute;left:50%;top:44%;width:min(78%,520px);height:auto;transform:translate(-50%,-50%);
+  color:var(--ink-2);stroke:var(--ink-2);opacity:.55;pointer-events:none;z-index:0;transition:opacity .3s var(--ease)}
+.hero-stage:has(.scene-host[data-ready]) >.furniture-mark{opacity:0}
+.hero-stage .scene-host{z-index:1}
+.scene-host canvas{opacity:0;transition:opacity .4s var(--ease)}
+.scene-host[data-ready] canvas{opacity:1}
+@media (max-width:760px){.hero-stage>.furniture-mark{position:static;transform:none;margin:8px auto 0;width:min(80%,320px);display:none}}
+
+/* ---------- Движение (Ковальски и Кребель: редко и коротко, только opacity и transform) ----------
+   Частые действия не анимируются: смена шага, выбор цвета, пересчёт цены, ввод, клавиатура.
+   Анимируются редкие: смена страницы, открытие окна, сообщение. Одна кривая, 200–240 мс, выход тише входа. */
+@media (prefers-reduced-motion:no-preference){
+  @keyframes lk-page-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes lk-dialog-in{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes lk-fade-in{from{opacity:0}to{opacity:1}}
+  @keyframes lk-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  #root main{animation:lk-page-in .22s var(--ease) both}
+  dialog.modal[open]{animation:lk-dialog-in .2s var(--ease) both}
+  dialog.modal[open]::backdrop{animation:lk-fade-in .2s var(--ease) both}
+  .toast{animation:lk-toast-in .24s var(--ease) both}
+}
+/* Наведение на карточку каталога: лёгкий подъём без увеличения. */
+.collection-card:hover .furniture-mark{transform:translateY(-2px)}
+
+/* Страница #kit (dev) */
+.design-kit .kit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:16px;margin:16px 0 32px}
+.design-kit figure,.design-kit .kit-marks figure{margin:0;border:1px dashed var(--line-strong);border-radius:var(--r-md);padding:16px;display:grid;gap:8px;justify-items:center;background:var(--paper)}
+.design-kit figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.design-kit .kit-marks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,640px),1fr));gap:16px}
+.design-kit .kit-marks figure{justify-items:stretch}
+.design-kit .kit-marks .furniture-mark{width:100%;max-width:640px;margin:0 auto;height:auto!important;color:var(--ink);stroke:var(--ink)}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;transform:none!important}}

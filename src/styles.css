@@ -1,4 +1,4 @@
-:root{font-family:'Onest',system-ui,sans-serif;color:#1e221b;background:#f3eee4;font-synthesis:none;font-size:15px;
+:root{font-family:'Onest',system-ui,sans-serif;color:var(--ink);background:var(--linen);font-synthesis:none;font-size:15px;
 --linen:#f3eee4;--paper:#fbf8f2;--ink:#1e221b;--ink-2:#4a493f;--muted:#625f52;--line:#d9d2c3;--line-strong:#7c7664;
 --loden:#2f3d2e;--thread:#b8402a;--sage:#a9b79a;--clay:#9c7a5b;--success:#2f6b3a;--warning:#8a5a12;--error:#a3321f;
 --green:var(--loden);--stage:var(--linen);--serif:'Prata','Times New Roman',serif;--mono:'IBM Plex Mono',ui-monospace,monospace;

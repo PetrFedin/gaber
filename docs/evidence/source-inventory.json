@@ -31,7 +31,7 @@
     },
     {
       "path": "DESIGN.md",
-      "sha": "0a1dd1fa5812ede8fed1ca31d77f55bac4c1a875"
+      "sha": "078458f56feeb3032202faefe5e0c9656e440a3f"
     },
     {
       "path": "README.md",
@@ -211,7 +211,7 @@
     },
     {
       "path": "index.html",
-      "sha": "382a59e007edade35370524ccf310c82f750bec8"
+      "sha": "389349b04dc5033b7c196c603e2419a4bd9063f0"
     },
     {
       "path": "package-lock.json",
@@ -231,7 +231,7 @@
     },
     {
       "path": "scripts/design-audit.browser.js",
-      "sha": "fa0804aeaa067574ffe8d21715bd804a419df9e7"
+      "sha": "bb40e9178055dbe0ec3de280af62a1dd26dfff4c"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",
@@ -399,7 +399,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "c29d1b4e9228cd7466161872c37858ad1f69d134"
+      "sha": "ede3023fc9ac0f3c701abae5a9d47823dbdc88fd"
     },
     {
       "path": "src/ClientOfferAssurance.jsx",
@@ -426,6 +426,10 @@
       "sha": "d852723bcf0668219746b7ab56c7949582b6761c"
     },
     {
+      "path": "src/DesignKit.jsx",
+      "sha": "af2f9a2f5752f820eb4a6f6c9859b6971307a4d4"
+    },
+    {
       "path": "src/EngineeringAssembly.js",
       "sha": "5a9b0d5905ea8e71b50880799555375135c44d5a"
     },
@@ -446,6 +450,10 @@
       "sha": "cdece625a39b3db02da7297651be5d9b09213105"
     },
     {
+      "path": "src/FurnitureMarks.jsx",
+      "sha": "0de1b4cd121d1a371dc9673897985e3982817393"
+    },
+    {
       "path": "src/OperationsPage.jsx",
       "sha": "6c2a7cc1c565d0f29fdc65b484f7b1ea4e97cf87"
     },
@@ -463,7 +471,7 @@
     },
     {
       "path": "src/Scene.jsx",
-      "sha": "c009ba98a20ba934cb99dda0ed3fa186e0e58fcd"
+      "sha": "e41852d9aa431b0624f57df87b8d60dfc6f58bb6"
     },
     {
       "path": "src/ServerOrders.jsx",
@@ -503,7 +511,7 @@
     },
     {
       "path": "src/designExperience.css",
-      "sha": "fb9063b17d06a56338ea1d7baeb8060a692c30fc"
+      "sha": "a33781ebc1b882750975459b20391ed5fc49dd12"
     },
     {
       "path": "src/designGuidance.js",
@@ -539,7 +547,7 @@
     },
     {
       "path": "src/icons.jsx",
-      "sha": "a8bbf9945ed21f5aafec95fafa46c389aa983a1a"
+      "sha": "c7620a80ffebf2f042817064cb97fa5bb2e53944"
     },
     {
       "path": "src/jointLayout.js",
@@ -611,7 +619,7 @@
     },
     {
       "path": "src/styles.css",
-      "sha": "8cfc044a3a658091e162e1af9500d6cec3ae05db"
+      "sha": "e1c90349c927e252470ae656dc2a282418f15051"
     },
     {
       "path": "src/supportLayout.js",
@@ -619,7 +627,7 @@
     },
     {
       "path": "src/theme.css",
-      "sha": "0462461a3fab6f32eccaa254c2197c656837c76e"
+      "sha": "ee8fe3a469046bd8f1263d54be30f2efcb1dc3a2"
     },
     {
       "path": "src/traceability.js",

@@ -16,7 +16,11 @@ export function loadConfig(env = process.env) {
     ordersDatabaseUrl: need('GABER_ORDERS_DATABASE_URL'),
     authDatabaseUrl: need('GABER_AUTH_DATABASE_URL'),
     tenantId: need('GABER_TENANT_ID'),
+    // 32 байта в base64: шифрует секреты TOTP в базе. Без ключа MFA отвечает MFA_NOT_CONFIGURED.
+    authEncKey: env.GABER_AUTH_ENC_KEY ? Buffer.from(env.GABER_AUTH_ENC_KEY, 'base64') : null,
     host: env.HOST || '127.0.0.1',
+    // Каталог собранного фронтенда (vite build): тогда один процесс отдаёт и сайт, и API.
+    staticDir: env.GABER_STATIC_DIR || null,
     port: Number(env.PORT || 8788),
     allowedOrigins: (env.ALLOWED_ORIGINS || 'http://127.0.0.1:4173,http://localhost:4173')
       .split(',')

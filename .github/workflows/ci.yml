@@ -111,6 +111,7 @@ jobs:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
           GABER_DEV_ADMIN_DATABASE_URL: postgres://postgres:gaber_ci_disposable_only@127.0.0.1:5432/gaber_staging
           GABER_DEV_SKIP_MIGRATIONS: '1'
+          GABER_AUTH_ENC_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           GABER_DEV_DB_ORDERS_PASSWORD: ci-orders-disposable
           GABER_DEV_DB_AUTH_PASSWORD: ci-auth-disposable
           GABER_ORDERS_DATABASE_URL: postgres://gaber_app_orders:ci-orders-disposable@127.0.0.1:5432/gaber_staging
@@ -121,6 +122,7 @@ jobs:
           node server/tests/auth-http-e2e.mjs
           node server/tests/order-lifecycle-e2e.mjs
           node server/tests/order-simulated-lifecycle-e2e.mjs
+          node server/tests/mfa-e2e.mjs
 
   # Real installed Chromium against compiled Vite preview. This is a local
   # browser UX smoke test, NOT identity/payment/production E2E.

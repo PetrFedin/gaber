@@ -41,12 +41,61 @@ export function createPgAuthStore({pool}) {
     async resolveSession(token, nowMs) {
       if (typeof token !== 'string' || token.length > 256) return null;
       const q = await pool.query(
-        `SELECT u.user_id,u.tenant_id,u.email,u.name,u.role,u.factory_id,s.expires_at,s.mfa_verified_at
+        `SELECT u.user_id,u.tenant_id,u.email,u.name,u.role,u.factory_id,u.totp_enrolled_at,s.expires_at,s.mfa_verified_at
          FROM gaber_auth.sessions s JOIN gaber_auth.users u ON u.user_id=s.user_id AND u.tenant_id=s.tenant_id
          WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>$2 AND u.disabled_at IS NULL`,
         [sha256(token), at(nowMs)]
       );
       return q.rows[0] ?? null;
+    },
+    // ---- MFA, ограничитель попыток и журнал событий ----
+    async getUserSecret({tenantId, userId}) {
+      const q = await pool.query(
+        'SELECT user_id,email,totp_secret_enc,totp_enrolled_at,totp_last_step FROM gaber_auth.users WHERE tenant_id=$1 AND user_id=$2 AND disabled_at IS NULL',
+        [tenantId, userId]
+      );
+      return q.rows[0] ?? null;
+    },
+    async setPendingTotp({userId, enc}) {
+      const q = await pool.query(
+        'UPDATE gaber_auth.users SET totp_secret_enc=$2 WHERE user_id=$1 AND totp_enrolled_at IS NULL',
+        [userId, enc]
+      );
+      return q.rowCount === 1;
+    },
+    async confirmTotp({userId, step}) {
+      const q = await pool.query(
+        'UPDATE gaber_auth.users SET totp_enrolled_at=now(), totp_last_step=$2 WHERE user_id=$1 AND totp_enrolled_at IS NULL AND totp_secret_enc IS NOT NULL',
+        [userId, step]
+      );
+      return q.rowCount === 1;
+    },
+    // Атомарно: код с шагом не больше уже принятого отвергается (защита от повторного использования).
+    async advanceTotpStep({userId, step}) {
+      const q = await pool.query(
+        'UPDATE gaber_auth.users SET totp_last_step=$2 WHERE user_id=$1 AND totp_enrolled_at IS NOT NULL AND totp_last_step<$2',
+        [userId, step]
+      );
+      return q.rowCount === 1;
+    },
+    async markSessionMfa(token, nowMs) {
+      await pool.query(
+        'UPDATE gaber_auth.sessions SET mfa_verified_at=$2 WHERE token_hash=$1 AND revoked_at IS NULL',
+        [sha256(String(token)), at(nowMs)]
+      );
+    },
+    async countAttempts(key, sinceMs) {
+      const q = await pool.query('SELECT count(*)::int AS n FROM gaber_auth.login_attempts WHERE key=$1 AND at>$2', [key, at(sinceMs)]);
+      return q.rows[0].n;
+    },
+    async addAttempt(key, nowMs) {
+      await pool.query('INSERT INTO gaber_auth.login_attempts(key,at) VALUES($1,$2)', [key, at(nowMs)]);
+    },
+    async clearAttempts(key) {
+      await pool.query('DELETE FROM gaber_auth.login_attempts WHERE key=$1', [key]);
+    },
+    async recordEvent({tenantId, userId = null, event, ip = null, detail = {}}) {
+      await pool.query('INSERT INTO gaber_auth.auth_events(tenant_id,user_id,event,ip,detail) VALUES($1,$2,$3,$4,$5)', [tenantId, userId, event, ip, detail]);
     },
     async revokeSession(token, nowMs) {
       await pool.query(

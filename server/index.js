@@ -16,7 +16,8 @@ const authPool = new pg.Pool({connectionString: config.authDatabaseUrl, max: 5})
 const authService = createAuthService({
   store: createPgAuthStore({pool: authPool}),
   tenantId: config.tenantId,
-  mfaAssumed: config.mfaAssumed
+  mfaAssumed: config.mfaAssumed,
+  encKey: config.authEncKey
 });
 // Падает при запуске, если флаг включён в production или для tenant не из TENANT-DEV*/TENANT-TEST*.
 const simulated = config.simulateExternalAuthority
@@ -27,6 +28,7 @@ const server = createGaberHttpServer({
   journal: wirePostgresOrderJournal({pool: ordersPool, simulatedExternalAuthority: simulated}),
   authService,
   allowedOrigins: config.allowedOrigins,
+  staticDir: config.staticDir,
   secureCookie: config.production
 });
 server.listen(config.port, config.host, () => {

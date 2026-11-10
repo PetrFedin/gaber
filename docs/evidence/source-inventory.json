@@ -30,6 +30,10 @@
       "sha": "35aab5cb512e1e267f7223a02c1080f60ec1438f"
     },
     {
+      "path": "DESIGN.md",
+      "sha": "e462be54c98553f89bb147c58e0c94348e417cb0"
+    },
+    {
       "path": "README.md",
       "sha": "2e432ca58141a16ee35d4569cb15e690a53edacd"
     },
@@ -211,11 +215,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha": "59c85c5775fc6845b74f390e13fc4d3a830cdc10"
+      "sha": "fb9350cda9d8904ceb37a950af7de9f5a56237b1"
     },
     {
       "path": "package.json",
-      "sha": "3cf47da5a79d900a90c30df9b891b6e4ddc46e58"
+      "sha": "d625e48596d6311e69466a7d31a17a8896afa0d6"
     },
     {
       "path": "public/favicon.svg",
@@ -224,6 +228,10 @@
     {
       "path": "scripts/browser-smoke.mjs",
       "sha": "b2aa4a3302d3ba5e61d7aa229dd1ed5569620ffa"
+    },
+    {
+      "path": "scripts/design-audit.browser.js",
+      "sha": "fa0804aeaa067574ffe8d21715bd804a419df9e7"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",
@@ -459,7 +467,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "fb061e3a8bfa0442844cd27ea2f80ed707792ccb"
+      "sha": "1747224801a62f2502151e44ce34a3877454d528"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -475,7 +483,7 @@
     },
     {
       "path": "src/atelierExperience.css",
-      "sha": "b20ec35ae68837176943d0b1b010e2585e210c19"
+      "sha": "a92e00480a0f7a02a1c55ce6fd8ae4ff9fc9b340"
     },
     {
       "path": "src/clientOffer.js",
@@ -495,7 +503,7 @@
     },
     {
       "path": "src/designExperience.css",
-      "sha": "656bb92d6982d55ee4ed9176d3fe828c79a00f58"
+      "sha": "fb9063b17d06a56338ea1d7baeb8060a692c30fc"
     },
     {
       "path": "src/designGuidance.js",
@@ -539,7 +547,7 @@
     },
     {
       "path": "src/main.jsx",
-      "sha": "3870ff5d38f63a17f83419d8e3b8b02d2bf43684"
+      "sha": "e6ab307802c2cb05264a0830752c3cc8b57a5299"
     },
     {
       "path": "src/manufacturing.js",
@@ -551,7 +559,7 @@
     },
     {
       "path": "src/orderExperience.css",
-      "sha": "a75bfa886fbbc5938222353ef40e74da4f9cbc26"
+      "sha": "a4bc73b6946dd41d2e7f48e87cb184e00074bda9"
     },
     {
       "path": "src/orderExperience.js",
@@ -590,10 +598,6 @@
       "sha": "3891b62eaa763774166fe430f3a9d6bf313fa9d0"
     },
     {
-      "path": "src/serverOrders.css",
-      "sha": "6d7ab7b763f2f3d56e49b728b4aac1e9c5701d9f"
-    },
-    {
       "path": "src/softLayout.js",
       "sha": "98cbebc8dceb2904c712fc21ae703713e68284c0"
     },
@@ -603,11 +607,15 @@
     },
     {
       "path": "src/styles.css",
-      "sha": "a80cbc549a749b30da0cc72cf6e582c12cd9cde5"
+      "sha": "8cfc044a3a658091e162e1af9500d6cec3ae05db"
     },
     {
       "path": "src/supportLayout.js",
       "sha": "746bbb88828783b67a3020c56ad3f5ba89a5dba7"
+    },
+    {
+      "path": "src/theme.css",
+      "sha": "3a8804df5a6ec459926f90ec22ab8ce19529417d"
     },
     {
       "path": "src/traceability.js",

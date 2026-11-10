@@ -2,7 +2,6 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {getFamily, getFabric} from './domain.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
 import {serverApi, errorText, randomId} from './serverApi.js';
-import './serverOrders.css';
 
 const ROLE_LABELS = {client: 'Клиент', factory: 'Фабрика', partner: 'Партнёр GABER'};
 const kopecks = (v) => Math.round(Number(String(v).replace(/\s/g, '').replace(',', '.')) * 100);

@@ -1,3 +1,4 @@
+import { getCurrentClientOffer } from "./clientOffer.js";
 import React, { useState } from "react";
 import { orderMoney } from "./orderMoney.js";
 import {
@@ -25,6 +26,10 @@ function downloadText(filename, text) {
 
 export function OrderJourney({ state, role, financials }) {
   const journey = getOrderJourney(state);
+  // Клиент не видит цену отозванного предложения: после запроса изменений действующего предложения нет.
+  const showPayment =
+    financials.priceKopecks > 0 &&
+    (role !== "client" || Boolean(getCurrentClientOffer(state)));
   const paymentPercent = financials.priceKopecks
     ? Math.min(
         100,
@@ -60,7 +65,7 @@ export function OrderJourney({ state, role, financials }) {
         </span>
         <p>{getNextOrderAction(state, role, financials)}</p>
       </div>
-      {financials.priceKopecks > 0 && (
+      {showPayment && (
         <div className="order-payment-progress">
           <div>
             <span>Локальный учёт оплаты</span>

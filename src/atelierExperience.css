@@ -1,13 +1,13 @@
 /* GABER client experience: editorial furniture commerce, readable controls,
    accountable next steps. Loaded after the legacy component rules. */
 :root {
-  --atelier-paper-oklch: oklch(97.2% 0.008 96);
-  --atelier-stage-oklch: oklch(92.8% 0.012 91);
-  --atelier-ink-oklch: oklch(28% 0.018 150);
-  --atelier-muted-oklch: oklch(50% 0.018 140);
-  --atelier-forest-oklch: oklch(36% 0.035 151);
-  --atelier-line-oklch: oklch(86% 0.012 105);
-  --atelier-soft-oklch: oklch(94.5% 0.012 105);
+  --atelier-paper-oklch: var(--paper);
+  --atelier-stage-oklch: var(--linen);
+  --atelier-ink-oklch: var(--ink);
+  --atelier-muted-oklch: var(--muted);
+  --atelier-forest-oklch: var(--loden);
+  --atelier-line-oklch: var(--line);
+  --atelier-soft-oklch: var(--linen);
   --atelier-paper: var(--atelier-paper-oklch);
   --atelier-stage: var(--atelier-stage-oklch);
   --atelier-ink: var(--atelier-ink-oklch);
@@ -15,10 +15,10 @@
   --atelier-accent: var(--atelier-forest-oklch);
   --atelier-line: var(--atelier-line-oklch);
   --atelier-soft: var(--atelier-soft-oklch);
-  --atelier-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --atelier-ease: var(--ease);
 }
 body {
-  font-size: 15px;
+  font-size:15px;
   line-height: 1.55;
   background: var(--atelier-paper);
   color: var(--atelier-ink);
@@ -29,16 +29,16 @@ body {
   border-color: var(--atelier-line);
 }
 .brand {
-  font-size: 23px;
+  font-size:23px;
   letter-spacing: 0.18em;
 }
 .brand-symbol {
   width: 48px;
   height: 48px;
-  border-color: #a9b19e;
+  border-color: var(--sage);
 }
 .brand small {
-  font-size: 8px;
+  font-size:11px;
   letter-spacing: 0.22em;
   color: var(--atelier-muted);
 }
@@ -46,7 +46,7 @@ body {
   gap: clamp(20px, 2.2vw, 36px);
 }
 .header nav a {
-  font-size: 13px;
+  font-size:13px;
   line-height: 1.4;
   color: var(--atelier-muted);
   padding: 34px 0;
@@ -61,7 +61,7 @@ body {
 }
 .nav-icon,
 .factory-link {
-  font-size: 12px;
+  font-size:13px;
   min-height: 44px;
 }
 .nav-icon {
@@ -71,7 +71,7 @@ body {
   color: var(--atelier-muted);
 }
 .eyebrow {
-  font-size: 10px;
+  font-size:11px;
   line-height: 1.6;
   letter-spacing: 0.14em;
   color: var(--atelier-muted);
@@ -79,10 +79,10 @@ body {
 .button {
   min-height: 46px;
   padding: 13px 22px;
-  font-size: 12px;
+  font-size:13px;
   letter-spacing: 0.01em;
   gap: 16px;
-  border-radius: 2px;
+  border-radius:6px;
   transition:
     background-color 0.16s ease,
     border-color 0.16s ease,
@@ -90,13 +90,13 @@ body {
 }
 .button.dark {
   background: var(--atelier-accent);
-  color: #f7f6f2;
+  color: var(--paper);
 }
 .button.dark:hover:not(:disabled) {
-  background: #293c31;
+  background: var(--loden);
 }
 .button.outline {
-  border-color: #aeb5a8;
+  border-color: var(--sage);
   color: var(--atelier-ink);
 }
 .button svg:last-child,
@@ -108,7 +108,7 @@ body {
   transform: translate(2px, -1px);
 }
 .text-button {
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-accent);
 }
 .icon-button {
@@ -136,14 +136,14 @@ body {
   max-width: 760px;
 }
 .hero-copy > p {
-  font-size: 15px;
+  font-size:15px;
   line-height: 1.75;
   color: var(--atelier-muted);
   max-width: 43ch;
   margin-bottom: 32px;
 }
 .hero-note {
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-muted);
   margin-top: 24px;
 }
@@ -151,12 +151,12 @@ body {
   background: var(--atelier-stage);
 }
 .hero-stage:before {
-  background: #edeae3;
+  background: var(--linen);
 }
 .hero-index {
   top: 32px;
   left: 34px;
-  font-size: 10px;
+  font-size:11px;
   letter-spacing: 0.16em;
   color: var(--atelier-muted);
 }
@@ -164,17 +164,17 @@ body {
   left: 34px;
   right: 34px;
   bottom: 30px;
-  font-size: 11px;
+  font-size:12px;
   color: var(--atelier-muted);
 }
 .round-button {
   width: 48px;
   height: 48px;
-  border-color: #9da895;
+  border-color: var(--sage);
   transition: background-color 0.16s ease;
 }
 .round-button:hover {
-  background: #f3f1ea;
+  background: var(--linen);
 }
 .round-button:hover svg {
   transform: translate(2px, -2px);
@@ -198,12 +198,12 @@ body {
   border-left: 0;
 }
 .home-assurance strong {
-  font-size: 13px;
+  font-size:13px;
   font-weight: 600;
   line-height: 1.4;
 }
 .home-assurance span {
-  font-size: 12px;
+  font-size:13px;
   line-height: 1.6;
   color: var(--atelier-muted);
   max-width: 38ch;
@@ -221,7 +221,7 @@ body {
   letter-spacing: -0.03em;
 }
 .section-top > p {
-  font-size: 13px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .collection-grid {
@@ -229,18 +229,18 @@ body {
 }
 .card-object {
   height: 260px;
-  background: #eeece6;
+  background: var(--linen);
   transition: background-color 0.2s ease;
 }
 .collection-card:hover .card-object {
-  background: #e7e6de;
+  background: var(--linen);
 }
 .collection-num {
-  font-size: 11px;
+  font-size:12px;
   color: var(--atelier-muted);
 }
 .furniture-mark {
-  stroke: #596552;
+  stroke: var(--muted);
   transition: transform 0.22s var(--atelier-ease);
 }
 .collection-card:hover .furniture-mark {
@@ -249,23 +249,23 @@ body {
 .card-round {
   width: 40px;
   height: 40px;
-  border-color: #a9b3a0;
+  border-color: var(--sage);
   color: var(--atelier-accent);
 }
 .collection-caption {
   padding-top: 18px;
 }
 .collection-caption span {
-  font-size: 9px;
+  font-size:11px;
   letter-spacing: 0.13em;
   color: var(--atelier-muted);
 }
 .collection-caption h3 {
-  font-size: 28px;
+  font-size:28px;
   margin-top: 6px;
 }
 .collection-caption p {
-  font-size: 11px;
+  font-size:12px;
   line-height: 1.5;
   color: var(--atelier-muted);
   max-width: 18ch;
@@ -273,13 +273,13 @@ body {
 }
 .process-section {
   padding: 70px clamp(24px, 4vw, 64px);
-  background: #eaede5;
+  background: var(--linen);
 }
 .process-grid h3 {
-  font-size: 14px;
+  font-size:14px;
 }
 .process-grid p {
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .footer {
@@ -288,7 +288,7 @@ body {
 }
 .footer p,
 .demo-info {
-  font-size: 11px;
+  font-size:12px;
   color: var(--atelier-muted);
 }
 .demo-info {
@@ -302,7 +302,7 @@ body {
 }
 .studio-steps {
   padding: 26px 14px;
-  background: #f3f3ed;
+  background: var(--paper);
   border-color: var(--atelier-line);
   overflow: auto;
 }
@@ -310,12 +310,12 @@ body {
   padding: 0 10px 22px;
 }
 .studio-family > span {
-  font-size: 9px;
+  font-size:11px;
   letter-spacing: 0.12em;
   color: var(--atelier-muted);
 }
 .studio-family h2 {
-  font-size: 29px;
+  font-size:29px;
   margin-top: 7px;
 }
 .studio-progress {
@@ -324,14 +324,14 @@ body {
   margin-bottom: 14px;
 }
 .studio-progress > span {
-  font-size: 10px;
+  font-size:11px;
   font-weight: 600;
   color: var(--atelier-muted);
   font-variant-numeric: tabular-nums;
 }
 .studio-progress > div {
   height: 2px;
-  background: #dfe2d8;
+  background: var(--linen);
   margin: 10px 0;
   overflow: hidden;
 }
@@ -342,7 +342,7 @@ body {
   transition: width 0.2s var(--atelier-ease);
 }
 .studio-progress p {
-  font-size: 11px;
+  font-size:12px;
   line-height: 1.55;
   color: var(--atelier-muted);
 }
@@ -357,9 +357,9 @@ body {
   gap: 10px;
   padding: 13px 10px;
   margin-bottom: 3px;
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-muted);
-  border-radius: 2px;
+  border-radius:6px;
   text-align: left;
   transition:
     background-color 0.15s ease,
@@ -367,22 +367,22 @@ body {
 }
 .studio-step-nav > button small {
   margin-left: auto;
-  font-size: 9px;
+  font-size:11px;
   font-variant-numeric: tabular-nums;
 }
 .studio-step-nav > button.active {
-  background: #e3e8dc;
+  background: var(--linen);
   color: var(--atelier-accent);
   font-weight: 500;
 }
 .studio-step-nav > button:hover {
-  background: #e9ede3;
+  background: var(--linen);
   color: var(--atelier-ink);
 }
 .step-bottom {
   left: 24px;
   bottom: 24px;
-  font-size: 9px;
+  font-size:11px;
   line-height: 1.6;
   color: var(--atelier-muted);
 }
@@ -394,7 +394,7 @@ body {
   padding: 14px 24px;
 }
 .studio-top .eyebrow {
-  font-size: 9px;
+  font-size:11px;
   letter-spacing: 0.12em;
 }
 .studio-canvas .scene-host {
@@ -403,11 +403,11 @@ body {
   height: 111%;
 }
 .dimension-line {
-  font-size: 11px;
+  font-size:12px;
   color: var(--atelier-muted);
 }
 .scene-help {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .viewport-tools {
@@ -431,7 +431,7 @@ body {
   flex-shrink: 0;
 }
 .tool-button {
-  font-size: 10px;
+  font-size:11px;
   min-height: 42px;
   flex-shrink: 0;
   color: var(--atelier-muted);
@@ -441,111 +441,111 @@ body {
   color: var(--atelier-accent);
 }
 .studio-specs {
-  font-size: 10px;
+  font-size:11px;
   min-height: 48px;
   color: var(--atelier-muted);
   gap: 20px;
 }
 .tag {
-  font-size: 9px;
+  font-size:11px;
   border-color: var(--atelier-line);
 }
 .studio-panel {
   padding: 31px 27px 24px;
   border-color: var(--atelier-line);
-  background: #fffefa;
+  background: var(--paper);
 }
 .panel-heading h2 {
-  font-size: 32px;
+  font-size:32px;
   line-height: 1.12;
   letter-spacing: -0.03em;
   margin: 12px 0;
 }
 .panel-heading > p {
-  font-size: 12px;
+  font-size:13px;
   line-height: 1.7;
   color: var(--atelier-muted);
   margin-bottom: 22px;
 }
 .category-switch {
-  background: #ecefe7;
-  border-radius: 2px;
+  background: var(--linen);
+  border-radius:6px;
 }
 .category-switch button {
-  font-size: 12px;
+  font-size:13px;
   min-height: 44px;
   color: var(--atelier-muted);
 }
 .category-switch button.active {
-  background: #fffefa;
+  background: var(--paper);
   color: var(--atelier-accent);
   box-shadow: 0 1px 3px #26302914;
 }
 .setting-label {
-  font-size: 12px;
+  font-size:13px;
   margin-top: 25px;
 }
 .setting-label > span {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .choice {
   min-height: 46px;
   padding: 13px 12px;
-  font-size: 12px;
-  border-color: #d5d9ce;
-  background: #fffefa;
-  border-radius: 2px;
+  font-size:13px;
+  border-color: var(--line);
+  background: var(--paper);
+  border-radius:6px;
 }
 .choice small {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .choice.selected {
-  border-color: #7f9272;
-  background: #eef2e8;
+  border-color: var(--sage);
+  background: var(--linen);
   color: var(--atelier-accent);
 }
 .choice-grid.three .choice {
-  font-size: 11px;
+  font-size:12px;
 }
 .module-control,
 .range-field > label {
-  font-size: 12px;
+  font-size:13px;
 }
 .range-field label > span {
-  font-size: 11px;
+  font-size:12px;
   border-color: var(--atelier-line);
 }
 .range-limits,
 .small-note {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .fabric-option {
   padding: 10px;
-  border-color: #d5d9ce;
-  background: #fffefa;
-  border-radius: 2px;
+  border-color: var(--line);
+  background: var(--paper);
+  border-radius:6px;
 }
 .fabric-option strong {
-  font-size: 12px;
+  font-size:13px;
 }
 .fabric-option small {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .material-description strong {
-  font-size: 12px;
+  font-size:13px;
 }
 .material-description p {
-  font-size: 11px;
+  font-size:12px;
   color: var(--atelier-muted);
 }
 .studio-price {
   padding: 18px 28px 18px clamp(24px, 4vw, 64px);
   gap: 14px;
-  background: #f8f8f3;
+  background: var(--paper);
   border-color: var(--atelier-line);
 }
 .studio-price-main {
@@ -556,7 +556,7 @@ body {
   margin-right: auto;
 }
 .studio-price .price-label {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
   flex-basis: 100%;
   display: flex;
@@ -564,23 +564,23 @@ body {
   gap: 8px;
 }
 .studio-price .price-label b {
-  font-size: 8px;
+  font-size:11px;
   letter-spacing: 0.08em;
   border: 1px solid var(--atelier-line);
   padding: 2px 5px;
   font-weight: 500;
 }
 .studio-price strong {
-  font-size: 30px;
+  font-size:30px;
   line-height: 1.15;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
 }
 .studio-price .text-button {
-  font-size: 11px;
+  font-size:12px;
 }
 .studio-price > p {
-  font-size: 11px;
+  font-size:12px;
   line-height: 1.6;
   color: var(--atelier-muted);
   margin-right: 10px;
@@ -589,7 +589,7 @@ body {
   min-width: 202px;
 }
 .validation-errors {
-  font-size: 12px;
+  font-size:13px;
   line-height: 1.6;
 }
 .summary-next {
@@ -599,14 +599,14 @@ body {
   margin: 22px 0;
 }
 .summary-next h4 {
-  font-size: 13px;
+  font-size:13px;
   margin: 0 0 10px;
 }
 .summary-next ul {
   margin: 0;
   padding-left: 20px;
   color: var(--atelier-muted);
-  font-size: 12px;
+  font-size:13px;
   line-height: 1.75;
 }
 .summary-next li + li {
@@ -622,48 +622,48 @@ body {
 .page-top p,
 .material-card p,
 .empty-state p {
-  font-size: 13px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .page-disclaimer {
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .project-card {
   border-color: var(--atelier-line);
-  background: #fffefa;
-  border-radius: 2px;
+  background: var(--paper);
+  border-radius:6px;
 }
 .project-card-body > p {
-  font-size: 12px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .project-card-body > small {
-  font-size: 10px;
+  font-size:11px;
   color: var(--atelier-muted);
 }
 .filter-tabs button,
 .search-field input {
-  font-size: 12px;
+  font-size:13px;
 }
 .material-card h2 {
-  font-size: 32px;
+  font-size:32px;
 }
 .material-card p {
   line-height: 1.7;
 }
 .modal {
   border-color: var(--atelier-line);
-  background: #fffefa;
-  border-radius: 3px;
+  background: var(--paper);
+  border-radius:6px;
 }
 .modal > p {
-  font-size: 13px;
+  font-size:13px;
   color: var(--atelier-muted);
 }
 .toast {
-  font-size: 12px;
-  border-radius: 3px;
+  font-size:13px;
+  border-radius:6px;
 }
 
 @media (min-width: 1550px) {
@@ -674,13 +674,13 @@ body {
     padding: 36px 32px;
   }
   .studio-step-nav > button {
-    font-size: 13px;
+    font-size:13px;
   }
   .panel-heading h2 {
-    font-size: 35px;
+    font-size:35px;
   }
   .choice {
-    font-size: 13px;
+    font-size:13px;
   }
 }
 @media (max-width: 1180px) {
@@ -695,7 +695,7 @@ body {
     min-height: 570px;
   }
   .hero h1 {
-    font-size: 54px;
+    font-size:54px;
   }
   .home-assurance > div {
     padding-inline: 20px;
@@ -711,7 +711,7 @@ body {
     padding-inline: 8px;
   }
   .studio-family h2 {
-    font-size: 25px;
+    font-size:25px;
   }
   .studio-progress {
     padding-inline: 8px;
@@ -720,7 +720,7 @@ body {
     display: none;
   }
   .studio-step-nav > button {
-    font-size: 10px;
+    font-size:11px;
     gap: 7px;
     padding-inline: 8px;
   }
@@ -745,10 +745,10 @@ body {
 }
 @media (max-width: 900px) and (min-width: 821px) {
   .header nav a {
-    font-size: 11px;
+    font-size:12px;
   }
   .brand {
-    font-size: 20px;
+    font-size:20px;
   }
   .brand small {
     display: none;
@@ -763,11 +763,11 @@ body {
     flex-direction: column;
     justify-content: center;
     gap: 5px;
-    font-size: 9px;
+    font-size:11px;
     min-height: 58px;
   }
   .studio-family h2 {
-    font-size: 22px;
+    font-size:22px;
   }
   .studio-top {
     padding-inline: 16px;
@@ -776,7 +776,7 @@ body {
     margin-inline: 16px;
   }
   .tool-button {
-    font-size: 9px;
+    font-size:11px;
   }
   .studio-price {
     padding-left: 24px;
@@ -787,17 +787,17 @@ body {
 }
 @media (max-width: 820px) {
   body {
-    font-size: 15px;
+    font-size:15px;
   }
   .header {
     height: 74px;
     padding-inline: 5%;
   }
   .brand {
-    font-size: 20px;
+    font-size:20px;
   }
   .brand small {
-    font-size: 6px;
+    font-size:11px;
   }
   .header-actions {
     gap: 10px;
@@ -814,7 +814,7 @@ body {
     min-height: 46px;
     padding: 14px 0;
     text-align: left;
-    font-size: 13px;
+    font-size:13px;
   }
   .nav-icon,
   .factory-link {
@@ -850,12 +850,12 @@ body {
     margin: 20px 0;
   }
   .hero-copy > p {
-    font-size: 14px;
+    font-size:14px;
     line-height: 1.7;
     margin-bottom: 25px;
   }
   .hero-note {
-    font-size: 11px;
+    font-size:12px;
     margin-top: 20px;
   }
   .hero-stage {
@@ -864,13 +864,13 @@ body {
   .hero-index {
     left: 6%;
     top: 23px;
-    font-size: 9px;
+    font-size:11px;
   }
   .hero-stage-bottom {
     left: 6%;
     right: 6%;
     bottom: 22px;
-    font-size: 10px;
+    font-size:11px;
   }
   .home-assurance {
     grid-template-columns: 1fr;
@@ -887,10 +887,10 @@ body {
     border-top: 0;
   }
   .home-assurance strong {
-    font-size: 13px;
+    font-size:13px;
   }
   .home-assurance span {
-    font-size: 12px;
+    font-size:13px;
     max-width: none;
   }
   .collection-section {
@@ -902,7 +902,7 @@ body {
   }
   .section-top h2,
   .process-section h2 {
-    font-size: 34px;
+    font-size:34px;
   }
   .section-top > p {
     display: none;
@@ -916,13 +916,13 @@ body {
   }
   .collection-caption p {
     display: block;
-    font-size: 11px;
+    font-size:12px;
   }
   .process-section {
     padding: 44px 6%;
   }
   .process-grid p {
-    font-size: 12px;
+    font-size:13px;
   }
   .footer {
     padding-inline: 6%;
@@ -940,7 +940,7 @@ body {
     padding: 0 3%;
     border-top: 1px solid var(--atelier-line);
     overflow: hidden;
-    background: #f3f3ed;
+    background: var(--paper);
   }
   .studio-progress,
   .studio-family,
@@ -964,7 +964,7 @@ body {
     gap: 5px;
     margin: 0;
     padding: 9px 5px;
-    font-size: 10px;
+    font-size:11px;
     text-align: center;
   }
   .studio-step-nav > button svg {
@@ -980,7 +980,7 @@ body {
     padding: 7px 5%;
   }
   .studio-top .eyebrow {
-    font-size: 8px;
+    font-size:11px;
   }
   .studio-canvas .scene-host {
     inset: -10% -9% 0;
@@ -996,7 +996,7 @@ body {
     gap: 8px;
   }
   .tool-button {
-    font-size: 9px;
+    font-size:11px;
     min-height: 44px;
   }
   .viewport-tools .icon-button {
@@ -1004,10 +1004,10 @@ body {
     min-height: 44px;
   }
   .scene-help {
-    font-size: 9px;
+    font-size:11px;
   }
   .studio-specs {
-    font-size: 9px;
+    font-size:11px;
     padding: 8px 5%;
     min-height: 34px;
   }
@@ -1017,21 +1017,21 @@ body {
     min-height: 370px;
   }
   .panel-heading h2 {
-    font-size: 32px;
+    font-size:32px;
   }
   .panel-heading > p {
-    font-size: 13px;
+    font-size:13px;
   }
   .choice,
   .choice-grid.three .choice {
-    font-size: 12px;
+    font-size:13px;
     min-height: 46px;
   }
   .fabric-option strong {
-    font-size: 13px;
+    font-size:13px;
   }
   .fabric-option small {
-    font-size: 11px;
+    font-size:12px;
   }
   .color-button {
     width: 44px;
@@ -1053,18 +1053,18 @@ body {
     min-width: 0;
   }
   .studio-price .price-label {
-    font-size: 9px;
+    font-size:11px;
     line-height: 1.4;
   }
   .studio-price strong {
-    font-size: 23px;
+    font-size:23px;
   }
   .studio-price .text-button {
     display: none;
   }
   .studio-price > .button {
     min-height: 44px;
-    font-size: 11px;
+    font-size:12px;
     padding: 11px 13px;
   }
   .studio-price > .button.outline {
@@ -1086,47 +1086,47 @@ body {
     padding: 38px 6% 52px;
   }
   .page-top h1 {
-    font-size: 38px;
+    font-size:38px;
   }
   .page-top p {
-    font-size: 13px;
+    font-size:13px;
   }
   .page-disclaimer {
-    font-size: 11px;
+    font-size:12px;
   }
   .project-title h3 {
-    font-size: 27px;
+    font-size:27px;
   }
   .project-card-body > p {
-    font-size: 12px;
+    font-size:13px;
   }
   .modal {
     padding: 23px;
     max-height: 90svh;
   }
   .modal h2 {
-    font-size: 30px;
+    font-size:30px;
   }
   .summary-next ul {
-    font-size: 12px;
+    font-size:13px;
   }
   .toast {
-    font-size: 11px;
+    font-size:12px;
   }
 }
 @media (max-width: 390px) {
   .hero h1 {
-    font-size: 42px;
+    font-size:42px;
   }
   .hero-copy > p {
-    font-size: 13px;
+    font-size:13px;
   }
   .studio-center {
     height: 390px;
   }
   .studio-step-nav > button {
     flex-basis: 82px;
-    font-size: 9px;
+    font-size:11px;
   }
   .studio-price .price-label b {
     display: none;
@@ -1165,7 +1165,7 @@ body {
     flex-direction: row;
     gap: 8px;
     padding: 8px 4px;
-    font-size: 10px;
+    font-size:11px;
   }
   .studio-step-nav > button small {
     display: none;
@@ -1181,7 +1181,7 @@ body {
   .gaber-operations-table,
   .drawing-scroll {
     background:
-      linear-gradient(to right, #fffefa 30%, transparent),
+      linear-gradient(to right, var(--paper) 30%, transparent),
       linear-gradient(to right, transparent, #26302914 70%) 100% 0 / 32px 100%
         no-repeat;
     background-attachment: local, scroll;
@@ -1192,7 +1192,7 @@ body {
     flex-basis: auto;
     gap: 6px;
     padding-inline: 2px;
-    font-size: 10px;
+    font-size:11px;
   }
 }
 @media (pointer: coarse) {

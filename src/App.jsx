@@ -29,11 +29,13 @@ import {
   FileText,
   Factory,
   UserRound,
+  Sun,
+  Moon,
   Palette,
   Ruler,
   Eye,
   Trash2,
-} from "lucide-react";
+} from "./icons.jsx";
 import Scene from "./Scene.jsx";
 import ConfiguratorPanel, { MaterialInspector } from "./ConfiguratorPanel.jsx";
 import ConfigurationDetails from "./ConfigurationDetails.jsx";
@@ -41,6 +43,10 @@ import CostingPage from "./CostingPage.jsx";
 import TechnicalPage from "./TechnicalPage.jsx";
 import ProjectStorageTools from "./ProjectStorageTools.jsx";
 import OrderWorkspace from "./OrderWorkspace.jsx";
+import ServerOrders from "./ServerOrders.jsx";
+import FurnitureMark from "./FurnitureMarks.jsx";
+import { readDraft, writeDraft, stripConfigFromUrl } from "./draftStorage.js";
+import DesignKit from "./DesignKit.jsx";
 import OperationsPage from "./OperationsPage.jsx";
 import { readProfile, validProfile } from "./costing.js";
 import {
@@ -129,41 +135,7 @@ function download(name, text, type = "application/json") {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function Mark({ type = "sofa" }) {
-  return (
-    <svg
-      className="furniture-mark"
-      viewBox="0 0 300 170"
-      fill="none"
-      aria-hidden="true"
-    >
-      {type === "headboard" ? (
-        <>
-          <rect x="47" y="23" width="206" height="116" rx="24" />
-          <path d="M88 28v103m41-103v103m42-103v103m41-103v103M72 139v14m156-14v14" />
-        </>
-      ) : type === "bed" ? (
-        <>
-          <rect x="60" y="25" width="180" height="80" rx="18" />
-          <path d="M60 90L35 145h230l-25-55M80 40v50m47-50v50m47-50v50m46-50v50M60 145v13m180-13v13" />
-          <rect x="58" y="92" width="184" height="35" rx="10" />
-        </>
-      ) : ["chair", "chairbed"].includes(type) ? (
-        <>
-          <rect x="90" y="27" width="120" height="75" rx="28" />
-          <rect x="84" y="90" width="132" height="40" rx="15" />
-          <path d="M84 71h-12v63h25m119-63h12v63h-25M99 133l-5 23m107-23l5 23" />
-        </>
-      ) : (
-        <>
-          <rect x="48" y="39" width="204" height="69" rx="22" />
-          <rect x="48" y="95" width="204" height="37" rx="12" />
-          <path d="M149 45v78M49 78H32v57h33m186-57h17v57h-33M59 134v16m180-16v16" />
-        </>
-      )}
-    </svg>
-  );
-}
+const Mark = FurnitureMark;
 function Empty({ title, description, action, onAction }) {
   return (
     <div className="empty-state">
@@ -226,6 +198,25 @@ function App() {
       notify("Не удалось сохранить ставки в браузере");
     }
   }
+  // Тема: сохранённый выбор, иначе системная. Атрибут на <html> задаёт ещё index.html, чтобы не мигало.
+  const [theme, setTheme] = useState(
+    () =>
+      (typeof document !== "undefined" &&
+        document.documentElement.dataset.theme) ||
+      "light",
+  );
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    try {
+      localStorage.setItem("gaber.theme", next);
+    } catch {
+      /* хранилище недоступно: тема сохранится до перезагрузки */
+    }
+  }
   const [route, setRoute] = useState(() =>
     location.hash.startsWith("#studio")
       ? "studio"
@@ -234,8 +225,15 @@ function App() {
         : location.hash.slice(1) || "home",
   );
   const [config, setConfig] = useState(
-    () => configFromHash() || initialConfig(),
+    () => {
+      const fromLink = configFromHash();
+      if (fromLink) stripConfigFromUrl();
+      return fromLink || readDraft() || initialConfig();
+    },
   );
+  useEffect(() => {
+    if (!validate(config).length) writeDraft(config);
+  }, [config]);
   const [step, setStep] = useState("composition");
   const [history, setHistory] = useState([]),
     [future, setFuture] = useState([]),
@@ -272,6 +270,8 @@ function App() {
           "projects",
           "factory",
           "partner",
+          "orders",
+          ...(import.meta.env.DEV ? ["kit"] : []),
           "materials",
           "costing",
           "technical",
@@ -478,8 +478,27 @@ function App() {
           <a href="#partner" className={route === "partner" ? "active" : ""}>
             Партнёр GABER
           </a>
+          <a href="#orders" className={route === "orders" ? "active" : ""}>
+            Заказы
+          </a>
         </nav>
         <div className="header-actions">
+          <button
+            className="demo-badge"
+            title="Что означает демонстрационный режим"
+            onClick={() => setModal({ type: "about" })}
+          >
+            ДЕМО
+          </button>
+          <button
+            className="nav-icon"
+            aria-label={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+            aria-pressed={theme === "dark"}
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            <span>{theme === "dark" ? "Светлая" : "Тёмная"}</span>
+          </button>
           <button
             className={`nav-icon ${route === "projects" ? "active" : ""}`}
             aria-label="Кабинет клиента"
@@ -536,9 +555,27 @@ function App() {
             </div>
             <div className="hero-stage">
               <span className="hero-index">01 — LINEA</span>
+              {/* Контур дивана виден, пока строится 3D-модель, затем плавно уступает ей место. */}
+              <FurnitureMark type="sofa" />
               <Scene config={initialConfig()} hero />
               <div className="hero-stage-bottom">
-                <span>Габариты · материалы · конструкция</span>
+                <dl className="hero-plate">
+                  <div>
+                    <dt>Габариты</dt>
+                    <dd>
+                      {initialConfig().width} × {initialConfig().depth} ×{" "}
+                      {initialConfig().height} см
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Обивка</dt>
+                    <dd>{getFabric(initialConfig()).name}</dd>
+                  </div>
+                  <div>
+                    <dt>Лист</dt>
+                    <dd>Лекало 01</dd>
+                  </div>
+                </dl>
                 <button
                   className="round-button"
                   aria-label="Открыть конструктор Linea"
@@ -839,7 +876,7 @@ function App() {
           <div className="studio-price">
             <div className="studio-price-main" aria-live="polite">
               <span className="price-label">
-                Предварительная стоимость <b>ДЕМО</b>
+                Предварительная стоимость
               </span>
               <strong>
                 {calculation ? money(calculation.price) : "Проверьте параметры"}
@@ -1057,7 +1094,7 @@ function App() {
                         Сравнить
                       </button>
                     </div>
-                    <small>{date(p.createdAt)} · демонстрационный расчёт</small>
+                    <small>{date(p.createdAt)}</small>
                   </div>
                 </article>
               ))}
@@ -1126,6 +1163,8 @@ function App() {
           />
         </>
       )}
+      {route === "orders" && <ServerOrders config={config} />}
+      {route === "kit" && import.meta.env.DEV && <DesignKit />}
       {["projects", "factory", "partner"].includes(route) && (
         <OrderWorkspace
           key={route + ":" + (selectedProject ?? "")}
@@ -1217,7 +1256,7 @@ function App() {
               </dl>
               <ConfigurationDetails config={config} />
               <div className="summary-price">
-                <span>Предварительная цена · демо</span>
+                <span>Предварительная цена</span>
                 <strong>
                   {calculation
                     ? money(calculation.price)
@@ -1309,7 +1348,7 @@ function App() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Расчёт · демо</dt>
+                  <dt>Расчёт</dt>
                   <dd>{money(active.quote?.price ?? active.estimate.price)}</dd>
                 </div>
               </dl>
@@ -1378,7 +1417,6 @@ function App() {
                     <p>{getFabric(p.config).name}</p>
                     <p>{getColor(p.config).name}</p>
                     <strong>{money(p.quote?.price ?? p.estimate.price)}</strong>
-                    <small>Демонстрационная цена</small>
                   </article>
                 ))}
             </div>
@@ -1453,9 +1491,10 @@ function App() {
                 калькуляция и связанные демо-кабинеты.
               </p>
               <p>
-                Все цены, нормы и материалы демонстрационные. Проекты хранятся
-                локально. Вход, серверные роли, база заказов и реальные данные
-                фабрики ещё не подключены.
+                Все цены, нормы и материалы демонстрационные. Кабинеты клиента,
+                фабрики и партнёра на этих страницах — локальная симуляция в
+                вашем браузере. Раздел «Заказы» работает с сервером (вход, роли,
+                общий журнал), но реальных данных фабрики в системе тоже нет.
               </p>
               <p>
                 Демо-переключение кабинетов не защищает данные. Не используйте

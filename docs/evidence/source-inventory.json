@@ -2,6 +2,10 @@
   "schemaVersion": "gaber/source-inventory/1",
   "files": [
     {
+      "path": ".dockerignore",
+      "sha": "80f86000710d7be44c500a9f114f1f04e117f2ae"
+    },
+    {
       "path": ".editorconfig",
       "sha": "1014ba78880c899e842b397cb89a878be4671f7d"
     },
@@ -11,11 +15,11 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "e1eafb62aa6f88942467844d611903853ef4baee"
+      "sha": "fd9de70a25419e120d86ca0d42921f9fe048284e"
     },
     {
       "path": ".gitignore",
-      "sha": "f714736eab271a3f541560015318c1cc5438b6ba"
+      "sha": "8fe574267d724c64b252272f83dcfd21b43fc8cd"
     },
     {
       "path": ".nvmrc",
@@ -28,6 +32,14 @@
     {
       "path": "CONTRIBUTING.md",
       "sha": "35aab5cb512e1e267f7223a02c1080f60ec1438f"
+    },
+    {
+      "path": "DESIGN.md",
+      "sha": "078458f56feeb3032202faefe5e0c9656e440a3f"
+    },
+    {
+      "path": "Dockerfile",
+      "sha": "67b723ec44c9f1883c8cd6c8bcb472b10db8dc6d"
     },
     {
       "path": "README.md",
@@ -46,6 +58,10 @@
       "sha": "9962b77e2b1858c6b23c76e568f0b03d61bf9a96"
     },
     {
+      "path": "docs/DEPLOY.md",
+      "sha": "70b777f21fc1e00e24852b149c088fb34f60c9ec"
+    },
+    {
       "path": "docs/E2E-ROLE-ACCEPTANCE.md",
       "sha": "38d3398b56d7be433a1f19e3b5a883bf525e1e71"
     },
@@ -55,7 +71,7 @@
     },
     {
       "path": "docs/INDEX.md",
-      "sha": "ba3b41c5dfd9d508146e08a9c82c1fea966c8d2e"
+      "sha": "351040f34b5c50f6638ddf56f36a1330a4ebdb4a"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
@@ -67,7 +83,7 @@
     },
     {
       "path": "docs/PROJECT-STRUCTURE.md",
-      "sha": "daf7796ad6f21fec4453c1426173f80ce85cee3e"
+      "sha": "2f054d34b7641a68b42d50c22486592798fc7647"
     },
     {
       "path": "docs/RELEASE-REVIEW-GATES.md",
@@ -78,8 +94,12 @@
       "sha": "349a3a6510d9b1b54b2df1f8e7ef31224f7e1e9e"
     },
     {
+      "path": "docs/SERVER-AUTH.md",
+      "sha": "253175d8a5985f5367b9cf8b6e0ce036ba4c1b58"
+    },
+    {
       "path": "docs/STATUS.md",
-      "sha": "d4b19c28e30b452ac756a53b06d2a4db9987b501"
+      "sha": "63a81a1f39f050d7736c7d9e933a506dc65f232c"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -203,15 +223,15 @@
     },
     {
       "path": "index.html",
-      "sha": "382a59e007edade35370524ccf310c82f750bec8"
+      "sha": "389349b04dc5033b7c196c603e2419a4bd9063f0"
     },
     {
       "path": "package-lock.json",
-      "sha": "5f11bfdc41c2defd6512145052a6d8f3f0201806"
+      "sha": "e379ae4315ad4b94b24da085981f7671f7fe38fd"
     },
     {
       "path": "package.json",
-      "sha": "599e366286017809e3b052c980578a5bd362ea0e"
+      "sha": "1e2276685a1aea6f0fb022dd428a17c9782e9370"
     },
     {
       "path": "public/favicon.svg",
@@ -220,6 +240,10 @@
     {
       "path": "scripts/browser-smoke.mjs",
       "sha": "b2aa4a3302d3ba5e61d7aa229dd1ed5569620ffa"
+    },
+    {
+      "path": "scripts/design-audit.browser.js",
+      "sha": "bb40e9178055dbe0ec3de280af62a1dd26dfff4c"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",
@@ -239,7 +263,55 @@
     },
     {
       "path": "server/accessPolicy.js",
-      "sha": "8cdfd0ee08cef1138f70f434d9c93a6a57b50cc4"
+      "sha": "5cee8c2c7fd76ce461e508f5c1ef41e28a072f14"
+    },
+    {
+      "path": "server/auth/authHttp.js",
+      "sha": "22510d818ceca4e58ff4970461b02b5f14f725f6"
+    },
+    {
+      "path": "server/auth/authService.js",
+      "sha": "bb5cf157f1b614ca90a56d8fefc636739370762e"
+    },
+    {
+      "path": "server/auth/authStore.js",
+      "sha": "35ddf5f52a800cfe79ac41febdc349c11373b7a1"
+    },
+    {
+      "path": "server/auth/passwords.js",
+      "sha": "f50fd95021e710f2b8451d855a61e90ed4e68e1f"
+    },
+    {
+      "path": "server/auth/principal.js",
+      "sha": "304fc122eadcd77772d36e79220e49d6ba5d2a9c"
+    },
+    {
+      "path": "server/auth/totp.js",
+      "sha": "5723bf7489bab185be27353859924e3f0156b5f3"
+    },
+    {
+      "path": "server/config.js",
+      "sha": "7ecae13118dca7e252d80560ab0dffb40b2e9e6c"
+    },
+    {
+      "path": "server/dev/dev.env.example",
+      "sha": "d99ed337ff5eb9d1d6ab78028e37dda1e95df6cb"
+    },
+    {
+      "path": "server/dev/docker-compose.yml",
+      "sha": "b288c27145e27e305840f55908cd1318424ae825"
+    },
+    {
+      "path": "server/dev/seed-data.js",
+      "sha": "29aa1968fbe7aa8c74b00b8507568be2bea09052"
+    },
+    {
+      "path": "server/dev/setup.mjs",
+      "sha": "3773357452cf9ccc5d377a71e2e97dc7930e519b"
+    },
+    {
+      "path": "server/devExternalAuthority.js",
+      "sha": "99b832768c18ca6f8aaa9abe7bc7d38c0a95f6cb"
     },
     {
       "path": "server/factoryReviewPolicy.js",
@@ -248,6 +320,14 @@
     {
       "path": "server/factoryReviewService.js",
       "sha": "096559327f972581e76593918dfd822055b6b7cf"
+    },
+    {
+      "path": "server/httpServer.js",
+      "sha": "849329238a6bdc54d7abe144ea046d6cfefeb549"
+    },
+    {
+      "path": "server/index.js",
+      "sha": "5c5daf1ae1a67488e2689b2117dcadc5f615211f"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -278,8 +358,16 @@
       "sha": "5a2231897ec8cd8d36abd1ed01229ab3d46193d9"
     },
     {
+      "path": "server/migrations/008_auth_sessions_hold.sql",
+      "sha": "041ecb33dc2a2811255d4b00852b12b3bbc733b9"
+    },
+    {
+      "path": "server/migrations/009_mfa_audit_hold.sql",
+      "sha": "83842ff69d22c73e8712694e199e413c551471be"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
-      "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
+      "sha": "0751dce833c1c221ef96a2a99de6984f912243a3"
     },
     {
       "path": "server/orderHttpApi.js",
@@ -287,11 +375,11 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "41a59c87003f7ec3c9420f941cc08a841a9b20ac"
+      "sha": "772d26ab5ddb96adf15b1d58558aed845bfc9198"
     },
     {
       "path": "server/orderJournalWiring.js",
-      "sha": "dd9519af3c92874ec761ff6afd56d719c543dbfc"
+      "sha": "73af8d27d0abaffeffd21626a557debfed10b68f"
     },
     {
       "path": "server/orderReadModel.js",
@@ -303,7 +391,27 @@
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "d62e27b9b787d661484fdfa5cfd74ec77da8f0d6"
+      "sha": "c010a983ae4ff44ad042dccafa4a8d6072dfcaa7"
+    },
+    {
+      "path": "server/staticFiles.js",
+      "sha": "83129a97863fa89363c23f1e9ea677e964d38bef"
+    },
+    {
+      "path": "server/tests/auth-http-e2e.mjs",
+      "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
+    },
+    {
+      "path": "server/tests/mfa-e2e.mjs",
+      "sha": "b367eb4e09fd446602b987930d87c70767ac49ad"
+    },
+    {
+      "path": "server/tests/order-lifecycle-e2e.mjs",
+      "sha": "7d5716e6c2830beb612fd1a08a93272aa41c5102"
+    },
+    {
+      "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
+      "sha": "09841d11b30bb3ced13ad30a2e060eeedf5f9f98"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -319,7 +427,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "60bbdd429d896e243755889e25508e79b4d5710c"
+      "sha": "3790fe4b55de21f8f94100bf3bff37e1055fe37c"
     },
     {
       "path": "src/ClientOfferAssurance.jsx",
@@ -339,15 +447,23 @@
     },
     {
       "path": "src/CostingPage.jsx",
-      "sha": "25da07a42148d8ed458b326a0239bbc3791d2533"
+      "sha": "591a9375e8f87dc7fb76986937394546b28b4981"
     },
     {
       "path": "src/DesignExperience.jsx",
       "sha": "d852723bcf0668219746b7ab56c7949582b6761c"
     },
     {
+      "path": "src/DesignKit.jsx",
+      "sha": "af2f9a2f5752f820eb4a6f6c9859b6971307a4d4"
+    },
+    {
       "path": "src/EngineeringAssembly.js",
       "sha": "5a9b0d5905ea8e71b50880799555375135c44d5a"
+    },
+    {
+      "path": "src/ErrorBoundary.jsx",
+      "sha": "1abea23280721d8df0c6f0ce27170cdce9af7efe"
     },
     {
       "path": "src/FactoryCostDraftPanel.jsx",
@@ -366,12 +482,16 @@
       "sha": "cdece625a39b3db02da7297651be5d9b09213105"
     },
     {
+      "path": "src/FurnitureMarks.jsx",
+      "sha": "0de1b4cd121d1a371dc9673897985e3982817393"
+    },
+    {
       "path": "src/OperationsPage.jsx",
       "sha": "6c2a7cc1c565d0f29fdc65b484f7b1ea4e97cf87"
     },
     {
       "path": "src/OrderExperience.jsx",
-      "sha": "f30933a5ddfbcca0f3ab49e4defb3dfc880a95a6"
+      "sha": "237b626aa1cbb407bdb8248dd42054ac7ca91805"
     },
     {
       "path": "src/OrderWorkspace.jsx",
@@ -383,7 +503,11 @@
     },
     {
       "path": "src/Scene.jsx",
-      "sha": "c009ba98a20ba934cb99dda0ed3fa186e0e58fcd"
+      "sha": "e41852d9aa431b0624f57df87b8d60dfc6f58bb6"
+    },
+    {
+      "path": "src/ServerOrders.jsx",
+      "sha": "84ad9517b291b464bfbdf3fcd4d3217b474afe8e"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -399,7 +523,7 @@
     },
     {
       "path": "src/atelierExperience.css",
-      "sha": "b20ec35ae68837176943d0b1b010e2585e210c19"
+      "sha": "a92e00480a0f7a02a1c55ce6fd8ae4ff9fc9b340"
     },
     {
       "path": "src/clientOffer.js",
@@ -415,11 +539,11 @@
     },
     {
       "path": "src/costing.js",
-      "sha": "02a64fe5527252453fb7b44a62604a7d258103ea"
+      "sha": "c5c415f44fca07d9977b46cd531189f8fd71d0d1"
     },
     {
       "path": "src/designExperience.css",
-      "sha": "656bb92d6982d55ee4ed9176d3fe828c79a00f58"
+      "sha": "a33781ebc1b882750975459b20391ed5fc49dd12"
     },
     {
       "path": "src/designGuidance.js",
@@ -428,6 +552,10 @@
     {
       "path": "src/domain.js",
       "sha": "aad06c49124d2aa288a4352d008211dac88619ec"
+    },
+    {
+      "path": "src/draftStorage.js",
+      "sha": "80505bd4f3c4d86936701f6523d5762f588c4a6c"
     },
     {
       "path": "src/engineering.js",
@@ -454,6 +582,10 @@
       "sha": "7380cc74f1277be2b156f2f6c79d99ec1f61e459"
     },
     {
+      "path": "src/icons.jsx",
+      "sha": "c7620a80ffebf2f042817064cb97fa5bb2e53944"
+    },
+    {
       "path": "src/jointLayout.js",
       "sha": "57049541619a854e968bd6f26372c847272ec0f8"
     },
@@ -463,7 +595,7 @@
     },
     {
       "path": "src/main.jsx",
-      "sha": "3870ff5d38f63a17f83419d8e3b8b02d2bf43684"
+      "sha": "3c40dfe2552ed2e2101ed06b4675cb134f0a01fc"
     },
     {
       "path": "src/manufacturing.js",
@@ -475,7 +607,7 @@
     },
     {
       "path": "src/orderExperience.css",
-      "sha": "a75bfa886fbbc5938222353ef40e74da4f9cbc26"
+      "sha": "a4bc73b6946dd41d2e7f48e87cb184e00074bda9"
     },
     {
       "path": "src/orderExperience.js",
@@ -510,6 +642,10 @@
       "sha": "33bf83b1fef35c0511cf72ac9a478d2e60b914b0"
     },
     {
+      "path": "src/serverApi.js",
+      "sha": "41ef7a2e3c5a6ff407c5e09a6e5e07991e48396b"
+    },
+    {
       "path": "src/softLayout.js",
       "sha": "98cbebc8dceb2904c712fc21ae703713e68284c0"
     },
@@ -519,11 +655,15 @@
     },
     {
       "path": "src/styles.css",
-      "sha": "a80cbc549a749b30da0cc72cf6e582c12cd9cde5"
+      "sha": "e1c90349c927e252470ae656dc2a282418f15051"
     },
     {
       "path": "src/supportLayout.js",
       "sha": "746bbb88828783b67a3020c56ad3f5ba89a5dba7"
+    },
+    {
+      "path": "src/theme.css",
+      "sha": "a1d4cbebaeb7e37149dc0e3d1b16938a6a1d6eb1"
     },
     {
       "path": "src/traceability.js",
@@ -550,6 +690,10 @@
       "sha": "1ca6cd813c71d7a3b2bba5b712f77d4084b98ce3"
     },
     {
+      "path": "tests/auth-service.test.js",
+      "sha": "ecfc598cad06bf1405f5fd5da28f4b4cddb29b73"
+    },
+    {
       "path": "tests/chaise-structure.test.js",
       "sha": "8b9a3e4b05c11dc5fe18233a0b72c8e5821da25d"
     },
@@ -564,6 +708,10 @@
     {
       "path": "tests/cost-audit-hardening-v046.test.js",
       "sha": "ab3d091fccb3a08bdabce41330dc2e760b3b7df0"
+    },
+    {
+      "path": "tests/cost-sensitivity.test.js",
+      "sha": "7769b034128e79c108d829681254659bceeb9f39"
     },
     {
       "path": "tests/cost-traceability-v046.test.js",
@@ -582,8 +730,16 @@
       "sha": "57330e2ac8fef92fcce39b3d9093a590edd36647"
     },
     {
+      "path": "tests/dev-external-authority.test.js",
+      "sha": "10d63e35c6463d56a5b474d24e4e8aafcf41df34"
+    },
+    {
       "path": "tests/domain.test.js",
       "sha": "947379553651c41977f81edcaf4c240941f211c2"
+    },
+    {
+      "path": "tests/draft-and-boundary-ui.mjs",
+      "sha": "6f30f3a72914aa2b0a3ab30ed111b6e59d0feff5"
     },
     {
       "path": "tests/engineering.test.js",
@@ -730,8 +886,20 @@
       "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
     },
     {
+      "path": "tests/server-orders-ui.mjs",
+      "sha": "ddfc781625ea7ad12971e19f1f6a6daec8bf5bd3"
+    },
+    {
+      "path": "tests/static-files.test.js",
+      "sha": "934fe9ad7110e475d28e2abd538a578ad68f8d46"
+    },
+    {
       "path": "tests/storage.test.js",
       "sha": "b47e4cf6219d0137a102eaeef58a223b207d5e0c"
+    },
+    {
+      "path": "tests/totp.test.js",
+      "sha": "b429888d282de15d8198ea5ba54a953fa6171993"
     },
     {
       "path": "tests/traceability-v043.test.js",
@@ -751,7 +919,7 @@
     },
     {
       "path": "vite.config.js",
-      "sha": "93e68980d67dc83faa655301b19991f73721704f"
+      "sha": "de6a6f0ec5f0dece6d2a1eba1efdb9803355d3c3"
     }
   ]
 }

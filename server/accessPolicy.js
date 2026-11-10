@@ -10,7 +10,8 @@ const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
 const WRITE_MFA=new Set([
  'partner.spec.prepare','orders.assign_factory','offers.write','payments.record_unverified',
  'factory.spec.confirm','factory.spec.return','factory.technical_review',
- 'qc.record','shipments.record','issues.respond','catalog.manage'
+ 'qc.record','shipments.record','issues.respond','catalog.manage',
+ 'production.start','shipments.confirm_carrier'
 ]);
 const EXTERNAL_AUTHORITY=new Set([
  'payments.verify_bank','production.start','factory.production_release',
@@ -32,6 +33,9 @@ const RIGHTS=Object.freeze({
  'payments.read':['client','partner'],
  'finance.internal.read':['partner'],
  'finance.factory.read':['factory','partner'],
+ // Права фабрики на эти два действия действуют только при внешнем полномочии (см. EXTERNAL_AUTHORITY выше).
+ 'production.start':['factory'],
+ 'shipments.confirm_carrier':['factory'],
  'qc.record':['factory'],
  'shipments.record':['factory'],
  'delivery.accept':['client'],
@@ -46,8 +50,11 @@ const RIGHTS=Object.freeze({
  'analytics.tenant':['partner'],
  'factory.technical_review':['factory']
 });
+// Только эти внешние полномочия вообще можно имитировать в dev. Банк, списания, возвраты и допуск производства
+// (payments.verify_bank, payments.charge, payments.refund, factory.production_release) имитировать нельзя никогда.
+export const SIMULATABLE_EXTERNAL_ACTIONS=Object.freeze(['production.start','shipments.confirm_carrier']);
 const deny=reason=>({allowed:false,reason,scope:null,productionRelease:{allowed:false}});
-export function authorizeGaberAction({principal,resource,action,nowMs}){
+export function authorizeGaberAction({principal,resource,action,nowMs,externalGrants=null}){
  if(!principal||principal.identitySource!=='server-session'||
     principal.authenticated!==true||!id(principal.subject)||!id(principal.tenantId)||
     !Number.isSafeInteger(principal.sessionExpiresAtMs)||
@@ -58,7 +65,9 @@ export function authorizeGaberAction({principal,resource,action,nowMs}){
    ![resource.orderId,resource.catalogId,resource.analyticsScopeId].some(id))
   return deny('NO_AUTHORITATIVE_RESOURCE');
  if(principal.tenantId!==resource.tenantId)return deny('TENANT_SCOPE_MISMATCH');
- if(EXTERNAL_AUTHORITY.has(action))return deny('EXTERNAL_AUTHORITY_REQUIRED');
+ if(EXTERNAL_AUTHORITY.has(action)&&
+    !(externalGrants?.has?.(action)&&SIMULATABLE_EXTERNAL_ACTIONS.includes(action)))
+  return deny('EXTERNAL_AUTHORITY_REQUIRED');
  if(!Object.hasOwn(RIGHTS,action))return deny('ACTION_UNKNOWN');
  const role=principal.roles[0];
  if(!RIGHTS[action].includes(role))return deny('ROLE_FORBIDDEN');

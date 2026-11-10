@@ -19,6 +19,8 @@
 - [Инженерная модель v0.4](engineering-v0.4.md).
 - [Путь клиента](CLIENT-EXPERIENCE.md).
 - [HTTP и PostgreSQL E2E-контракт](HTTP-POSTGRES-E2E-CONTRACT.md).
+- [Серверный вход и сессии](SERVER-AUTH.md).
+- [Запуск стенда одним контейнером](DEPLOY.md).
 - [Стенд PostgreSQL](POSTGRES-STAGING-CONTRACT.md).
 - [План восстановления CI](CI-RECOVERY-RUNBOOK.md).
 - [Проверенный демо-кандидат от 01.11.2026](VERIFIED-CANDIDATE-2026-11-01.md) — доказательство лишь указанного SHA.

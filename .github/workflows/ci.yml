@@ -120,6 +120,7 @@ jobs:
           node server/dev/setup.mjs
           node server/tests/auth-http-e2e.mjs
           node server/tests/order-lifecycle-e2e.mjs
+          node server/tests/order-simulated-lifecycle-e2e.mjs
 
   # Real installed Chromium against compiled Vite preview. This is a local
   # browser UX smoke test, NOT identity/payment/production E2E.

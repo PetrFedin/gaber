@@ -7,9 +7,12 @@ export function loadConfig(env = process.env) {
   };
   const mfaAssumed = env.GABER_DEV_ASSUME_MFA === '1';
   if (mfaAssumed && production) throw Error('GABER_DEV_ASSUME_MFA запрещён в production');
+  const simulateExternalAuthority = env.GABER_DEV_SIMULATE_EXTERNAL_AUTHORITY === '1';
+  if (simulateExternalAuthority && production) throw Error('GABER_DEV_SIMULATE_EXTERNAL_AUTHORITY запрещён в production');
   return {
     production,
     mfaAssumed,
+    simulateExternalAuthority,
     ordersDatabaseUrl: need('GABER_ORDERS_DATABASE_URL'),
     authDatabaseUrl: need('GABER_AUTH_DATABASE_URL'),
     tenantId: need('GABER_TENANT_ID'),

@@ -35,7 +35,7 @@ function verify(head,rows,scope,replay){
  if(state&&(state.version!==head.version||state.projectId!==scope.orderId))throw Error('JOURNAL_INTEGRITY_FAILURE');
  return {events,state};
 }
-export function createOrderJournalService({repository,admission,reducer,clock=Date.now}){
+export function createOrderJournalService({repository,admission,reducer,clock=Date.now,simulatedExternalAuthority=null}){
  if(typeof repository?.withOrderTransaction!=='function'||typeof admission!=='function'||
    typeof reducer?.replayOrder!=='function'||typeof reducer?.appendOrderCommand!=='function')
   throw TypeError('INVALID_JOURNAL_DEPENDENCIES');
@@ -83,7 +83,7 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
   }catch{return deny('INVALID_JSON_REQUEST');}
   const {orderId,requestId,type,payload,revisionId,expectedVersion}=input;
   if(type==='create'&&payload.projectId!==orderId)return deny('ORDER_PROJECT_MISMATCH');
-  if(forbidden.has(type))return deny('EXTERNAL_AUTHORITY_REQUIRED');
+  if(forbidden.has(type)&&!simulatedExternalAuthority?.commandTypes?.has(type))return deny('EXTERNAL_AUTHORITY_REQUIRED');
   const now=clock();if(!Number.isSafeInteger(now)||!Number.isFinite(new Date(now).getTime())||now<=0)
    return deny('INVALID_SERVER_CLOCK');
   const scope={tenantId:actor.tenantId,orderId};
@@ -108,7 +108,8 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
       !['client','factory','partner'].includes(actor.roles[0]))
     return deny('NO_VERIFIED_SESSION');
    const role=actor.roles[0];
-   const verdict=admission({principal:actor,resource,command:{type,role,payload},nowMs:now});
+   const verdict=admission({principal:actor,resource,command:{type,role,payload},nowMs:now,
+     externalGrants:simulatedExternalAuthority?.grants??null});
    if(!verdict?.allowed)return deny(verdict?.code??'ROLE_FORBIDDEN');
    if(verdict.reducerRole!==role)return deny('UNTRUSTED_COMMAND_ROLE');
    if(role==='factory'){

@@ -37,7 +37,7 @@ const ALLOWED = {register: ['email', 'password', 'name'], login: ['email', 'pass
 export const originAllowed = (req, allowedOrigins) => !req.headers.origin || allowedOrigins.includes(req.headers.origin);
 
 /** Возвращает true, если запрос принадлежит маршрутам /api/v1/auth/*. */
-export function createAuthHttpHandler({service, allowedOrigins = [], secureCookie = false}) {
+export function createAuthHttpHandler({service, allowedOrigins = [], secureCookie = false, serverInfo = {}}) {
   const cookie = (token, maxAge) =>
     `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secureCookie ? '; Secure' : ''}`;
   return async (req, res) => {
@@ -48,7 +48,7 @@ export function createAuthHttpHandler({service, allowedOrigins = [], secureCooki
       const action = m[1];
       if (action === 'me') {
         if (req.method !== 'GET') return send(res, 405, {code: 'METHOD_NOT_ALLOWED'}), true;
-        return send(res, 200, {user: await service.me(readCookie(req))}), true;
+        return send(res, 200, {user: await service.me(readCookie(req)), server: serverInfo}), true;
       }
       if (req.method !== 'POST') return send(res, 405, {code: 'METHOD_NOT_ALLOWED'}), true;
       if (!originAllowed(req, allowedOrigins)) return send(res, 403, {code: 'FORBIDDEN_ORIGIN'}), true;

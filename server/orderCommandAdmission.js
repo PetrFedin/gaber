@@ -28,12 +28,12 @@ const deny=code=>({allowed:false,code,productionRelease:{allowed:false}});
  * Principal role is assigned by trusted session middleware. Browser-selected
  * or command payload roles do not establish authority.
  */
-export function admitOrderCommand({principal,resource,command,nowMs}){
+export function admitOrderCommand({principal,resource,command,nowMs,externalGrants=null}){
  if(!command||typeof command!=='object'||Array.isArray(command)||
    typeof command.type!=='string'||!Object.hasOwn(MAP,command.type))
   return deny('COMMAND_UNKNOWN');
  const [action,perspective]=MAP[command.type];
- const auth=authorizeGaberAction({principal,resource,action,nowMs});
+ const auth=authorizeGaberAction({principal,resource,action,nowMs,externalGrants});
  if(!auth.allowed)return deny(auth.reason);
  if(perspective&&auth.role!==perspective)return deny('PERSPECTIVE_MISMATCH');
  if(command.role!==auth.role)return deny('UNTRUSTED_COMMAND_ROLE');

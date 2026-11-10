@@ -28,7 +28,8 @@ export const randomId = (prefix) => {
   return prefix + '-' + [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 };
 export const serverApi = {
-  me: (f) => request('GET', '/api/v1/auth/me', undefined, f).then((r) => r.user),
+  // Возвращает {user, server}: server сообщает, включены ли dev-имитации (MFA, внешние полномочия).
+  me: (f) => request('GET', '/api/v1/auth/me', undefined, f).then((r) => ({user: r.user, server: r.server ?? {}})),
   login: (email, password, f) => request('POST', '/api/v1/auth/login', {email, password}, f).then((r) => r.user),
   register: (email, password, name, f) =>
     request('POST', '/api/v1/auth/register', {email, password, ...(name ? {name} : {})}, f).then((r) => r.user),

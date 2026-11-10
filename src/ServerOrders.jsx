@@ -229,8 +229,11 @@ function LoginForm({onDone, busy, setBusy, setError}) {
 }
 
 /** Рабочее пространство заказов на сервере: вход, список и действия по ролям. Источник истины — журнал сервера. */
-export default function ServerOrders({config, holdDisabled = true}) {
+export default function ServerOrders({config, holdDisabled: holdOverride}) {
   const [user, setUser] = useState(undefined);
+  const [serverInfo, setServerInfo] = useState({});
+  // Закрытые HOLD этапы показываются только если сервер сам сообщил о dev-имитации внешних полномочий.
+  const holdDisabled = holdOverride ?? !serverInfo.devSimulatedAuthority;
   const [orders, setOrders] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -246,7 +249,10 @@ export default function ServerOrders({config, holdDisabled = true}) {
     }
   }, []);
   useEffect(() => {
-    serverApi.me().then(setUser).catch((e) => {
+    serverApi.me().then((r) => {
+      setUser(r.user);
+      setServerInfo(r.server);
+    }).catch((e) => {
       setUser(null);
       if (e.code === 'SERVER_UNAVAILABLE') setError(errorText(e));
     });
@@ -312,10 +318,20 @@ export default function ServerOrders({config, holdDisabled = true}) {
           </div>
         )}
       </div>
+      {serverInfo.devSimulatedAuthority && (
+        <div className="inline-warning" role="note" data-dev-simulation="external-authority">
+          DEV-СИМУЛЯТОР: сервер имитирует внешние полномочия (производство, контроль качества, отгрузка, доставка). Банк не имитируется, оплата не подтверждается. Это не реальные операции и не допуск в производство.
+        </div>
+      )}
       {error && <div className="inline-warning" role="alert">{error}</div>}
       {note && <div className="small-note" role="status">{note}</div>}
       {user === undefined && <p className="helper">Проверяем сессию…</p>}
-      {user === null && <LoginForm onDone={setUser} busy={busy} setBusy={setBusy} setError={setError} />}
+      {user === null && <LoginForm
+          onDone={(u) => {
+            setUser(u);
+            serverApi.me().then((r) => setServerInfo(r.server)).catch(() => {});
+          }}
+          busy={busy} setBusy={setBusy} setError={setError} />}
       {user && role === 'client' && (
         <section className="server-create">
           <h2>Новый заказ из конструктора</h2>

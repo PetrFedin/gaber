@@ -15,7 +15,7 @@
     "server": "node --env-file=server/dev/dev.env server/index.js",
     "dev:db": "docker compose --env-file server/dev/dev.env -f server/dev/docker-compose.yml up -d",
     "dev:setup": "node --env-file=server/dev/dev.env server/dev/setup.mjs",
-    "test:auth-e2e": "node --env-file-if-exists=server/dev/dev.env server/tests/auth-http-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-lifecycle-e2e.mjs"
+    "test:auth-e2e": "node --env-file-if-exists=server/dev/dev.env server/tests/auth-http-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-lifecycle-e2e.mjs && node --env-file-if-exists=server/dev/dev.env server/tests/order-simulated-lifecycle-e2e.mjs"
   },
   "dependencies": {
     "@fontsource/golos-text": "^5.3.0",

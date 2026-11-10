@@ -11,7 +11,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "2364b245ae38633b2015243cdd4860a2eb06d134"
+      "sha": "cfced02b8bd0ec178f99c45ba894398bb9ffc110"
     },
     {
       "path": ".gitignore",
@@ -79,7 +79,7 @@
     },
     {
       "path": "docs/SERVER-AUTH.md",
-      "sha": "6100dc9038659f6c09bf5de6f0328a5b82c18fc0"
+      "sha": "b34f8b0798529a3e140ac327e5f42f9038f39682"
     },
     {
       "path": "docs/STATUS.md",
@@ -215,7 +215,7 @@
     },
     {
       "path": "package.json",
-      "sha": "1610ff28cab6383a1abaef5fb6f1b9023c261ad8"
+      "sha": "3cf47da5a79d900a90c30df9b891b6e4ddc46e58"
     },
     {
       "path": "public/favicon.svg",
@@ -243,11 +243,11 @@
     },
     {
       "path": "server/accessPolicy.js",
-      "sha": "8cdfd0ee08cef1138f70f434d9c93a6a57b50cc4"
+      "sha": "5cee8c2c7fd76ce461e508f5c1ef41e28a072f14"
     },
     {
       "path": "server/auth/authHttp.js",
-      "sha": "ffb85a7ae2cb01f524b3b3dc0832d1646be3dcc4"
+      "sha": "6c6584a545dae1bda19897d514931c191bf0f3a6"
     },
     {
       "path": "server/auth/authService.js",
@@ -267,11 +267,11 @@
     },
     {
       "path": "server/config.js",
-      "sha": "dd19c6e3f346435d4b3607b31d9ab81041494cbd"
+      "sha": "d111179d46ebae64beb3d9092ddc8efb0f403ce0"
     },
     {
       "path": "server/dev/dev.env.example",
-      "sha": "eda2ad778b26610e08bd139a0adadb4aabec245d"
+      "sha": "f78957915ea9c5d5d258b79c09ce36efef298319"
     },
     {
       "path": "server/dev/docker-compose.yml",
@@ -286,6 +286,10 @@
       "sha": "3773357452cf9ccc5d377a71e2e97dc7930e519b"
     },
     {
+      "path": "server/devExternalAuthority.js",
+      "sha": "99b832768c18ca6f8aaa9abe7bc7d38c0a95f6cb"
+    },
+    {
       "path": "server/factoryReviewPolicy.js",
       "sha": "967f58badeb54ed76a6f52fc8622d74e0979d239"
     },
@@ -295,11 +299,11 @@
     },
     {
       "path": "server/httpServer.js",
-      "sha": "a4a16a04b113b80e023c869fead85bf9b402a318"
+      "sha": "8b610f4d1fd6a54c0995fc6339c2bb51394f17c4"
     },
     {
       "path": "server/index.js",
-      "sha": "320aa97fba21833e156babf1f85910a244a82fd8"
+      "sha": "db205a9b02bc03f842ec10d8c51d1fb48652975e"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -335,7 +339,7 @@
     },
     {
       "path": "server/orderCommandAdmission.js",
-      "sha": "074b78d9778171c8f7913cad15c1c98307c1ce49"
+      "sha": "0751dce833c1c221ef96a2a99de6984f912243a3"
     },
     {
       "path": "server/orderHttpApi.js",
@@ -343,11 +347,11 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "41a59c87003f7ec3c9420f941cc08a841a9b20ac"
+      "sha": "772d26ab5ddb96adf15b1d58558aed845bfc9198"
     },
     {
       "path": "server/orderJournalWiring.js",
-      "sha": "0f9222926dc80da43209138c91fb49e6fbb3b26e"
+      "sha": "73af8d27d0abaffeffd21626a557debfed10b68f"
     },
     {
       "path": "server/orderReadModel.js",
@@ -368,6 +372,10 @@
     {
       "path": "server/tests/order-lifecycle-e2e.mjs",
       "sha": "7d5716e6c2830beb612fd1a08a93272aa41c5102"
+    },
+    {
+      "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
+      "sha": "09841d11b30bb3ced13ad30a2e060eeedf5f9f98"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -451,7 +459,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "42c450cac3da823be2df12c30f5ff60db6ccfe2a"
+      "sha": "fb061e3a8bfa0442844cd27ea2f80ed707792ccb"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -579,7 +587,7 @@
     },
     {
       "path": "src/serverApi.js",
-      "sha": "0c73b167adfe771cc2e300a3e9a03d49de6ffcfb"
+      "sha": "3891b62eaa763774166fe430f3a9d6bf313fa9d0"
     },
     {
       "path": "src/serverOrders.css",
@@ -660,6 +668,10 @@
     {
       "path": "tests/design-guidance.test.js",
       "sha": "57330e2ac8fef92fcce39b3d9093a590edd36647"
+    },
+    {
+      "path": "tests/dev-external-authority.test.js",
+      "sha": "10d63e35c6463d56a5b474d24e4e8aafcf41df34"
     },
     {
       "path": "tests/domain.test.js",
@@ -811,7 +823,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "af0da8085573d5918e0d7cb04e08574d76fa65f9"
+      "sha": "2e35e5948a914211389f94d2e5737c9b168eeb61"
     },
     {
       "path": "tests/storage.test.js",

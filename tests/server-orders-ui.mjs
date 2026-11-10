@@ -28,13 +28,13 @@ try {
     'p@x.test': {id: 'U-p', email: 'p@x.test', role: 'partner', password: 'partner-pass-1'},
     'f@x.test': {id: 'U-f', email: 'f@x.test', role: 'factory', password: 'factory-pass-1', factoryId: 'FAB-T'}
   };
-  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfa = false, externalHold = true, holdDisabled = true;
+  let session = null, owner = null, events = [], clock = Date.parse('2026-11-10T10:00:00.000Z'), mfa = false, externalHold = true, holdProp;
   const requests = [];
   const json = (status, body) => ({ok: status < 400, status, json: async () => body});
   globalThis.fetch = async (url, init = {}) => {
     const body = init.body ? JSON.parse(init.body) : undefined;
     requests.push({url, method: init.method, body});
-    if (url === '/api/v1/auth/me') return json(200, {user: session && {id: session.id, email: session.email, role: session.role}});
+    if (url === '/api/v1/auth/me') return json(200, {user: session && {id: session.id, email: session.email, role: session.role}, server: {devSimulatedAuthority: !externalHold}});
     if (url === '/api/v1/auth/login') {
       const u = users[body.email];
       if (!u || u.password !== body.password) return json(401, {code: 'BAD_CREDENTIALS'});
@@ -69,7 +69,7 @@ try {
     return json(404, {code: 'NOT_FOUND'});
   };
 
-  const render = async () => act(async () => root.render(React.createElement(ServerOrders, {config: initialConfig(), holdDisabled})));
+  const render = async () => act(async () => root.render(React.createElement(ServerOrders, {config: initialConfig(), holdDisabled: holdProp})));
   const text = () => document.body.textContent;
   const button = (label) => {
     const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === label);
@@ -197,15 +197,22 @@ try {
   assert.doesNotMatch(text(), /Учтено|Заявлено клиентом|Остаток к оплате/, 'фабрика не видит платежи');
   await logout();
   // если интерфейс всё же отправит закрытую команду, отказ сервера объяснён
-  holdDisabled = false;
+  holdProp = false; // принудительно показать закрытые кнопки, сервер ответит отказом
   await render();
   await login('f@x.test', 'factory-pass-1');
   await click('Начать производство');
   assert.match(alertText(), /PRODUCTION HOLD/);
   assert.equal(state().stage, 'accepted');
 
-  // --- этапы за HOLD: формы и данные проверены по настоящему редьюсеру (сервер в памяти без HOLD) ---
+  // --- сервер сообщает о dev-симуляторе внешних полномочий: кнопки этапов появляются сами, с предупреждением ---
+  holdProp = undefined;
   externalHold = false;
+  await render();
+  await logout();
+  assert.doesNotMatch(text(), /DEV-СИМУЛЯТОР/, 'без входа баннер не нужен');
+  await login('f@x.test', 'factory-pass-1');
+  assert.match(text(), /DEV-СИМУЛЯТОР/, 'баннер dev-симулятора');
+  assert.equal(has('Начать производство'), true, 'кнопка этапа показана по сигналу сервера');
   await click('Начать производство');
   assert.equal(state().stage, 'production');
   await click('Производство завершено');

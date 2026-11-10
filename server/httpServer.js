@@ -7,10 +7,12 @@ import {createAuthHttpHandler, readCookie, originAllowed} from './auth/authHttp.
  * Браузер аутентифицируется httpOnly-cookie: здесь она превращается в Bearer для существующего
  * адаптера заказов. Явный заголовок Authorization имеет приоритет (для не-браузерных клиентов).
  */
-export function createGaberHttpServer({journal, authService, allowedOrigins = [], secureCookie = false, clock = Date.now}) {
+export function createGaberHttpServer({journal, authService, allowedOrigins = [], secureCookie = false, clock = Date.now, serverInfo = {}}) {
   const orders = createOrderHttpHandler({journal, resolveSession: (t) => authService.resolveSession(t), clock});
-  const auth = createAuthHttpHandler({service: authService, allowedOrigins, secureCookie});
+  const auth = createAuthHttpHandler({service: authService, allowedOrigins, secureCookie, serverInfo});
   return createServer(async (req, res) => {
+    // Заметный сигнал для клиентов и прокси: сервер работает с имитацией внешних полномочий.
+    if (serverInfo.devSimulatedAuthority) res.setHeader('X-Gaber-Dev-Simulation', 'external-authority');
     if (await auth(req, res)) return;
     if (req.method !== 'GET' && req.method !== 'HEAD' && !originAllowed(req, allowedOrigins)) {
       res.writeHead(403, {'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store'});

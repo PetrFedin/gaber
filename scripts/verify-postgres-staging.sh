@@ -4,7 +4,8 @@
 # payment credentials or factory claims are involved.
 set -euo pipefail
 : "${GABER_TEST_PG_PASSWORD:?Test-only password must be configured}"
-container_id="$(docker ps --filter 'ancestor=postgres:17' --format '{{.ID}}' | head -n 1)"
+# GABER_PG_CONTAINER позволяет указать контейнер явно (локальный шлюз на Mac); иначе берётся первый postgres:17.
+container_id="${GABER_PG_CONTAINER:-$(docker ps --filter 'ancestor=postgres:17' --format '{{.ID}}' | head -n 1)}"
 if [ -z "$container_id" ]; then
   echo 'POSTGRES_17_SERVICE_NOT_FOUND' >&2
   exit 1

@@ -1,0 +1,18 @@
+# Одноразовая PostgreSQL 17 для разработки (миграции 001..008 рассчитаны на 17).
+# Запуск: docker compose --env-file server/dev/dev.env -f server/dev/docker-compose.yml up -d
+name: gaber-v04
+services:
+  db:
+    image: postgres:17
+    container_name: gaber-v04-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${GABER_DEV_PG_ADMIN_PASSWORD:?задайте GABER_DEV_PG_ADMIN_PASSWORD в server/dev/dev.env}
+      POSTGRES_DB: gaber_dev
+    ports:
+      - '127.0.0.1:${GABER_DEV_PG_PORT:-55482}:5432'
+    volumes:
+      - gaber_v04_pgdata:/var/lib/postgresql/data
+volumes:
+  gaber_v04_pgdata:

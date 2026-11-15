@@ -1,0 +1,227 @@
+/* GABER «Лекало»: фирменный слой поверх базовых стилей. Правила и токены: DESIGN.md. */
+:root{--stage-paper:#efe8da;--grid-major:rgba(124,118,100,.16);--grid-minor:rgba(124,118,100,.1);--loden-hover:#243022;color-scheme:light}
+/* Тёмная тема «Вечернее ателье»: те же имена токенов, светлая заливка главной кнопки и тёплая бумага вместо чёрного. */
+:root[data-theme=dark]{color-scheme:dark;
+  --linen:#151812;--paper:#1d2119;--ink:#efeadd;--ink-2:#cbc6b6;--muted:#a8a393;--line:#353a2f;--line-strong:#85866f;
+  --loden:#b9c7a8;--loden-hover:#cdd9bf;--thread:#e58a70;--sage:#6f7f62;--clay:#b8946f;
+  --success:#7cc08a;--warning:#e0b05a;--error:#f0856f;--stage:#151812;--stage-paper:#1a1e16;
+  --grid-major:rgba(185,199,168,.14);--grid-minor:rgba(185,199,168,.07);
+  --e1:0 1px 2px rgba(0,0,0,.4);--e2:0 8px 24px rgba(0,0,0,.45);--e3:0 24px 64px rgba(0,0,0,.6)}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--linen);color:var(--ink);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.01em;text-wrap:balance}
+p{text-wrap:pretty}
+
+/* Метки: номера, коллекции, статусы. Моноширинный, заглавные, с трекингом. */
+.eyebrow,.hero-index,.price-label,.status,.tag,th,.studio-specs,.range-limits,.brand small{
+  font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.eyebrow{color:var(--muted);font-size:11px}
+.price,.studio-price strong,.stat strong,td,.dimension-line,.server-facts dd{font-variant-numeric:tabular-nums}
+
+/* Строчка вместо сплошной рамки под шапкой: единственный повторяющийся мотив. */
+.header{border-bottom:0;background:var(--paper);
+  background-image:linear-gradient(90deg,var(--line-strong) 50%,transparent 0);
+  background-size:8px 1px;background-repeat:repeat-x;background-position:0 100%}
+.header nav a{color:var(--ink-2);font-weight:500}
+.header nav a.active,.header nav a:hover{color:var(--ink)}
+.brand{font-family:var(--serif);font-weight:400;color:var(--ink)}
+
+/* Кнопки: одна главная заливка loden, остальные контуром. */
+.button{min-height:var(--hit);font-weight:500;letter-spacing:0;border-radius:var(--r-sm)}
+.button.dark{background:var(--loden);color:var(--paper)}
+.button.dark:hover:not(:disabled){background:var(--loden-hover)}
+.button.outline{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
+.button.outline:hover:not(:disabled){background:var(--paper);border-color:var(--ink)}
+button:disabled{opacity:1;color:var(--muted);cursor:not-allowed}
+.button.dark:disabled{background:var(--line);color:var(--muted)}
+.button,.icon-button,.tool-button,.choice,.text-button,.studio-steps>button,.filter-tabs button,.category-switch button{
+  transition:background-color .18s var(--ease),border-color .18s var(--ease),color .18s var(--ease),transform .18s var(--ease)}
+.button:active:not(:disabled),.icon-button:active:not(:disabled),.tool-button:active:not(:disabled){transform:scale(.97)}
+
+/* Фокус: двойное кольцо читается и на светлом, и на тёмном. */
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,canvas:focus-visible{
+  outline:2px solid var(--loden);outline-offset:2px;box-shadow:0 0 0 5px var(--paper)}
+
+/* Зоны касания не меньше 44 px. */
+.icon-button,.tool-button,.round-button,.color-button,.category-switch button,.text-button,.nav-icon,.factory-link,.demo-info,.choice,.studio-steps>button,.filter-tabs button,.option-toggle,summary,.button{
+  min-height:var(--hit)}
+.icon-button,.color-button,.round-button{width:var(--hit);height:var(--hit)}
+.tool-button,.category-switch button,.icon-button,.nav-icon,.factory-link{min-width:var(--hit)}
+.nav-icon,.factory-link,.demo-info,summary{display:inline-flex;align-items:center}
+input[type=text],input[type=number],input[type=search],input[type=email],input[type=password],input:not([type]),select,textarea{
+  min-height:var(--hit);border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)}
+textarea{min-height:88px}
+input[type=range]{min-height:var(--hit);cursor:pointer;accent-color:var(--loden)}
+input[type=checkbox],input[type=radio]{accent-color:var(--loden)}
+
+/* Статусы: слово, а не только цвет. */
+.status{font-size:11px;font-weight:500;border-radius:var(--r-sm)}
+[role=alert],.error-text{color:var(--error)}
+.inline-warning{color:var(--ink);background:var(--paper);border:1px dashed var(--line-strong);border-radius:var(--r-sm);padding:12px 16px}
+
+/* Образцы и выбранные состояния обводятся строчкой. */
+.choice.selected,.fabric-option.selected{outline:1.5px dashed var(--thread);outline-offset:2px}
+
+/* Активный шаг конструктора: рамка и жирное слово, без цветных боковых полос. */
+.studio-steps>button{color:var(--ink-2);border-radius:var(--r-sm)}
+.studio-steps>button.active{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--line-strong)}
+
+/* Подсказка под шагами не накладывается на кнопки: кнопки крупнее, колонка прокручивается. */
+.studio-steps{overflow-y:auto}
+.studio-steps .step-bottom{position:static;margin-top:16px}
+@media (max-height:820px){.studio-steps .step-bottom{display:none}}
+
+/* Модальные окна и панели: без стеклянного размытия. */
+.modal{border-radius:var(--r-md);box-shadow:var(--e3)}
+
+/* ---------- Заказы на сервере (#orders) ---------- */
+.server-orders .server-session{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+.server-orders .server-login,.server-orders .server-create{max-width:480px;display:grid;gap:16px;margin:24px 0;
+  background:var(--paper);border:1px dashed var(--line-strong);border-radius:var(--r-md);padding:24px}
+.server-orders .server-order{background:var(--paper);border:1px dashed var(--line-strong);border-radius:var(--r-md);
+  padding:24px;margin:16px 0;display:grid;gap:16px}
+.server-orders .server-order header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.server-orders .server-order h3{font-size:22px;margin:4px 0}
+.server-orders .server-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:0}
+.server-orders .server-facts dt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.server-orders .server-facts dd{margin:4px 0 0;font-family:var(--mono);font-size:15px;font-weight:500}
+.server-orders .server-messages{margin:0;padding-left:20px;font-size:14px;display:grid;gap:4px}
+.server-orders .server-actions{display:flex;flex-wrap:wrap;gap:16px}
+.server-orders .server-action{display:grid;gap:12px;flex:1 1 260px;min-width:0;border-top:1px dashed var(--line-strong);padding-top:16px}
+.server-orders .advanced-field{display:grid;gap:4px;font-size:13px;color:var(--ink-2)}
+.server-orders .advanced-field input,.server-orders .advanced-field textarea,.server-orders .advanced-field select{width:100%;font-size:15px}
+.server-orders .page-top .server-session{max-width:100%}
+.server-orders section>h2{margin-top:32px}
+.server-orders .server-mfa{max-width:640px;display:grid;gap:16px;margin:24px 0;background:var(--paper);border:1px dashed var(--thread);border-radius:var(--r-md);padding:24px}
+.server-orders .server-uri{font-size:12px;word-break:break-all;font-weight:400}
+.server-orders .inline-warning{margin:16px 0}
+
+/* ---------- Главная: лист чертежа ---------- */
+.hero-stage{background-color:var(--stage-paper);
+  background-image:linear-gradient(var(--grid-major) 1px,transparent 1px),linear-gradient(90deg,var(--grid-major) 1px,transparent 1px),
+    linear-gradient(var(--grid-minor) 1px,transparent 1px),linear-gradient(90deg,var(--grid-minor) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;background-position:-1px -1px}
+.hero-stage::before{inset:16px;width:auto;height:auto;right:16px;top:16px;border-radius:0;background:none;box-shadow:none;
+  border:1.5px dashed var(--line-strong);pointer-events:none;z-index:1}
+.hero-stage::after,.stage-watermark{display:none}
+.hero-index{color:var(--ink-2)}
+.hero-plate{margin:0;display:flex;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line-strong);border-radius:var(--r-sm);font-family:var(--mono)}
+.hero-plate>div{padding:8px 16px}
+.hero-plate>div+div{border-left:1px solid var(--line-strong)}
+.hero-plate dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero-plate dd{margin:4px 0 0;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap}
+.hero-stage-bottom{z-index:2}
+.hero-stage .scene-host{inset:8% 2% 18% 2%}
+.round-button{border-color:var(--line-strong);background:var(--paper)}
+.round-button:hover{background:var(--linen)}
+.round-button{flex:none;min-width:var(--hit)}
+@media (max-width:760px){
+  .hero-stage{display:flex;flex-direction:column;min-height:0;height:auto}
+  .hero-stage .hero-index{position:static;margin:28px 28px 0}
+  .hero-stage .scene-host{position:relative;inset:auto;width:100%;height:300px;flex:none}
+  .hero-stage .hero-stage-bottom{position:static;margin:0 28px 28px;left:auto;right:auto;bottom:auto}
+  .hero-plate>div:nth-child(3){border-left:0;border-top:1px solid var(--line-strong);flex:1 1 100%}
+  .hero-plate dd{white-space:normal}.hero-plate>div{padding:8px 12px}}
+
+/* Перечень возможностей: номера лекал вместо трёх одинаковых карточек. */
+.home-assurance{counter-reset:lekalo;background:var(--paper);border-top:1px dashed var(--line-strong);border-bottom:1px dashed var(--line-strong)}
+.home-assurance>div{counter-increment:lekalo;position:relative}
+.home-assurance>div::before{content:'ЛЕКАЛО 0' counter(lekalo);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.home-assurance strong{font-family:var(--serif);font-weight:400;font-size:20px;letter-spacing:-.01em}
+.stitch-icon{flex:none}
+.stitch-icon.accent{color:var(--thread)}
+
+/* ---------- Контраст и размеры по результатам аудита в браузере ---------- */
+.footer-dot{color:var(--thread)}
+.helper,.table-scroll th,.table-scroll small,.rates-table th,.count,.text-button{color:var(--muted)}
+.filter-tabs button{color:var(--ink-2)}
+.filter-tabs button.active{color:var(--ink);font-weight:600}
+.material-large span{background:var(--paper);color:var(--ink);padding:2px 8px;border-radius:var(--r-sm)}
+button:disabled,.button.dark:disabled{color:var(--ink-2)}
+.status{background:var(--paper);border:1px solid var(--line-strong);padding:2px 8px;color:var(--ink-2)}
+.status.amber{color:var(--warning)}
+.status.green{color:var(--success)}
+.status.red{color:var(--error)}
+.status.muted{color:var(--muted)}
+summary{min-width:var(--hit);justify-content:center}
+.advanced-field input,.advanced-field select{min-height:var(--hit);height:auto}
+.studio-price .text-button,.studio-price-main .text-button{color:var(--ink-2)}
+input[type=file]{min-height:var(--hit);padding:8px;font-size:13px}
+.filter-tabs button{min-width:var(--hit)}
+.rates-table td:last-child{min-width:420px}
+.rates-table td input{width:100%}
+.rates-table input[type=number]{min-width:96px}
+.palette-row{flex-wrap:wrap}
+.gaber-workspace select,.gaber-workspace input:not([type=file]){min-height:var(--hit);border-color:var(--line-strong);font-size:13px}
+/* Панель вида: кнопки переносятся, а не прячутся за прокруткой. */
+.viewport-tools>div{flex-wrap:wrap;overflow:visible}
+
+/* Шапка не переносит пункты на вторую строку: на средних ширинах сжимаются промежутки и скрывается подпись бренда. */
+.header nav a{white-space:nowrap}
+@media (max-width:1180px){.header nav{gap:16px}.header nav a{font-size:13px}.brand small{display:none}}
+/* Два блока страницы подряд (шапка кабинета и журнал заказов) не растягиваются до высоты экрана каждый. */
+.factory-page,.order-workspace{min-height:0}
+/* Планшет и узкий ноутбук (до 1000 px): пункты меню уходят под кнопку, чтобы шапка не выходила за экран. */
+@media (max-width:1000px){
+  .header{position:relative}
+  .header nav{display:none;position:absolute;top:100%;left:0;right:0;z-index:20;flex-direction:column;align-items:stretch;gap:0;
+    padding:8px 5% 16px;background:var(--paper);border-bottom:1px dashed var(--line-strong);box-shadow:var(--e2)}
+  .header nav.mobile-open{display:flex;flex-wrap:nowrap}
+  .header nav a{display:flex;align-items:center;min-height:var(--hit);flex:none;width:100%;font-size:15px}
+  .menu-toggle{display:grid!important}
+}
+/* Телефон: шапка помещается в 375 px. Кабинет фабрики доступен из меню и по ссылке, бренд и промежутки сжаты. */
+@media (max-width:520px){
+  .header{padding-inline:12px}
+  .brand{font-size:18px;letter-spacing:.08em;gap:8px}
+  .brand{min-height:var(--hit);align-items:center}
+  .brand-symbol{width:36px;height:36px;font-size:30px}
+  .header-actions{gap:2px}
+  .factory-link{display:none}
+  .demo-badge{padding:0 6px}
+}
+/* Поле выбора файла в стиле кнопки. */
+input[type=file]::file-selector-button{min-height:36px;margin-right:12px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
+  background:transparent;color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+input[type=file]::file-selector-button:hover{background:var(--paper)}
+
+/* Единая пометка демонстрационного режима: один бейдж в шапке вместо повторов в каждом поле. */
+.demo-badge{min-height:var(--hit);padding:0 12px;border:1px dashed var(--thread);border-radius:var(--r-sm);background:transparent;
+  color:var(--thread);font-family:var(--mono);font-size:11px;letter-spacing:.08em;white-space:nowrap}
+.demo-badge:hover{background:color-mix(in srgb,var(--thread) 10%,transparent)}
+@media (max-width:760px){.demo-badge{padding:0 8px;letter-spacing:.04em}}
+
+/* ---------- 3D-сцена: заглушка-контур и плавное появление ---------- */
+.hero-stage>.furniture-mark{position:absolute;left:50%;top:44%;width:min(78%,520px);height:auto;transform:translate(-50%,-50%);
+  color:var(--ink-2);stroke:var(--ink-2);opacity:.55;pointer-events:none;z-index:0;transition:opacity .3s var(--ease)}
+.hero-stage:has(.scene-host[data-ready]) >.furniture-mark{opacity:0}
+.hero-stage .scene-host{z-index:1}
+.scene-host canvas{opacity:0;transition:opacity .4s var(--ease)}
+.scene-host[data-ready] canvas{opacity:1}
+@media (max-width:760px){.hero-stage>.furniture-mark{position:static;transform:none;margin:8px auto 0;width:min(80%,320px);display:none}}
+
+/* ---------- Движение (Ковальски и Кребель: редко и коротко, только opacity и transform) ----------
+   Частые действия не анимируются: смена шага, выбор цвета, пересчёт цены, ввод, клавиатура.
+   Анимируются редкие: смена страницы, открытие окна, сообщение. Одна кривая, 200–240 мс, выход тише входа. */
+@media (prefers-reduced-motion:no-preference){
+  @keyframes lk-page-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes lk-dialog-in{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes lk-fade-in{from{opacity:0}to{opacity:1}}
+  @keyframes lk-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  #root main{animation:lk-page-in .22s var(--ease) both}
+  dialog.modal[open]{animation:lk-dialog-in .2s var(--ease) both}
+  dialog.modal[open]::backdrop{animation:lk-fade-in .2s var(--ease) both}
+  .toast{animation:lk-toast-in .24s var(--ease) both}
+}
+/* Наведение на карточку каталога: лёгкий подъём без увеличения. */
+.collection-card:hover .furniture-mark{transform:translateY(-2px)}
+
+/* Страница #kit (dev) */
+.design-kit .kit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:16px;margin:16px 0 32px}
+.design-kit figure,.design-kit .kit-marks figure{margin:0;border:1px dashed var(--line-strong);border-radius:var(--r-md);padding:16px;display:grid;gap:8px;justify-items:center;background:var(--paper)}
+.design-kit figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.design-kit .kit-marks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,640px),1fr));gap:16px}
+.design-kit .kit-marks figure{justify-items:stretch}
+.design-kit .kit-marks .furniture-mark{width:100%;max-width:640px;margin:0 auto;height:auto!important;color:var(--ink);stroke:var(--ink)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;transform:none!important}}

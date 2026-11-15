@@ -6,3 +6,7 @@ dist/
 *.log
 qa/
 .DS_Store
+
+# Локальные секреты разработки
+server/dev/dev.env
+*.env

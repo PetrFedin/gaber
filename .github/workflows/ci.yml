@@ -1,18 +1,153 @@
 name: Check Gaber
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+concurrency:
+  group: gaber-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # PR default checkout is a synthetic merge commit, NOT the head SHA.
+          # The release gate must verify the exact authored source revision.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact checkout SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          actual=$(git rev-parse HEAD)
+          if [ "$actual" != "$EXPECTED_SHA" ]; then
+            echo "CHECKOUT_SHA_MISMATCH: expected=$EXPECTED_SHA actual=$actual" >&2
+            exit 1
+          fi
+          echo "GABER_VERIFIED_SOURCE_SHA=$actual"
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Dependency install
+        id: install
+        run: npm ci
+      - name: Verify inventory and repository structure
+        id: source
+        run: npm run verify:repository
+      - name: Node domain, engineering and API regression tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: npm run test:node
+      - name: DOM integration, rendering and three-role smoke tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: npm run test:ui
+      - name: Production build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: npm run build
+
+  # Isolated PostgreSQL 17 schema/RLS gate. No production databases, real
+  # account credentials or external service provisioning. All contents are
+  # discarded after the GitHub-hosted job completes.
+  postgres-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: gaber_ci_disposable_only
+          POSTGRES_DB: gaber_staging
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d gaber_staging"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact PostgreSQL contract SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          actual=$(git rev-parse HEAD)
+          test "$actual" = "$EXPECTED_SHA" || { echo "POSTGRES_SHA_MISMATCH" >&2; exit 1; }
+      - name: Apply staging migrations 001-009 and run real PostgreSQL tenant/RLS contract
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: bash scripts/verify-postgres-staging.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install project and isolated PostgreSQL test driver
+        run: |
+          npm ci
+          # pg is used only by the CI test; do not alter the tracked
+          # application dependency graph or package-lock.json.
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund pg@8.16.3
+          npm run verify:repository
+      - name: Prepare disposable HTTP E2E server role and fixture organisations
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: |
+          docker exec -e "PGPASSWORD=$GABER_TEST_PG_PASSWORD" -i \
+            "$(docker ps --filter 'ancestor=postgres:17' --format '{{.ID}}' | head -n 1)" \
+            psql -X -v ON_ERROR_STOP=1 -U postgres -d gaber_staging \
+            < server/tests/postgres-http-e2e-fixtures.sql
+      - name: Run actual HTTP to PostgreSQL multi-tenant three-role E2E
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+        run: node server/tests/postgres-http-e2e.mjs
+      - name: Server login, sessions, role isolation, payments and HOLD on PostgreSQL 17
+        env:
+          GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
+          GABER_DEV_ADMIN_DATABASE_URL: postgres://postgres:gaber_ci_disposable_only@127.0.0.1:5432/gaber_staging
+          GABER_DEV_SKIP_MIGRATIONS: '1'
+          GABER_AUTH_ENC_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          GABER_DEV_DB_ORDERS_PASSWORD: ci-orders-disposable
+          GABER_DEV_DB_AUTH_PASSWORD: ci-auth-disposable
+          GABER_ORDERS_DATABASE_URL: postgres://gaber_app_orders:ci-orders-disposable@127.0.0.1:5432/gaber_staging
+          GABER_AUTH_DATABASE_URL: postgres://gaber_app_auth:ci-auth-disposable@127.0.0.1:5432/gaber_staging
+        run: |
+          # Миграции 001-008 уже применены verify-postgres-staging.sh; setup создаёт роли и пользователей.
+          node server/dev/setup.mjs
+          node server/tests/auth-http-e2e.mjs
+          node server/tests/order-lifecycle-e2e.mjs
+          node server/tests/order-simulated-lifecycle-e2e.mjs
+          node server/tests/mfa-e2e.mjs
+
+  # Real installed Chromium against compiled Vite preview. This is a local
+  # browser UX smoke test, NOT identity/payment/production E2E.
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact browser QA SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify inventory and repository structure
+        run: npm run verify:repository
+      - name: Build the exact browser candidate
+        run: npm run build
+      - name: Test actual Chromium roles and viewport overflow at 375, 768 and 1440
+        run: node scripts/browser-smoke.mjs
+      # Screenshots remain in the ephemeral job only: repository Actions
+      # artifact quota is exhausted. Do not buy storage or change visibility.

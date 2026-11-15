@@ -1,0 +1,937 @@
+{
+  "schemaVersion": "gaber/source-inventory/1",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "sha": "80f86000710d7be44c500a9f114f1f04e117f2ae"
+    },
+    {
+      "path": ".editorconfig",
+      "sha": "1014ba78880c899e842b397cb89a878be4671f7d"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha": "8eaae48ebd43ac1e7d2baa6ca3d017d235b864f0"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha": "5dffaa7543be554c27675864d047e85f1aa9fb4e"
+    },
+    {
+      "path": ".gitignore",
+      "sha": "8fe574267d724c64b252272f83dcfd21b43fc8cd"
+    },
+    {
+      "path": ".nvmrc",
+      "sha": "ce62013c39aed63f656bb7ae41bdd45d81163ffe"
+    },
+    {
+      "path": ".openai/hosting.json",
+      "sha": "7c0f7627018fe7c3f79894dc9195a6f855a33215"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha": "35aab5cb512e1e267f7223a02c1080f60ec1438f"
+    },
+    {
+      "path": "DESIGN.md",
+      "sha": "078458f56feeb3032202faefe5e0c9656e440a3f"
+    },
+    {
+      "path": "Dockerfile",
+      "sha": "67b723ec44c9f1883c8cd6c8bcb472b10db8dc6d"
+    },
+    {
+      "path": "README.md",
+      "sha": "2e432ca58141a16ee35d4569cb15e690a53edacd"
+    },
+    {
+      "path": "docs/CI-RECOVERY-RUNBOOK.md",
+      "sha": "16d65a05d5f848f95d7d7ab22ddfa4b99d2f7e7f"
+    },
+    {
+      "path": "docs/CLIENT-EXPERIENCE.md",
+      "sha": "bbc651a7cebbbaf84710a4eeaec026aca8bc37a5"
+    },
+    {
+      "path": "docs/CONSTRUCTOR-QUALITY.md",
+      "sha": "9962b77e2b1858c6b23c76e568f0b03d61bf9a96"
+    },
+    {
+      "path": "docs/DEPLOY.md",
+      "sha": "70b777f21fc1e00e24852b149c088fb34f60c9ec"
+    },
+    {
+      "path": "docs/E2E-ROLE-ACCEPTANCE.md",
+      "sha": "38d3398b56d7be433a1f19e3b5a883bf525e1e71"
+    },
+    {
+      "path": "docs/HTTP-POSTGRES-E2E-CONTRACT.md",
+      "sha": "e08375c1a63863330b2e907f154c703cbf79a42a"
+    },
+    {
+      "path": "docs/INDEX.md",
+      "sha": "bbd0ddedeb6eb51361f4656fc780102fbdbfa5c9"
+    },
+    {
+      "path": "docs/MVP-QUALITY-CONTRACT.md",
+      "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
+    },
+    {
+      "path": "docs/ORDER-INPUT-AND-STATIC-BOUNDARY-2026-11-16.md",
+      "sha": "248199de6ae22bda8c00ee7d487587a7fe332197"
+    },
+    {
+      "path": "docs/POSTGRES-STAGING-CONTRACT.md",
+      "sha": "02a0ef4e9142000d2ba2b70413a55974d23f1bdc"
+    },
+    {
+      "path": "docs/PROJECT-STRUCTURE.md",
+      "sha": "2f054d34b7641a68b42d50c22486592798fc7647"
+    },
+    {
+      "path": "docs/RELEASE-REVIEW-GATES.md",
+      "sha": "d46151ee0698ed6b2d7b0fa9d521c6e513de21ce"
+    },
+    {
+      "path": "docs/REPRODUCIBILITY.md",
+      "sha": "349a3a6510d9b1b54b2df1f8e7ef31224f7e1e9e"
+    },
+    {
+      "path": "docs/SERVER-AUTH.md",
+      "sha": "ef271b9ebd5d140b6b5b55a4902081521fb8b8d3"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "sha": "d4dc79467157c3023b4ee21b67b7f7b11290e57c"
+    },
+    {
+      "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
+      "sha": "08628303d54b6c0160ad112502e0fb4a338e8f4d"
+    },
+    {
+      "path": "docs/VERIFIED-CANDIDATE-2026-11-01.md",
+      "sha": "f015444c2c0a1af40700c62bd39495c71605aa8f"
+    },
+    {
+      "path": "docs/architecture.md",
+      "sha": "b74abbc07d090fefc523adee7f0e5fe76eaefbfb"
+    },
+    {
+      "path": "docs/audit-and-development-plan-v0.4.19.md",
+      "sha": "ab5065569829aaaf5d73a1056b8f55c8e3ad5925"
+    },
+    {
+      "path": "docs/audit-v0.4.15.md",
+      "sha": "50459f346eab307e6d593317d9c4beec3409b424"
+    },
+    {
+      "path": "docs/engineering-v0.3.md",
+      "sha": "0151da123b83c66e56a87f61f82fc616c6979a9b"
+    },
+    {
+      "path": "docs/engineering-v0.4.md",
+      "sha": "b096a5e403b4c6d641a4ccbb8c536d471f370346"
+    },
+    {
+      "path": "docs/evidence/v0.4.19/local-summary.json",
+      "sha": "e2bdae49013563d3baa7c5e04cf14e9071a4b1d2"
+    },
+    {
+      "path": "docs/expansion-v0.2.md",
+      "sha": "6d81bcbd282c0947ac56e5e04b0eacf90981268b"
+    },
+    {
+      "path": "docs/market-benchmark-v046-2026-10-20.md",
+      "sha": "4f2fd988e3ab49b8712dc6e395a8f4bf73320fd7"
+    },
+    {
+      "path": "docs/project-map-v0.4.16.md",
+      "sha": "54ad9d598a4d04ae92c171534ecd027de395aea7"
+    },
+    {
+      "path": "docs/project-recovery-2026-10-19.md",
+      "sha": "aed4a85b87072dae3b4f3203e6fcf19fe9358029"
+    },
+    {
+      "path": "docs/roadmap.md",
+      "sha": "3ccd9e9e2c11a073483e7d4af87de51aa0e85fa9"
+    },
+    {
+      "path": "docs/technical-specification-v1.md",
+      "sha": "b04f8ff73b0eb389ea9c1c5c3752c7e69bc809fd"
+    },
+    {
+      "path": "docs/verification-storage-2026-10-19.md",
+      "sha": "4ff4e4380ace4fb72982c190611f3e53ace1d001"
+    },
+    {
+      "path": "docs/verification-v0.4.1.md",
+      "sha": "112ba398c800d8fff23d4baf1c3c8f929813b1e3"
+    },
+    {
+      "path": "docs/verification-v0.4.10.md",
+      "sha": "51b106d195cc1d7a7b5f922ae40e880a48afa278"
+    },
+    {
+      "path": "docs/verification-v0.4.11.md",
+      "sha": "c5b19b8a8c1862cd4cdc81d5b94c109bf4c20ee7"
+    },
+    {
+      "path": "docs/verification-v0.4.12.md",
+      "sha": "1751f6d43a1a751e718df132795a8421d4f7ca22"
+    },
+    {
+      "path": "docs/verification-v0.4.13.md",
+      "sha": "5fd3647b928ab2dea52544e219c870f77a54901d"
+    },
+    {
+      "path": "docs/verification-v0.4.14.md",
+      "sha": "48ca5ad3d243af679055fe016396668577d9b247"
+    },
+    {
+      "path": "docs/verification-v0.4.17.md",
+      "sha": "148e4798acf00342f5d43d8d796ccdff115941aa"
+    },
+    {
+      "path": "docs/verification-v0.4.18.md",
+      "sha": "54831b4e421d7b225fb6b389103ddb2315a29580"
+    },
+    {
+      "path": "docs/verification-v0.4.19.md",
+      "sha": "4d335fdd28e2594258b35e057e1fb1badb324126"
+    },
+    {
+      "path": "docs/verification-v0.4.2.md",
+      "sha": "2e20ea097260a514394fdf45b6e9d18eeb2fd7b0"
+    },
+    {
+      "path": "docs/verification-v0.4.3.md",
+      "sha": "153b3ce1313c034ee91bfdca0bdedd5572905183"
+    },
+    {
+      "path": "docs/verification-v0.4.4.md",
+      "sha": "47fa84963c9135519a9b7b5b7624f637f013427a"
+    },
+    {
+      "path": "docs/verification-v0.4.5.md",
+      "sha": "2d66428dc2b25a9aa5dfd0009711cf7f5b1d1242"
+    },
+    {
+      "path": "docs/verification-v0.4.7.md",
+      "sha": "148171f7dfa7383d307f9418fdcff647f46ccb87"
+    },
+    {
+      "path": "docs/verification-v0.4.8.md",
+      "sha": "ab45a61c1d69a229023796826a78eb1bfb877593"
+    },
+    {
+      "path": "index.html",
+      "sha": "389349b04dc5033b7c196c603e2419a4bd9063f0"
+    },
+    {
+      "path": "package-lock.json",
+      "sha": "e379ae4315ad4b94b24da085981f7671f7fe38fd"
+    },
+    {
+      "path": "package.json",
+      "sha": "1e2276685a1aea6f0fb022dd428a17c9782e9370"
+    },
+    {
+      "path": "public/favicon.svg",
+      "sha": "820cc9cf5620a295fd63971a1c01387d01ca15bb"
+    },
+    {
+      "path": "scripts/browser-smoke.mjs",
+      "sha": "b2aa4a3302d3ba5e61d7aa229dd1ed5569620ffa"
+    },
+    {
+      "path": "scripts/design-audit.browser.js",
+      "sha": "bb40e9178055dbe0ec3de280af62a1dd26dfff4c"
+    },
+    {
+      "path": "scripts/verify-postgres-staging.sh",
+      "sha": "727494e5123af771de58c64092aea823b0ec2664"
+    },
+    {
+      "path": "scripts/verify-release.sh",
+      "sha": "b851aaf99dc76af708cbd7d195dff7395432fecf"
+    },
+    {
+      "path": "scripts/verify-repository.mjs",
+      "sha": "21246afbed94d44a1734012e163e48b2f52806a2"
+    },
+    {
+      "path": "scripts/verify-source.mjs",
+      "sha": "b5e553d4887a1f072dc8129b2def85971f768ce3"
+    },
+    {
+      "path": "server/accessPolicy.js",
+      "sha": "5cee8c2c7fd76ce461e508f5c1ef41e28a072f14"
+    },
+    {
+      "path": "server/auth/authHttp.js",
+      "sha": "22510d818ceca4e58ff4970461b02b5f14f725f6"
+    },
+    {
+      "path": "server/auth/authService.js",
+      "sha": "bb5cf157f1b614ca90a56d8fefc636739370762e"
+    },
+    {
+      "path": "server/auth/authStore.js",
+      "sha": "35ddf5f52a800cfe79ac41febdc349c11373b7a1"
+    },
+    {
+      "path": "server/auth/passwords.js",
+      "sha": "f50fd95021e710f2b8451d855a61e90ed4e68e1f"
+    },
+    {
+      "path": "server/auth/principal.js",
+      "sha": "304fc122eadcd77772d36e79220e49d6ba5d2a9c"
+    },
+    {
+      "path": "server/auth/totp.js",
+      "sha": "5723bf7489bab185be27353859924e3f0156b5f3"
+    },
+    {
+      "path": "server/config.js",
+      "sha": "7ecae13118dca7e252d80560ab0dffb40b2e9e6c"
+    },
+    {
+      "path": "server/dev/dev.env.example",
+      "sha": "d99ed337ff5eb9d1d6ab78028e37dda1e95df6cb"
+    },
+    {
+      "path": "server/dev/docker-compose.yml",
+      "sha": "b288c27145e27e305840f55908cd1318424ae825"
+    },
+    {
+      "path": "server/dev/seed-data.js",
+      "sha": "29aa1968fbe7aa8c74b00b8507568be2bea09052"
+    },
+    {
+      "path": "server/dev/setup.mjs",
+      "sha": "3773357452cf9ccc5d377a71e2e97dc7930e519b"
+    },
+    {
+      "path": "server/devExternalAuthority.js",
+      "sha": "99b832768c18ca6f8aaa9abe7bc7d38c0a95f6cb"
+    },
+    {
+      "path": "server/factoryReviewPolicy.js",
+      "sha": "967f58badeb54ed76a6f52fc8622d74e0979d239"
+    },
+    {
+      "path": "server/factoryReviewService.js",
+      "sha": "096559327f972581e76593918dfd822055b6b7cf"
+    },
+    {
+      "path": "server/httpServer.js",
+      "sha": "849329238a6bdc54d7abe144ea046d6cfefeb549"
+    },
+    {
+      "path": "server/index.js",
+      "sha": "5c5daf1ae1a67488e2689b2117dcadc5f615211f"
+    },
+    {
+      "path": "server/migrations/001_factory_review_hold.sql",
+      "sha": "0943192d0d360a24fadca4a2e08cee8178e8c537"
+    },
+    {
+      "path": "server/migrations/002_order_event_journal_hold.sql",
+      "sha": "b6f2a97ef6a56cca7c533add60c3e9946c07d482"
+    },
+    {
+      "path": "server/migrations/003_scoped_order_messages_hold.sql",
+      "sha": "00aa76a3fe543f04552d18155ff10c7edcdeb1ef"
+    },
+    {
+      "path": "server/migrations/004_three_role_platform_hold.sql",
+      "sha": "fee73854589b2d4cc37c91bf4c19cf3cb0ff69c2"
+    },
+    {
+      "path": "server/migrations/005_dialogue_channels_hold.sql",
+      "sha": "473f8ab3f6f0304d7ec29288256f2ddc25cc9472"
+    },
+    {
+      "path": "server/migrations/006_order_intake_factory_assignment_hold.sql",
+      "sha": "3a5d20c34d8dba3018f84a3604ca1d34b97f9122"
+    },
+    {
+      "path": "server/migrations/007_verified_factory_directory_hold.sql",
+      "sha": "5a2231897ec8cd8d36abd1ed01229ab3d46193d9"
+    },
+    {
+      "path": "server/migrations/008_auth_sessions_hold.sql",
+      "sha": "041ecb33dc2a2811255d4b00852b12b3bbc733b9"
+    },
+    {
+      "path": "server/migrations/009_mfa_audit_hold.sql",
+      "sha": "83842ff69d22c73e8712694e199e413c551471be"
+    },
+    {
+      "path": "server/orderCommandAdmission.js",
+      "sha": "0751dce833c1c221ef96a2a99de6984f912243a3"
+    },
+    {
+      "path": "server/orderHttpApi.js",
+      "sha": "bcdd013480338e3c0d70000cd380b8f99877dc57"
+    },
+    {
+      "path": "server/orderJournalService.js",
+      "sha": "7c9ce711260fa728e26abcfdca4ddabc8750e5ce"
+    },
+    {
+      "path": "server/orderJournalWiring.js",
+      "sha": "73af8d27d0abaffeffd21626a557debfed10b68f"
+    },
+    {
+      "path": "server/orderReadModel.js",
+      "sha": "87bf7d7dffd5144a191d3fe2f1d9d776507df1a6"
+    },
+    {
+      "path": "server/postgresFactoryRepository.js",
+      "sha": "462ec0bb15e17dd62416de4eaa4a39b23eca2751"
+    },
+    {
+      "path": "server/postgresOrderRepository.js",
+      "sha": "c010a983ae4ff44ad042dccafa4a8d6072dfcaa7"
+    },
+    {
+      "path": "server/staticFiles.js",
+      "sha": "b1276de46ce75f2f88b7edb713adb8616acd4e14"
+    },
+    {
+      "path": "server/tests/auth-http-e2e.mjs",
+      "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
+    },
+    {
+      "path": "server/tests/mfa-e2e.mjs",
+      "sha": "b367eb4e09fd446602b987930d87c70767ac49ad"
+    },
+    {
+      "path": "server/tests/order-lifecycle-e2e.mjs",
+      "sha": "7d5716e6c2830beb612fd1a08a93272aa41c5102"
+    },
+    {
+      "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
+      "sha": "c9269b4e58df368615bf038c1aab0d82d4f6b1a7"
+    },
+    {
+      "path": "server/tests/postgres-http-e2e-fixtures.sql",
+      "sha": "3171cd39c7cf3a520af0f8ffef8258515f5e8936"
+    },
+    {
+      "path": "server/tests/postgres-http-e2e.mjs",
+      "sha": "cc649f2000681e4300de88a7a4c60266e58f9f75"
+    },
+    {
+      "path": "server/tests/postgres-staging-v007.sql",
+      "sha": "58c6bf398f50b7890483b5f6d085a120d384de36"
+    },
+    {
+      "path": "src/App.jsx",
+      "sha": "3790fe4b55de21f8f94100bf3bff37e1055fe37c"
+    },
+    {
+      "path": "src/ClientOfferAssurance.jsx",
+      "sha": "030d4c7068608ecf2b5f77fb9fea2c00037482a1"
+    },
+    {
+      "path": "src/ConfigurationDetails.jsx",
+      "sha": "64ab4cd14dfd9281df9204d64543142ef16593dc"
+    },
+    {
+      "path": "src/ConfiguratorPanel.jsx",
+      "sha": "e9d31d4e4b5473cfa04e339b6b554ae8ee9302c6"
+    },
+    {
+      "path": "src/CostTraceabilityPanel.jsx",
+      "sha": "ec6c3c84d03a53f4015b8812b25230da5f052ca8"
+    },
+    {
+      "path": "src/CostingPage.jsx",
+      "sha": "591a9375e8f87dc7fb76986937394546b28b4981"
+    },
+    {
+      "path": "src/DesignExperience.jsx",
+      "sha": "d852723bcf0668219746b7ab56c7949582b6761c"
+    },
+    {
+      "path": "src/DesignKit.jsx",
+      "sha": "af2f9a2f5752f820eb4a6f6c9859b6971307a4d4"
+    },
+    {
+      "path": "src/EngineeringAssembly.js",
+      "sha": "5a9b0d5905ea8e71b50880799555375135c44d5a"
+    },
+    {
+      "path": "src/ErrorBoundary.jsx",
+      "sha": "1abea23280721d8df0c6f0ce27170cdce9af7efe"
+    },
+    {
+      "path": "src/FactoryCostDraftPanel.jsx",
+      "sha": "6b4db7147213c31ff693d3e9a39176e1f638c483"
+    },
+    {
+      "path": "src/FactoryCostEditor.jsx",
+      "sha": "741c9bdfb5ff0c869bf2cf952108f7c54e477b4a"
+    },
+    {
+      "path": "src/FactoryDraftWorkspace.jsx",
+      "sha": "82186b465e81e2d07e141ee06654f97e8545333e"
+    },
+    {
+      "path": "src/FactoryInsightsPanel.jsx",
+      "sha": "cdece625a39b3db02da7297651be5d9b09213105"
+    },
+    {
+      "path": "src/FurnitureMarks.jsx",
+      "sha": "0de1b4cd121d1a371dc9673897985e3982817393"
+    },
+    {
+      "path": "src/OperationsPage.jsx",
+      "sha": "6c2a7cc1c565d0f29fdc65b484f7b1ea4e97cf87"
+    },
+    {
+      "path": "src/OrderExperience.jsx",
+      "sha": "237b626aa1cbb407bdb8248dd42054ac7ca91805"
+    },
+    {
+      "path": "src/OrderWorkspace.jsx",
+      "sha": "3232684059496ab961be30f48e8d3a92148b5dc8"
+    },
+    {
+      "path": "src/ProjectStorageTools.jsx",
+      "sha": "97e0cb07a23d2ca549de1b8c53c2fee98415cac4"
+    },
+    {
+      "path": "src/Scene.jsx",
+      "sha": "e41852d9aa431b0624f57df87b8d60dfc6f58bb6"
+    },
+    {
+      "path": "src/ServerOrders.jsx",
+      "sha": "6f5c27b9c5e6f7c8d72909f6ef35a906a73afb84"
+    },
+    {
+      "path": "src/TechnicalPage.jsx",
+      "sha": "b340e874e95e86fb083ce4be2858dc384e0c8a28"
+    },
+    {
+      "path": "src/assemblyExplosion.js",
+      "sha": "900c4362be238f73250711b40c614566ea149dcd"
+    },
+    {
+      "path": "src/assetSafety.js",
+      "sha": "f8b0b32ead3158dcd3fc82d15ed7e73e7a7e7845"
+    },
+    {
+      "path": "src/atelierExperience.css",
+      "sha": "a92e00480a0f7a02a1c55ce6fd8ae4ff9fc9b340"
+    },
+    {
+      "path": "src/clientOffer.js",
+      "sha": "bd880ff50d2e708bf89366423236cac1da128e3a"
+    },
+    {
+      "path": "src/costTraceability.js",
+      "sha": "a7e81a7ecfea2d1f9a663a2eedcdd17b1e7cb9df"
+    },
+    {
+      "path": "src/costVariance.js",
+      "sha": "083a8abc31530ad8329dfb8196d4be01bf499baf"
+    },
+    {
+      "path": "src/costing.js",
+      "sha": "c5c415f44fca07d9977b46cd531189f8fd71d0d1"
+    },
+    {
+      "path": "src/designExperience.css",
+      "sha": "a33781ebc1b882750975459b20391ed5fc49dd12"
+    },
+    {
+      "path": "src/designGuidance.js",
+      "sha": "80187d1e270c45e4724f8ee73adeb34adfff2b3c"
+    },
+    {
+      "path": "src/domain.js",
+      "sha": "aad06c49124d2aa288a4352d008211dac88619ec"
+    },
+    {
+      "path": "src/draftStorage.js",
+      "sha": "80505bd4f3c4d86936701f6523d5762f588c4a6c"
+    },
+    {
+      "path": "src/engineering.js",
+      "sha": "ff04055390d28d32326b95530ff3fe1131ee638b"
+    },
+    {
+      "path": "src/factoryCosting.js",
+      "sha": "866f3315398d4797b0989069c16ce267833d4783"
+    },
+    {
+      "path": "src/factoryDraftStorage.js",
+      "sha": "3cbbe5130137181c5a71a648eb5205d553cfe72e"
+    },
+    {
+      "path": "src/factoryInsights.js",
+      "sha": "56e03c725417394ec897fe789a7b1b6840391e2f"
+    },
+    {
+      "path": "src/factoryScratch.js",
+      "sha": "8b3f60aef3e517c8879bed9e1f04b5d91d32aa21"
+    },
+    {
+      "path": "src/frameLayout.js",
+      "sha": "7380cc74f1277be2b156f2f6c79d99ec1f61e459"
+    },
+    {
+      "path": "src/icons.jsx",
+      "sha": "c7620a80ffebf2f042817064cb97fa5bb2e53944"
+    },
+    {
+      "path": "src/jointLayout.js",
+      "sha": "57049541619a854e968bd6f26372c847272ec0f8"
+    },
+    {
+      "path": "src/leadTime.js",
+      "sha": "fdfcf440a95808ca0e9576dc299c2224f38ac31d"
+    },
+    {
+      "path": "src/main.jsx",
+      "sha": "3c40dfe2552ed2e2101ed06b4675cb134f0a01fc"
+    },
+    {
+      "path": "src/manufacturing.js",
+      "sha": "f86609a436fcda8b180400277e7ee3a3e0d97942"
+    },
+    {
+      "path": "src/orderAnalytics.js",
+      "sha": "60ad93f8baa32cbd0e04c2a1389759be206664e5"
+    },
+    {
+      "path": "src/orderExperience.css",
+      "sha": "a4bc73b6946dd41d2e7f48e87cb184e00074bda9"
+    },
+    {
+      "path": "src/orderExperience.js",
+      "sha": "471accd057d7a4143128bde84551c210e49da1e9"
+    },
+    {
+      "path": "src/orderMessageChannels.js",
+      "sha": "b2bbf0b5cc0a4dfb941f793d2dae23c9e3e51604"
+    },
+    {
+      "path": "src/orderMoney.js",
+      "sha": "962a2e9cd54c92db73c9ca7cff0d06a66238b794"
+    },
+    {
+      "path": "src/orderStorage.js",
+      "sha": "006f24a10d340ebccf58ea01c6f0577f33d2abdd"
+    },
+    {
+      "path": "src/orderWorkflow.js",
+      "sha": "85c2c073914241f357207c88c84b854f146193b8"
+    },
+    {
+      "path": "src/partnerEconomics.js",
+      "sha": "c9dbed4b1f0f4685eb8fcee7e13c83764e66f7f6"
+    },
+    {
+      "path": "src/previewLayout.js",
+      "sha": "e3414022d9a8a05713180c11b47532940b5f7e1c"
+    },
+    {
+      "path": "src/productionSchedule.js",
+      "sha": "33bf83b1fef35c0511cf72ac9a478d2e60b914b0"
+    },
+    {
+      "path": "src/serverApi.js",
+      "sha": "41ef7a2e3c5a6ff407c5e09a6e5e07991e48396b"
+    },
+    {
+      "path": "src/serverOrderMoney.js",
+      "sha": "0f3e6c174b701793a871bdd10b862e3331fd30d9"
+    },
+    {
+      "path": "src/softLayout.js",
+      "sha": "98cbebc8dceb2904c712fc21ae703713e68284c0"
+    },
+    {
+      "path": "src/storage.js",
+      "sha": "d019eb592c08cec70ccffc25adace3cff1afb8c3"
+    },
+    {
+      "path": "src/styles.css",
+      "sha": "e1c90349c927e252470ae656dc2a282418f15051"
+    },
+    {
+      "path": "src/supportLayout.js",
+      "sha": "746bbb88828783b67a3020c56ad3f5ba89a5dba7"
+    },
+    {
+      "path": "src/theme.css",
+      "sha": "a1d4cbebaeb7e37149dc0e3d1b16938a6a1d6eb1"
+    },
+    {
+      "path": "src/traceability.js",
+      "sha": "5fbc67f3c8da192c328dbaf6db037d648bbf351e"
+    },
+    {
+      "path": "src/upholsteryGeometry.js",
+      "sha": "b5ca371e0e9d7058c625c4c9f594a60ec7f2cc12"
+    },
+    {
+      "path": "src/visualDetailing.js",
+      "sha": "fc79a86f2ab39501eb46f43721e2b736fea092be"
+    },
+    {
+      "path": "tests/access-policy-v0415.test.js",
+      "sha": "9504a700db402bff04c77d307da3d0224e1ad232"
+    },
+    {
+      "path": "tests/assembly-explosion.test.js",
+      "sha": "784811c8de28085084cef724f2d9655559bf2ec1"
+    },
+    {
+      "path": "tests/assembly-links.test.js",
+      "sha": "1ca6cd813c71d7a3b2bba5b712f77d4084b98ce3"
+    },
+    {
+      "path": "tests/auth-service.test.js",
+      "sha": "ecfc598cad06bf1405f5fd5da28f4b4cddb29b73"
+    },
+    {
+      "path": "tests/chaise-structure.test.js",
+      "sha": "8b9a3e4b05c11dc5fe18233a0b72c8e5821da25d"
+    },
+    {
+      "path": "tests/client-experience-ui.mjs",
+      "sha": "ee87c3fd589ecd2227d33d8cdd0cfbf7b394ddf4"
+    },
+    {
+      "path": "tests/client-offer.test.js",
+      "sha": "c7c113e63b5448691e4ee833f93d7d16345834aa"
+    },
+    {
+      "path": "tests/cost-audit-hardening-v046.test.js",
+      "sha": "ab3d091fccb3a08bdabce41330dc2e760b3b7df0"
+    },
+    {
+      "path": "tests/cost-sensitivity.test.js",
+      "sha": "7769b034128e79c108d829681254659bceeb9f39"
+    },
+    {
+      "path": "tests/cost-traceability-v046.test.js",
+      "sha": "ec0eff6731876d15e9e7c2a1a0a0c184339643b9"
+    },
+    {
+      "path": "tests/cost-variance.test.js",
+      "sha": "72046709f2dc818c84ad5b564860b020f4376ee9"
+    },
+    {
+      "path": "tests/design-experience-ui.mjs",
+      "sha": "e866a2480aa1365005418f425cf7af1782cfbfba"
+    },
+    {
+      "path": "tests/design-guidance.test.js",
+      "sha": "57330e2ac8fef92fcce39b3d9093a590edd36647"
+    },
+    {
+      "path": "tests/dev-external-authority.test.js",
+      "sha": "10d63e35c6463d56a5b474d24e4e8aafcf41df34"
+    },
+    {
+      "path": "tests/domain.test.js",
+      "sha": "947379553651c41977f81edcaf4c240941f211c2"
+    },
+    {
+      "path": "tests/draft-and-boundary-ui.mjs",
+      "sha": "6f30f3a72914aa2b0a3ab30ed111b6e59d0feff5"
+    },
+    {
+      "path": "tests/engineering.test.js",
+      "sha": "bd5c831fe893b7989654e5fc7b9a0856042295ca"
+    },
+    {
+      "path": "tests/factory-costing-v047.test.js",
+      "sha": "4675a179a664e7845f710e6e35b630128938cd60"
+    },
+    {
+      "path": "tests/factory-costing-v048.test.js",
+      "sha": "130c1b6cd15a01477942384592f3a079ddde8561"
+    },
+    {
+      "path": "tests/factory-directory-v07.test.js",
+      "sha": "7329c7f4b54195b9d8254c9fbff4aa78e0a2e328"
+    },
+    {
+      "path": "tests/factory-editor-ui.mjs",
+      "sha": "13a67fc606eb175a7d3dd2dec56617ef0fb7c96c"
+    },
+    {
+      "path": "tests/factory-insights-v0410.test.js",
+      "sha": "f33136535941a022101e1b1b9bef19bb842f62c7"
+    },
+    {
+      "path": "tests/factory-review-policy.test.js",
+      "sha": "bca0f0380674e1c93b2da2b51e56d15833d47ef2"
+    },
+    {
+      "path": "tests/factory-review-service.test.js",
+      "sha": "64ff29893fc40205f99a27522ce86ba9839da5eb"
+    },
+    {
+      "path": "tests/factory-revisions-v049.test.js",
+      "sha": "2dcfd9bf7062070a89828ae2e4dd20bbb9c50e0a"
+    },
+    {
+      "path": "tests/factory-scratch-v0410.test.js",
+      "sha": "4859cdf1ef34aaaeb882fe5308b85f59c68b6f7c"
+    },
+    {
+      "path": "tests/joint-contract-v045.test.js",
+      "sha": "62914067cb2401d978a59c98d4e1cad1d431c2e8"
+    },
+    {
+      "path": "tests/lead-time.test.js",
+      "sha": "31fb65af86a2f4fdefd506c0e150a327adc145dd"
+    },
+    {
+      "path": "tests/manufacturing.test.js",
+      "sha": "bb994eb4631ee48f175a7436c15beb1248309c29"
+    },
+    {
+      "path": "tests/operations-workspace-ui.mjs",
+      "sha": "7c9950d3e16663e0e2d97867b1ea65bfdeec6d3a"
+    },
+    {
+      "path": "tests/order-analytics-v0415.test.js",
+      "sha": "e73e4a9411dd142cba7cbf14189e7086630a0408"
+    },
+    {
+      "path": "tests/order-command-admission-v0417.test.js",
+      "sha": "b5a0805c29fc7993f74210be077cac44452082f9"
+    },
+    {
+      "path": "tests/order-disputes-v0415.test.js",
+      "sha": "48510f28ce12249c83c14985cff6e1fd0bf2e0d8"
+    },
+    {
+      "path": "tests/order-experience.test.js",
+      "sha": "ab32ff0dc87424d47906b02e4ca85f42a92b841a"
+    },
+    {
+      "path": "tests/order-finance-ui.mjs",
+      "sha": "f868b3e9b17abecca8cd55c8db92eb0e81d7c9a0"
+    },
+    {
+      "path": "tests/order-http-api-v0419.test.js",
+      "sha": "5a1c2d2a92dad182e6b7fc165e2f0312527592ea"
+    },
+    {
+      "path": "tests/order-intake-e2e.test.js",
+      "sha": "4176c5353c5289046a4e228f026535f00895b7df"
+    },
+    {
+      "path": "tests/order-journal-v0418.test.js",
+      "sha": "56783a8fa9778d4ded02ff5044df7fb4012c0bf8"
+    },
+    {
+      "path": "tests/order-message-channels.test.js",
+      "sha": "0191a0c6f2de2c042b6247acfdb087e94fb75168"
+    },
+    {
+      "path": "tests/order-read-v0419.test.js",
+      "sha": "55957a2d079c9e78d864385d021aac346bdc35f1"
+    },
+    {
+      "path": "tests/order-workflow.test.js",
+      "sha": "0f8f52b27e3e29fd8e7218c04fe3c197b410cdbe"
+    },
+    {
+      "path": "tests/order-workspace-contract.test.js",
+      "sha": "75a8430894135c0f30f0f8a2227b4669f263079a"
+    },
+    {
+      "path": "tests/order-workspace-ui.mjs",
+      "sha": "991ac50fed05e212e7230092249e335e64754d1e"
+    },
+    {
+      "path": "tests/partner-economics.test.js",
+      "sha": "89929f0c0e42d33af529f9a7eed22cb60fd478b2"
+    },
+    {
+      "path": "tests/postgres-factory-repository.test.js",
+      "sha": "152d8bfc58f7ed94494bc68cd551af3e793c355f"
+    },
+    {
+      "path": "tests/preview-layout.test.js",
+      "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
+    },
+    {
+      "path": "tests/production-schedule.test.js",
+      "sha": "43100b4da8bc62b433331ee66f93b6508aa62fef"
+    },
+    {
+      "path": "tests/project-recovery.test.js",
+      "sha": "a9bf83db23294310e68444e008ce2414309c0dc0"
+    },
+    {
+      "path": "tests/project-storage-ui.mjs",
+      "sha": "6ebc65ed36c578df4e092bb052ca9645fd80a7f2"
+    },
+    {
+      "path": "tests/render-smoke.mjs",
+      "sha": "b10ac3a7cab93459b57dba73cd5759322d91f5a7"
+    },
+    {
+      "path": "tests/repository-structure.test.js",
+      "sha": "207adea23569b935789e731ecdad704e7f5a5a00"
+    },
+    {
+      "path": "tests/role-interactions-e2e.test.js",
+      "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
+    },
+    {
+      "path": "tests/server-order-money.test.js",
+      "sha": "91b6aaa06a537dd30ac2a8d11b6a10ff76cb5c94"
+    },
+    {
+      "path": "tests/server-orders-ui.mjs",
+      "sha": "6acf7fbb212408e97645c48531b497f9e4fe9eeb"
+    },
+    {
+      "path": "tests/static-files.test.js",
+      "sha": "bf14c15a08e3225cf4d3eed533a5769a595f0cb9"
+    },
+    {
+      "path": "tests/storage.test.js",
+      "sha": "b47e4cf6219d0137a102eaeef58a223b207d5e0c"
+    },
+    {
+      "path": "tests/totp.test.js",
+      "sha": "b429888d282de15d8198ea5ba54a953fa6171993"
+    },
+    {
+      "path": "tests/traceability-v043.test.js",
+      "sha": "7a1b30ab81120316df6166457d4cc6fb37099c96"
+    },
+    {
+      "path": "tests/traceability-v044.test.js",
+      "sha": "a0d786556c389e6c25a0f2ccbe99a2df3658bacb"
+    },
+    {
+      "path": "tests/upholstery-geometry.test.js",
+      "sha": "73f98bc2f65c8c9749772425b71cf8fe0ba36678"
+    },
+    {
+      "path": "tests/visual-detailing.test.js",
+      "sha": "02244c05f7acecdfae6f3cb14f2b27d71cd63524"
+    },
+    {
+      "path": "vite.config.js",
+      "sha": "de6a6f0ec5f0dece6d2a1eba1efdb9803355d3c3"
+    }
+  ]
+}

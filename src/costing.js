@@ -11,10 +11,13 @@ export function estimate(c,discount=0,profile=defaultProfile()){
  const r=profile.rates,f=getFabric(c),w=c.width/100,d=c.depth/100,h=c.height/100,head=c.category==='headboard',bed=c.category==='bed',chaise=c.layout!=='straight',area=head?w*h:bed?w*d:w*d+(chaise?.65*(w/Math.max(2,c.moduleCount)):0),complexity=c.shape==='organic'?1.18:c.shape==='linear'?.96:1;
  const backFactor=head||bed?1:1+(c.backDepth-23)/200;
  const netFabric=round((head?area*1.6:bed?area*.85+w*h:area*2.4*backFactor+2.8)+c.pillows*c.pillowWidth/100*c.pillowHeight/100*3+(chaise?1.2:0)+(c.covers==='removable'?1:0));
- const fabricMeters=round(netFabric*(1+r.waste/100));const hours=round((head?6+area*1.8:bed?12+area*2:9+w*3)*complexity+c.pillows*.5+(c.mechanism!=='none'?3:0)+(c.storage?2:0)+(c.covers==='removable'?2:0)+(c.charging?1:0)+(c.lamps?1.5:0));
+ const fabricMeters=round(netFabric*(1+r.waste/100));const seated=!head&&!bed,
+  // Демо-нормы формы: сложная спинка, форма подушек, число панелей изголовья и подлокотники меняют трудоёмкость.
+  formHours=(seated?({arched:.8,winged:1.6}[c.backShape]||0)+(({none:-1.5,slim:-.4}[c.arm])||0):0)+(seated&&c.support==='webbing'?.8:0)+(head?(c.panels-3)*.5:0)+c.pillows*({bolster:.3,lumbar:.1}[c.pillowShape]||0);
+ const hours=round((head?6+area*1.8:bed?12+area*2:9+w*3)*complexity+c.pillows*.5+(c.mechanism!=='none'?3:0)+(c.storage?2:0)+(c.covers==='removable'?2:0)+(c.charging?1:0)+(c.lamps?1.5:0)+formHours);
  const rows=[],add=(id,name,qty,unit,rate,source)=>{if(qty>0)rows.push({id,name,qty,unit,rate,cost:Math.round(qty*rate),source:source||profile.sources[id]||'Норма цифрового прототипа'});};
  add('fabric',`Обивка ${f.collection} · с отходами ${r.waste}%`,fabricMeters,'пог. м',profile.fabricPrices[f.id]??f.price,profile.fabricSources[f.id]||'Демонстрационная цена ткани');
- add('frame','Каркас / основа',round(area*complexity),'м² нормы',r.frame);add('filling','Мягкие слои и подушки',round(area*backFactor*(head?.5:1)*(c.comfort==='soft'?1.22:c.comfort==='firm'?1.08:1)+c.pillows*.12),'м² нормы',r.foam,profile.sources.foam);
+ add('frame','Каркас / основа',round(area*complexity),'м² нормы',r.frame);add('filling','Мягкие слои и подушки',round(area*backFactor*(head?.5:1)*(c.seatCore==='pocket'&&!head?1.3:1)*(c.comfort==='soft'?1.22:c.comfort==='firm'?1.08:1)+c.pillows*.12),'м² нормы',r.foam,profile.sources.foam);
  add(head?'mount':'legs',head?'Крепёж изголовья':`Опоры · ${{wood:'дерево',black:'графит',brass:'латунь',none:'без ножек'}[c.legs]}`,head||c.legs!=='none'?1:0,'компл.',head?r.mount:r[c.legs]||0,profile.sources[head?'mount':c.legs]);
  for(const [id,name,enabled] of [['storage','Хранение и подъёмный узел',c.storage],['woodArms','Деревянные детали подлокотников',c.woodArms],['charging','Зарядка USB',c.charging],['lamps','Встроенное освещение',c.lamps],['covers','Съёмные чехлы',c.covers==='removable']])add(id,name,enabled?1:0,'компл.',r[id]);
  if(c.mechanism!=='none')add(c.mechanism,'Механизм трансформации',1,'компл.',r[c.mechanism]);

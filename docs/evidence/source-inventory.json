@@ -10,6 +10,10 @@
       "sha": "1014ba78880c899e842b397cb89a878be4671f7d"
     },
     {
+      "path": ".githooks/pre-push",
+      "sha": "5832e834134fcfe67cf5b4bc544347b70246f1e8"
+    },
+    {
       "path": ".github/pull_request_template.md",
       "sha": "8eaae48ebd43ac1e7d2baa6ca3d017d235b864f0"
     },
@@ -19,7 +23,7 @@
     },
     {
       "path": ".gitignore",
-      "sha": "8fe574267d724c64b252272f83dcfd21b43fc8cd"
+      "sha": "5ba01a9a021f3d6d3a5a78b072b29f300356fe5e"
     },
     {
       "path": ".nvmrc",
@@ -71,7 +75,11 @@
     },
     {
       "path": "docs/INDEX.md",
-      "sha": "351040f34b5c50f6638ddf56f36a1330a4ebdb4a"
+      "sha": "ea243751948095987ef22db39018247afee4f8e3"
+    },
+    {
+      "path": "docs/LOCAL-VERIFICATION.md",
+      "sha": "efc6fb15549e66e8cd0644c6ea956edd25108dfa"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
@@ -99,7 +107,7 @@
     },
     {
       "path": "docs/STATUS.md",
-      "sha": "63a81a1f39f050d7736c7d9e933a506dc65f232c"
+      "sha": "51731e23960646c727be1f273a7e1818725df0ee"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -151,7 +159,7 @@
     },
     {
       "path": "docs/roadmap.md",
-      "sha": "3ccd9e9e2c11a073483e7d4af87de51aa0e85fa9"
+      "sha": "1571ea86c3053f7f64c47457bcf87a87073dfd55"
     },
     {
       "path": "docs/technical-specification-v1.md",
@@ -231,7 +239,7 @@
     },
     {
       "path": "package.json",
-      "sha": "1e2276685a1aea6f0fb022dd428a17c9782e9370"
+      "sha": "623ac2309730b6fcdd316ee8a5e457b77de49131"
     },
     {
       "path": "public/favicon.svg",
@@ -246,8 +254,12 @@
       "sha": "bb40e9178055dbe0ec3de280af62a1dd26dfff4c"
     },
     {
+      "path": "scripts/verify-local.sh",
+      "sha": "6f9636b9668cb32e8dd77fefd0108179e3614081"
+    },
+    {
       "path": "scripts/verify-postgres-staging.sh",
-      "sha": "727494e5123af771de58c64092aea823b0ec2664"
+      "sha": "51c5e7b3de09b13694e78cb9556e929269d25102"
     },
     {
       "path": "scripts/verify-release.sh",
@@ -419,7 +431,7 @@
     },
     {
       "path": "server/tests/postgres-http-e2e.mjs",
-      "sha": "cc649f2000681e4300de88a7a4c60266e58f9f75"
+      "sha": "84a41f0f1cd97404d5c1def544bfc947f79ddd2e"
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",

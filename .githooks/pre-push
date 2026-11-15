@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Быстрый шлюз перед push (без Docker и браузера). Включение: git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/scripts/verify-local.sh" --quick --allow-skip

@@ -10,3 +10,6 @@ qa/
 # Локальные секреты разработки
 server/dev/dev.env
 *.env
+
+# Локальный шлюз проверки
+.local-verification/

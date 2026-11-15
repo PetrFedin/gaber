@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
+import {mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync} from 'node:fs';
 import {createServer} from 'node:http';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -12,6 +12,10 @@ mkdirSync(join(root, 'assets'));
 writeFileSync(join(root, 'index.html'), '<!doctype html><title>GABER</title>');
 writeFileSync(join(root, 'assets', 'app-abc.js'), 'console.log(1)');
 writeFileSync(join(root, '..', 'gaber-outside-secret.txt'), 'TOPSECRET');
+// A symlink in the final path or an intermediate directory must not bypass containment.
+symlinkSync(join(root, '..', 'gaber-outside-secret.txt'), join(root, 'assets', 'outside-link.txt'));
+symlinkSync(join(root, '..'), join(root, 'assets', 'outside-dir'), 'dir');
+symlinkSync(join(root, 'index.html'), join(root, 'assets', 'inside-link.html'));
 const handler = createStaticHandler(join(root));
 const server = createServer(async (req, res) => {
   if (!(await handler(req, res))) {
@@ -62,6 +66,17 @@ test('выход за каталог и подмена пути не раскр�
   assert.equal((await get('/assets/..%2f..%2fgaber-outside-secret.txt')).status, 403);
   assert.equal((await get('/%00')).status, 418);
   assert.equal((await get('/%E0%A4%A')).status, 400);
+});
+test('file and directory symlinks cannot disclose content outside static root', async () => {
+  for (const path of ['/assets/outside-link.txt', '/assets/outside-dir/gaber-outside-secret.txt']) {
+    const response = await get(path);
+    assert.equal(response.status, 403, path);
+    assert.ok(!response.text.includes('TOPSECRET'), path);
+    assert.equal((await get(path, 'HEAD')).status, 403, path + ' HEAD');
+  }
+  const internal = await get('/assets/inside-link.html');
+  assert.equal(internal.status, 200);
+  assert.match(internal.text, /GABER/);
 });
 test('API и методы записи статикой не перехватываются', async () => {
   assert.equal((await get('/api/v1/auth/me')).status, 418);

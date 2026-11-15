@@ -2,9 +2,10 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {getFamily, getFabric} from './domain.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
 import {serverApi, errorText, randomId} from './serverApi.js';
+import {parseOrderKopecks, parseOrderBasisPoints} from './serverOrderMoney.js';
 
 const ROLE_LABELS = {client: 'Клиент', factory: 'Фабрика', partner: 'Партнёр GABER'};
-const kopecks = (v) => Math.round(Number(String(v).replace(/\s/g, '').replace(',', '.')) * 100);
+const POSITIVE_MONEY_FIELDS = new Set(['customerPriceKopecks', 'factoryCostKopecks', 'amountKopecks']);
 const rub = (k) =>
   k == null ? '—' : new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB'}).format(k / 100);
 const CHANNELS = {
@@ -85,10 +86,19 @@ function ActionForm({action, order, role, busy, onRun}) {
     const payload = {};
     for (const f of action.fields ?? []) {
       const raw = values[f.name] ?? '';
-      payload[f.name] = f.kind === 'money' ? kopecks(raw) : f.kind === 'percent' ? Math.round(Number(String(raw).replace(',', '.')) * 100) : String(raw).trim();
+      try {
+        payload[f.name] = f.kind === 'money'
+          ? parseOrderKopecks(raw, {positive: POSITIVE_MONEY_FIELDS.has(f.name), allowEmpty: !POSITIVE_MONEY_FIELDS.has(f.name)})
+          : f.kind === 'percent'
+            ? parseOrderBasisPoints(raw, {allowEmpty: true})
+            : String(raw).trim();
+      } catch (error) {
+        const help = f.kind === 'money'
+          ? 'сумма в рублях, максимум две цифры после запятой, без округления'
+          : 'процент от 0 до 100, максимум две цифры после запятой';
+        return onRun(null, null, `Проверьте поле «${f.label}»: ${help}.`);
+      }
     }
-    const bad = (action.fields ?? []).find((f) => (f.kind === 'money' || f.kind === 'percent') && !Number.isFinite(payload[f.name]));
-    if (bad) return onRun(null, null, `Проверьте поле «${bad.label}»: нужно число.`);
     if (action.withConfig) payload.config = order.config;
     const revisionId = action.rev === 'spec' ? order.factoryTask?.specId : action.rev === 'current' ? order.revisionId : undefined;
     onRun({type: action.type, payload, revisionId});

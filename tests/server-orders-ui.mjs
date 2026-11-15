@@ -155,6 +155,13 @@ try {
   // ТЗ и расчёт: рубли переводятся в копейки на клиенте, проверка на сервере
   const spec = {'Техническое задание': 'Каркас, наполнитель, швы', 'Цена клиенту, ₽': '2100,05', 'Стоимость у фабрики, ₽': '1000,01', 'Комиссия GABER, ₽': '400,01', 'Логистика, ₽': '100', 'Налоги, ₽': '50', 'Прочие затраты, ₽': '1', 'Аванс, % от цены': '50', 'Срок (ГГГГ-ММ-ДД)': '2027-02-01', 'Комментарий к предложению': 'Цена после проверки'};
   for (const [label, value] of Object.entries(spec)) await fillIn('Подготовить ТЗ и расчёт', label, value);
+  // Percentage must never be silently rounded: 50,999% is not 51,00%.
+  await fillIn('Подготовить ТЗ и расчёт', 'Аванс, % от цены', '50,999');
+  await click('Подготовить ТЗ и расчёт');
+  assert.match(document.querySelector('[role=alert]')?.textContent ?? '', /Проверьте поле «Аванс, % от цены»/);
+  assert.equal(requests.filter((r) => r.body?.type === 'prepare_spec').length, 0,
+    'некорректный процент не должен отправляться');
+  await fillIn('Подготовить ТЗ и расчёт', 'Аванс, % от цены', '50');
   await click('Подготовить ТЗ и расчёт');
   assert.equal(state().stage, 'awaiting_factory');
   assert.equal(state().specs[0].economics.customerPriceKopecks, 210005);

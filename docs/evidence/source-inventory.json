@@ -71,11 +71,15 @@
     },
     {
       "path": "docs/INDEX.md",
-      "sha": "351040f34b5c50f6638ddf56f36a1330a4ebdb4a"
+      "sha": "bbd0ddedeb6eb51361f4656fc780102fbdbfa5c9"
     },
     {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
       "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
+    },
+    {
+      "path": "docs/ORDER-INPUT-AND-STATIC-BOUNDARY-2026-11-16.md",
+      "sha": "248199de6ae22bda8c00ee7d487587a7fe332197"
     },
     {
       "path": "docs/POSTGRES-STAGING-CONTRACT.md",
@@ -99,7 +103,7 @@
     },
     {
       "path": "docs/STATUS.md",
-      "sha": "2ac68da1982b4175758926f26fd2fc572a0614d7"
+      "sha": "d4dc79467157c3023b4ee21b67b7f7b11290e57c"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -395,7 +399,7 @@
     },
     {
       "path": "server/staticFiles.js",
-      "sha": "83129a97863fa89363c23f1e9ea677e964d38bef"
+      "sha": "b1276de46ce75f2f88b7edb713adb8616acd4e14"
     },
     {
       "path": "server/tests/auth-http-e2e.mjs",
@@ -507,7 +511,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "47ff90d6045a5de2231d6cd4e3d18014078d8811"
+      "sha": "6f5c27b9c5e6f7c8d72909f6ef35a906a73afb84"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -644,6 +648,10 @@
     {
       "path": "src/serverApi.js",
       "sha": "41ef7a2e3c5a6ff407c5e09a6e5e07991e48396b"
+    },
+    {
+      "path": "src/serverOrderMoney.js",
+      "sha": "0f3e6c174b701793a871bdd10b862e3331fd30d9"
     },
     {
       "path": "src/softLayout.js",
@@ -886,12 +894,16 @@
       "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
     },
     {
+      "path": "tests/server-order-money.test.js",
+      "sha": "91b6aaa06a537dd30ac2a8d11b6a10ff76cb5c94"
+    },
+    {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "ddfc781625ea7ad12971e19f1f6a6daec8bf5bd3"
+      "sha": "6acf7fbb212408e97645c48531b497f9e4fe9eeb"
     },
     {
       "path": "tests/static-files.test.js",
-      "sha": "934fe9ad7110e475d28e2abd538a578ad68f8d46"
+      "sha": "bf14c15a08e3225cf4d3eed533a5769a595f0cb9"
     },
     {
       "path": "tests/storage.test.js",

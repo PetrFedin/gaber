@@ -20,6 +20,7 @@
 - [Путь клиента](CLIENT-EXPERIENCE.md).
 - [HTTP и PostgreSQL E2E-контракт](HTTP-POSTGRES-E2E-CONTRACT.md).
 - [Серверный вход и сессии](SERVER-AUTH.md).
+- [Точный ввод коммерческих сумм и защита статических файлов — 16.11.2026](ORDER-INPUT-AND-STATIC-BOUNDARY-2026-11-16.md).
 - [Запуск стенда одним контейнером](DEPLOY.md).
 - [Стенд PostgreSQL](POSTGRES-STAGING-CONTRACT.md).
 - [План восстановления CI](CI-RECOVERY-RUNBOOK.md).

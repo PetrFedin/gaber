@@ -79,7 +79,7 @@ jobs:
         run: |
           actual=$(git rev-parse HEAD)
           test "$actual" = "$EXPECTED_SHA" || { echo "POSTGRES_SHA_MISMATCH" >&2; exit 1; }
-      - name: Apply staging migrations 001-008 and run real PostgreSQL tenant/RLS contract
+      - name: Apply staging migrations 001-009 and run real PostgreSQL tenant/RLS contract
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
         run: bash scripts/verify-postgres-staging.sh

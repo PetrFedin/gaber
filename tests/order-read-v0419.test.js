@@ -15,7 +15,7 @@ const spec=config=>({config,customerPriceKopecks:200005,factoryCostKopecks:10000
  platformCommissionKopecks:40001,logisticsKopecks:10000,taxKopecks:5000,
  otherCostsKopecks:0,technicalNote:'Assembly drawings, frame, foam, upholstery',
  advanceBps:5000,dueDate:'2027-02-01',note:'Factory-reviewed proposal'});
-function fixture(){
+function fixture(simulatedExternalAuthority=null){
  let head=null,rows=[],readCount=0,n=0;
  const repository={async withOrderTransaction(scope,work){
   const draft={head:structuredClone(head),rows:structuredClone(rows)};
@@ -34,7 +34,7 @@ function fixture(){
   head=draft.head;rows=draft.rows;return result;
  }};
  const service=createOrderJournalService({repository,admission:admitOrderCommand,
-  reducer:{appendOrderCommand,replayOrder},clock:()=>now});
+  reducer:{appendOrderCommand,replayOrder},clock:()=>now,simulatedExternalAuthority});
  const send=(role,type,payload={},revisionId)=>service.execute({
   principal:principal(role),request:{orderId:'O1',requestId:'E'+(++n),
    expectedVersion:head?.version??0,type,payload,...(revisionId?{revisionId}:{})}
@@ -42,8 +42,8 @@ function fixture(){
  const read=role=>service.read({principal:principal(role),request:{orderId:'O1'}});
  return {send,read,service,get rows(){return rows},get reads(){return readCount}};
 }
-async function seeded(){
- const f=fixture(),config=initialConfig();
+async function seeded(simulatedExternalAuthority=null){
+ const f=fixture(simulatedExternalAuthority),config=initialConfig();
  for(const r of [
   await f.send('client','create',{projectId:'O1',name:'Private sofa',config}),
   await f.send('partner','prepare_spec',spec(config)),
@@ -56,6 +56,35 @@ async function seeded(){
  ])assert.equal(r.accepted,true,JSON.stringify(r));
  return f;
 }
+test('simulated external events are hash-chained, visible to all roles and not forgeable by API callers',async()=>{
+ // Narrow mock capability: real bootstrap permits only DEV/TEST tenants.
+ const sim={commandTypes:new Set(['start']),grants:new Set(['production.start'])};
+ const f=await seeded(sim);
+ const started=await f.send('factory','start',{},'R1');
+ assert.equal(started.accepted,true,JSON.stringify(started));
+ assert.equal(f.rows.at(-1).command.executionMode,'DEV_SIMULATED_EXTERNAL_AUTHORITY');
+ for(const role of ['client','factory','partner']){
+  const r=await f.read(role);
+  assert.equal(r.accepted,true,role);
+  assert.equal(r.order.authority,'DEV_SIMULATED_EXTERNAL_AUTHORITY',role);
+  assert.deepEqual(r.order.externalExecution,{
+   provenance:'DEV_SIMULATED_EXTERNAL_AUTHORITY',eventCount:1,markedEventCount:1
+  },role);
+  assert.equal(r.order.productionRelease.allowed,false,role);
+ }
+ const forged=await f.service.execute({principal:principal('client'),request:{
+  orderId:'O1',requestId:'FORGED',expectedVersion:9,type:'message',
+  payload:{note:'forgery',channel:'shared'},executionMode:'DEV_SIMULATED_EXTERNAL_AUTHORITY'
+ }});
+ assert.equal(forged.code,'INVALID_ORDER_REQUEST');
+ const normal=await f.send('client','message',{note:'Question',channel:'shared'},'R1');
+ assert.equal(normal.accepted,true);
+ assert.equal(f.rows.at(-1).command.executionMode,undefined);
+ assert.equal((await f.read('client')).order.externalExecution.eventCount,1);
+ // A changed marker is detected by the pre-existing hash chain.
+ f.rows[8].command.executionMode='FORGED';
+ await assert.rejects(f.read('client'),/JOURNAL_INTEGRITY_FAILURE/);
+});
 test('three role DTOs reference one order but isolate factory cost and partner commission',async()=>{
  const f=await seeded();
  const client=(await f.read('client')).order;

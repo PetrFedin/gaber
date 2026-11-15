@@ -16,6 +16,10 @@ const copy=x=>structuredClone(x);
 const same=(a,b)=>factoryConfigKey(a)===factoryConfigKey(b);
 const only=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(k=>keys.includes(k));
 const BEFORE_WORK=['requested','offered','accepted','change_requested'];
+// Trusted server-only provenance, not permission to execute external operations.
+// Legacy unmarked local simulations remain replayable, but are never proof.
+export const DEV_EXECUTION_MODE='DEV_SIMULATED_EXTERNAL_AUTHORITY';
+const SIMULATED_COMMAND_TYPES=new Set(['start','complete','quality_pass','ship','deliver','accept_delivery']);
 export function orderEngineering(state){
  const revision=state.revisions.at(-1),spec=state.specs?.at(-1);
  const config=(['awaiting_factory','factory_confirmed','factory_changes'].includes(state.stage)?spec?.config:null)??revision?.config??state.sourceConfig;
@@ -63,8 +67,11 @@ function validConfig(config){
  return copy(normalized);
 }
 function apply(state,command){
- if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion'])||!id(command.id)||!timestamp(command.at)||
+ if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion','executionMode'])||!id(command.id)||!timestamp(command.at)||
   !Number.isSafeInteger(command.expectedVersion)||!TYPES[command.type]||!only(command.payload,TYPES[command.type][1]))fail('COMMAND_INVALID');
+ if(command.executionMode!==undefined &&
+    (command.executionMode!==DEV_EXECUTION_MODE||!SIMULATED_COMMAND_TYPES.has(command.type)))
+  fail('COMMAND_INVALID');
  const requiredRole=TYPES[command.type][0];
  if(!['client','factory','partner'].includes(command.role)||
    (requiredRole==='factory_partner'

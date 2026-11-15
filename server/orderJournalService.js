@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {authorizeGaberAction} from './accessPolicy.js';
 import {projectOrderReadModel} from './orderReadModel.js';
+import {DEV_EXECUTION_MODE} from '../src/orderWorkflow.js';
 export const ORDER_JOURNAL_SCHEMA='gaber-server-order-journal/0.4.18';
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
 const deny=(code,more={})=>({accepted:false,code,...more,productionRelease:{allowed:false}});
@@ -62,10 +63,19 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    }
    const head=await tx.getHeadForUpdate();
    if(!head)return deny('ORDER_MISSING');
-   const {state}=verify(head,await tx.getEvents(),scope,reducer.replayOrder);
+   const rows=await tx.getEvents(),{state}=verify(head,rows,scope,reducer.replayOrder);
    if(!state)return deny('ORDER_MISSING');
-   return {accepted:true,code:'ORDER_READ',order:projectOrderReadModel(state,access.role),
-    productionRelease:{allowed:false}};
+   const order=projectOrderReadModel(state,access.role);
+   // Provenance is kept inside the hash-chained event command. Never
+   // upgrade unmarked historical events to genuine production evidence.
+   const external=rows.filter(r=>forbidden.has(r.command?.type));
+   if(external.length){
+    const marked=external.filter(r=>r.command.executionMode===DEV_EXECUTION_MODE).length;
+    const provenance=marked===external.length?DEV_EXECUTION_MODE:'UNVERIFIED_LEGACY_EXTERNAL_EVENTS';
+    order.authority=provenance;
+    order.externalExecution={provenance,eventCount:external.length,markedEventCount:marked};
+   }
+   return {accepted:true,code:'ORDER_READ',order,productionRelease:{allowed:false}};
   });
  },async execute({principal,request}){
   if(!principal||principal.identitySource!=='server-session'||principal.authenticated!==true||
@@ -144,6 +154,9 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(state&&now<Date.parse(state.updatedAt))return deny('SERVER_CLOCK_BEHIND_ORDER');
    const command={id:requestId,at:new Date(now).toISOString(),type,role,payload,expectedVersion};
    if(revisionId!==undefined)command.revisionId=revisionId;
+   // Only a trusted DEV server may stamp this value. Requests containing
+   // executionMode are rejected by the command input schema above.
+   if(forbidden.has(type))command.executionMode=DEV_EXECUTION_MODE;
    let result;
    try{result=reducer.appendOrderCommand(events,command);}
    catch(e){return deny('ORDER_TRANSITION_REJECTED',{reason:/^[A-Z0-9_]+$/.test(e.message)?e.message:'INVALID_STATE'});}

@@ -118,7 +118,10 @@ try {
   await deny('client', A, 'start', {}, 'current', 403, 'клиент не запускает производство даже при симуляторе');
   await deny('partner', A, 'start', {}, 'current', 403, 'партнёр не запускает производство даже при симуляторе');
   await must('factory', A, 'start', {}, 'current', 'фабрика начинает производство');
-  check((await read('client', A)).stage, 'production', 'этап: производство');
+  const afterStart = await read('client', A);
+  check(afterStart.stage, 'production', 'этап: производство');
+  check(afterStart.externalExecution?.provenance, 'DEV_SIMULATED_EXTERNAL_AUTHORITY', 'клиенту виден источник DEV-операций');
+  check(afterStart.externalExecution?.markedEventCount, 1, 'первая имитация отмечена в журнале');
   await deny('factory', A, 'quality_pass', {reference: 'QC-0'}, 'current', 422, 'контроль качества до завершения производства');
   await must('factory', A, 'complete', {}, 'current', 'производство завершено');
   await deny('factory', A, 'ship', {carrier: 'ТК', tracking: 'T1', reference: 'SHIP-0'}, 'current', 422, 'отгрузка до контроля качества');
@@ -134,6 +137,10 @@ try {
   check((await read('client', A)).stage, 'closed', 'заказ закрыт');
   const dto = await read('client', A);
   check(dto.productionRelease, {allowed: false}, 'productionRelease.allowed остаётся false');
+  check(dto.externalExecution?.eventCount, 6, 'все шесть симулированных этапов сохранены');
+  check(dto.externalExecution?.markedEventCount, 6, 'все шесть этапов помечены сервером');
+  check((await read('factory', A)).externalExecution?.provenance, 'DEV_SIMULATED_EXTERNAL_AUTHORITY', 'фабрика видит происхождение этапов');
+  check((await read('partner', A)).externalExecution?.provenance, 'DEV_SIMULATED_EXTERNAL_AUTHORITY', 'партнёр видит происхождение этапов');
   check(dto.finance.verifiedBankKopecks, null, 'банк по-прежнему не подтверждён');
   await deny('client', A, 'report_issue', {note: 'Поздно'}, 'current', 422, 'закрытый заказ нельзя оспорить');
 

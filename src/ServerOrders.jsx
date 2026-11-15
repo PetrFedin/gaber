@@ -149,6 +149,13 @@ function OrderCard({order, role, busy, onRun, holdDisabled}) {
         </div>
         <span className="status amber">{ORDER_STAGES[order.stage] ?? order.stage}</span>
       </header>
+      {order.externalExecution && (
+        <p className="inline-warning" role="note" data-order-evidence={order.externalExecution.provenance}>
+          {order.externalExecution.provenance === 'DEV_SIMULATED_EXTERNAL_AUTHORITY'
+            ? `DEV-СИМУЛЯЦИЯ: ${order.externalExecution.eventCount} этапов производства/доставки имитированы и зафиксированы в журнале. Это не доказательство реальных операций.`
+            : 'ВНИМАНИЕ: журнал содержит прежние внешние операции без подтверждённого происхождения. Реальное производство и доставка не доказаны.'}
+        </p>
+      )}
       <dl className="server-facts">
         <div><dt>Версия журнала</dt><dd>{order.version}</dd></div>
         {order.offer && <div><dt>Цена предложения</dt><dd>{rub(order.offer.priceKopecks)}</dd></div>}

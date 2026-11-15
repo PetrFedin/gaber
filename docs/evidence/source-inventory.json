@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "fd9de70a25419e120d86ca0d42921f9fe048284e"
+      "sha": "5dffaa7543be554c27675864d047e85f1aa9fb4e"
     },
     {
       "path": ".gitignore",
@@ -95,11 +95,11 @@
     },
     {
       "path": "docs/SERVER-AUTH.md",
-      "sha": "253175d8a5985f5367b9cf8b6e0ce036ba4c1b58"
+      "sha": "ef271b9ebd5d140b6b5b55a4902081521fb8b8d3"
     },
     {
       "path": "docs/STATUS.md",
-      "sha": "63a81a1f39f050d7736c7d9e933a506dc65f232c"
+      "sha": "2ac68da1982b4175758926f26fd2fc572a0614d7"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",
@@ -375,7 +375,7 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "772d26ab5ddb96adf15b1d58558aed845bfc9198"
+      "sha": "7c9ce711260fa728e26abcfdca4ddabc8750e5ce"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -411,7 +411,7 @@
     },
     {
       "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
-      "sha": "09841d11b30bb3ced13ad30a2e060eeedf5f9f98"
+      "sha": "c9269b4e58df368615bf038c1aab0d82d4f6b1a7"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -507,7 +507,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "84ad9517b291b464bfbdf3fcd4d3217b474afe8e"
+      "sha": "47ff90d6045a5de2231d6cd4e3d18014078d8811"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -627,7 +627,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "4f84e4dc9cde55ca61bbecd4b372d94ba7bae02b"
+      "sha": "85c2c073914241f357207c88c84b854f146193b8"
     },
     {
       "path": "src/partnerEconomics.js",
@@ -835,11 +835,11 @@
     },
     {
       "path": "tests/order-read-v0419.test.js",
-      "sha": "5764228583914c7040f209d8ce892f11d8d602d5"
+      "sha": "55957a2d079c9e78d864385d021aac346bdc35f1"
     },
     {
       "path": "tests/order-workflow.test.js",
-      "sha": "b59044e16f9e97268bfe0e9df963eb666dddb225"
+      "sha": "0f8f52b27e3e29fd8e7218c04fe3c197b410cdbe"
     },
     {
       "path": "tests/order-workspace-contract.test.js",

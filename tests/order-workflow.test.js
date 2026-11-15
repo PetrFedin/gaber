@@ -174,3 +174,16 @@ test('factory assignment is a single immutable operator event, never a customer 
  assert.equal(s.state.assignedFactoryId,'FACTORY-A');
  assert.equal(s.state.productionRelease.allowed,false);
 });
+
+test('DEV provenance survives reducer replay without allowing arbitrary labels',()=>{
+ const s=scenario();
+ s.offer();
+ s.send('client','accept');
+ s.send('partner','record_payment',{amountKopecks:50001,reference:'LOCAL-DEV'});
+ assert.throws(()=>s.send('client','message',{note:'hello'}, {executionMode:'DEV_SIMULATED_EXTERNAL_AUTHORITY'}),/COMMAND_INVALID/);
+ assert.throws(()=>s.send('factory','start',{}, {executionMode:'BANK_CONFIRMED'}),/COMMAND_INVALID/);
+ const state=s.send('factory','start',{}, {executionMode:'DEV_SIMULATED_EXTERNAL_AUTHORITY'});
+ assert.equal(state.stage,'production');
+ assert.equal(s.events.at(-1).executionMode,'DEV_SIMULATED_EXTERNAL_AUTHORITY');
+ assert.equal(replayOrder(s.events).stage,'production');
+});

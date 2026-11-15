@@ -47,7 +47,7 @@
     },
     {
       "path": "README.md",
-      "sha": "2e432ca58141a16ee35d4569cb15e690a53edacd"
+      "sha": "ad8754ae12f00feee8f831cd17a7ebb6cf047170"
     },
     {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
@@ -75,7 +75,7 @@
     },
     {
       "path": "docs/INDEX.md",
-      "sha": "ea243751948095987ef22db39018247afee4f8e3"
+      "sha": "e02f87afd741adcf3e0067ba6315c25d7218c025"
     },
     {
       "path": "docs/LOCAL-VERIFICATION.md",
@@ -108,6 +108,10 @@
     {
       "path": "docs/STATUS.md",
       "sha": "51731e23960646c727be1f273a7e1818725df0ee"
+    },
+    {
+      "path": "docs/STEERING.md",
+      "sha": "8e21e17a7d17e26f7986fe3113522157b6dd809f"
     },
     {
       "path": "docs/THREE-ROLE-PLATFORM-CONTRACT.md",

@@ -22,6 +22,7 @@
 - [Серверный вход и сессии](SERVER-AUTH.md).
 - [Запуск стенда одним контейнером](DEPLOY.md).
 - [Локальная проверка вместо GitHub Actions](LOCAL-VERIFICATION.md).
+- [Как руководить проектом из GitHub](STEERING.md).
 - [Стенд PostgreSQL](POSTGRES-STAGING-CONTRACT.md).
 - [План восстановления CI](CI-RECOVERY-RUNBOOK.md).
 - [Проверенный демо-кандидат от 01.11.2026](VERIFIED-CANDIDATE-2026-11-01.md) — доказательство лишь указанного SHA.

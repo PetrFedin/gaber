@@ -22,6 +22,8 @@ export default function DesignExperience({
   inspection,
   explosion,
   autoRotate,
+  lighting = 'day',
+  onLightingChange = () => {},
   reducedMotion,
   selectedPart,
   onAutoRotateChange,
@@ -42,6 +44,11 @@ export default function DesignExperience({
         <button type="button" className={inspection && explosion > 0 ? 'active' : ''}
           onClick={() => {onInspectionChange(true); onExplosionChange(1);}}>Разобрать</button>
         {inspection && <button type="button" onClick={() => {onInspectionChange(false); onExplosionChange(0);}}>Обивка</button>}
+        <label className="design-lighting-select">Свет
+          <select aria-label="Освещение" value={lighting} onChange={event => onLightingChange(event.target.value)}>
+            <option value="day">День</option><option value="evening">Вечер</option><option value="cool">Холодный</option>
+          </select>
+        </label>
       </div>
       <label className="design-part-select">
         <span className="sr-only">Выбрать элемент изделия</span>

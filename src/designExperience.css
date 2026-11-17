@@ -304,3 +304,30 @@
   min-width: 44px;
   min-height: 44px;
 }
+
+/* User-controlled preview lighting; no effect on engineering dimensions or costs. */
+.design-lighting-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  padding: 4px 7px;
+  color: var(--muted);
+  font-size: 11px;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.design-lighting-select select {
+  min-height: 34px;
+  max-width: 105px;
+  color: var(--loden);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+}
+.design-lighting-select select:focus-visible {
+  outline: 2px solid var(--loden);
+  outline-offset: 2px;
+}

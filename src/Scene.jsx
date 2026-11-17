@@ -12,6 +12,8 @@ import {createUpholsteredGeometry, conformUpholsteryDetail, upholsteryProfileFor
 import DesignExperience from './DesignExperience.jsx';
 import {applyExplosion} from './assemblyExplosion.js';
 import {getAvailableParts} from './designGuidance.js';
+import {createPresentationTimeline, setPresentationTarget, advancePresentationTimeline} from './presentationTimeline.js';
+import {getLightPreset} from './visualLighting.js';
 
 function texture(kind){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#888';c.fillRect(0,0,256,256);
@@ -116,6 +118,7 @@ const Scene=forwardRef(function Scene({config,onSelect,hero=false,quality='ateli
  const host=useRef(null),runtime=useRef(null),onSelectRef=useRef(onSelect),[failed,setFailed]=useState(false),[simplified,setSimplified]=useState(false);
  const [inspection,setInspection]=useState(config.exploded),[explosion,setExplosion]=useState(config.exploded?1:0),[autoRotate,setAutoRotate]=useState(false),[selectedPart,setSelectedPart]=useState(null);
  const [reducedMotion]=useState(()=>typeof matchMedia!=='undefined'&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+ const [lighting,setLighting]=useState('day');
  onSelectRef.current=onSelect;
  useImperativeHandle(ref,()=>({
   view(mode){const r=runtime.current;if(!r)return;const w=config.width/100,scale=config.category==='chair'?.6:config.category==='headboard'?.8:1;r.controls.target.set(0,config.category==='headboard'?.7:.52,.12);if(mode==='top')r.camera.position.set(0,Math.max(2.3,w*1.7),.01);else if(mode==='front')r.camera.position.set(0,1,4.8*scale);else r.camera.position.set(3.1*scale,2.05*scale,4.4*scale);r.controls.update();},
@@ -145,13 +148,28 @@ const Scene=forwardRef(function Scene({config,onSelect,hero=false,quality='ateli
    scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(hero?36:36,1,.1,50);camera.position.set(3.1,2.05,4.4);
    controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,.58,.1);controls.enableDamping=!isSVG;controls.dampingFactor=.075;controls.minDistance=2;controls.maxDistance=8;controls.maxPolarAngle=Math.PI*.48;controls.enablePan=false;controls.autoRotate=!isSVG&&hero&&!matchMedia('(prefers-reduced-motion: reduce)').matches;controls.autoRotateSpeed=.35;controls.addEventListener('change',()=>{dirty=true;});controls.update();
    if(!isSVG){pmrem=new THREE.PMREMGenerator(renderer);const room=new RoomEnvironment();env=pmrem.fromScene(room,.04);scene.environment=env.texture;room.dispose();}
-   if(isSVG)scene.add(new THREE.AmbientLight('#ffffff',.65));else scene.add(new THREE.HemisphereLight('#fff9ef','#a79c86',2.4));
+   const hemi=isSVG?new THREE.AmbientLight('#ffffff',.65):new THREE.HemisphereLight('#fff9ef','#a79c86',2.4);scene.add(hemi);
    const light=new THREE.DirectionalLight('#fff4dd',isSVG?.7:3.4);light.position.set(-3,6,4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-4;light.shadow.camera.right=4;light.shadow.camera.top=4;light.shadow.camera.bottom=-4;light.shadow.normalBias=.04;light.shadow.bias=-.0001;light.shadow.radius=5;scene.add(light);
    const fill=new THREE.DirectionalLight('#e5edf7',isSVG?.15:1.2);fill.position.set(4,3,-3);scene.add(fill);
    if(!isSVG){const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.13}));floor.rotation.x=-Math.PI/2;floor.position.y=.005;floor.receiveShadow=true;scene.add(floor);}
-   runtime.current={renderer,scene,camera,controls,model:null,simplified:isSVG,reducedMotion,explosionCurrent:0,explosionTarget:0,invalidate:()=>{dirty=true;}};
+   runtime.current={renderer,scene,camera,controls,model:null,simplified:isSVG,reducedMotion,explosionCurrent:0,explosionTarget:0,explosionTimeline:createPresentationTimeline(0),primaryLight:light,fillLight:fill,ambientLight:hemi,invalidate:()=>{dirty=true;}};
    observer=new ResizeObserver(()=>{const {width,height}=element.getBoundingClientRect();if(width&&height){renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();dirty=true;}});observer.observe(element);
-   const animate=()=>{if(disposed)return;raf=requestAnimationFrame(animate);if(document.hidden)return;const r=runtime.current;if(r?.model){const target=r.explosionTarget??0,current=r.explosionCurrent??0;if(Math.abs(target-current)>.0005){const next=r.reducedMotion?target:current+(target-current)*.22;r.explosionCurrent=Math.abs(target-next)<=.0005?target:next;applyExplosion(r.model,r.explosionCurrent);dirty=true;}}const moving=controls.update();if(moving||dirty){renderer.render(scene,camera);dirty=false;}};animate();
+   let previousFrameMs=null;
+   const animate=(frameMs)=>{
+    if(disposed)return;
+    raf=requestAnimationFrame(animate);
+    if(document.hidden){previousFrameMs=null;return;}
+    const elapsed=previousFrameMs===null||typeof frameMs!=='number'?0:Math.max(0,(frameMs-previousFrameMs)/1000);
+    previousFrameMs=typeof frameMs==='number'?frameMs:null;
+    const r=runtime.current;
+    if(r?.model){
+     const previous=r.explosionCurrent??0;
+     const next=advancePresentationTimeline(r.explosionTimeline,elapsed,{reducedMotion:r.reducedMotion});
+     if(Math.abs(next-previous)>1e-8){r.explosionCurrent=next;applyExplosion(r.model,next);dirty=true;}
+    }
+    const moving=controls.update();
+    if(moving||dirty){renderer.render(scene,camera);dirty=false;}
+   };animate();
    const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
    const tagged=object=>{const model=runtime.current?.model;for(let node=object;node&&node!==model;node=node.parent)if(node.userData.part)return node;return null;};
    const start=e=>{down=[e.clientX,e.clientY];};const end=e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hits=runtime.current?.model?ray.intersectObject(runtime.current.model,true):[];const target=hits.map(hit=>tagged(hit.object)).find(Boolean);if(target){const part=target.userData.part;setSelectedPart(part);onSelectRef.current?.(part);}};
@@ -162,10 +180,27 @@ const Scene=forwardRef(function Scene({config,onSelect,hero=false,quality='ateli
   return()=>{disposed=true;cancelAnimationFrame(raf);observer?.disconnect();runtime.current?.cleanup?.();controls?.dispose();if(runtime.current?.model)release(runtime.current.model);if(scene)scene.traverse(o=>{if(o.geometry)o.geometry.dispose();});env?.dispose();pmrem?.dispose();renderer?.dispose?.();renderer?.domElement.remove();runtime.current=null;};
  },[hero]);
  useEffect(()=>{setInspection(config.exploded);setExplosion(config.exploded?1:0);},[config.exploded]);
- useEffect(()=>{const r=runtime.current;if(r){r.explosionTarget=explosion;if(r.reducedMotion&&r.model){r.explosionCurrent=explosion;applyExplosion(r.model,explosion);r.invalidate();}}},[explosion]);
+ useEffect(()=>{const r=runtime.current;if(r){r.explosionTarget=explosion;setPresentationTarget(r.explosionTimeline,explosion);if(r.reducedMotion&&r.model){r.explosionCurrent=advancePresentationTimeline(r.explosionTimeline,0,{reducedMotion:true});applyExplosion(r.model,r.explosionCurrent);r.invalidate();}}},[explosion]);
+ useEffect(()=>{
+  const r=runtime.current;if(!r)return;
+  const preset=getLightPreset(lighting);
+  r.primaryLight.color.set(preset.key);
+  r.primaryLight.intensity=r.simplified?0.7*preset.keyI/3.4:preset.keyI;
+  r.fillLight.color.set(preset.fill);
+  r.fillLight.intensity=r.simplified?0.15*preset.fillI/1.2:preset.fillI;
+  r.ambientLight.color.set(preset.hemi);
+  if(r.simplified)r.ambientLight.intensity=0.65*preset.hemiI/2.4;
+  else{
+   r.ambientLight.groundColor.set(preset.ground);
+   r.ambientLight.intensity=preset.hemiI;
+   r.scene.environmentIntensity=preset.env;
+   r.renderer.toneMappingExposure=preset.exposure;
+  }
+  r.invalidate();
+ },[lighting]);
  useEffect(()=>{const r=runtime.current;if(r)r.controls.autoRotate=!r.simplified&&!r.reducedMotion&&(autoRotate||(hero&&!r.reducedMotion));},[autoRotate,hero]);
  useEffect(()=>{if(selectedPart&&!getAvailableParts(config,inspection).includes(selectedPart))setSelectedPart(null);},[config,inspection,selectedPart]);
  useEffect(()=>{const r=runtime.current;if(!r)return;try{if(r.model){r.scene.remove(r.model);release(r.model);}r.model=furniture(inspection?{...config,exploded:true}:config,r.simplified||quality==='draft');applyExplosion(r.model,r.explosionCurrent??0);r.explosionTarget=explosion;if(!hero)addRoom(r.model,config,r.simplified);r.scene.add(r.model);requestAnimationFrame(()=>{if(host.current)host.current.dataset.ready='1';});r.controls.target.set(0,config.category==='headboard'?.7:.55,config.layout==='straight'?0:.25);if(r.lastCategory!==config.category){const scale=config.category==='chair'?.6:config.category==='headboard'?.8:1;r.camera.position.set(3.1*scale,2.05*scale,4.4*scale);r.lastCategory=config.category;}r.controls.update();r.invalidate();setFailed(false);}catch{setFailed(true);}},[config,quality,inspection]);
- return <><div className="scene-host" ref={host}>{simplified&&!failed&&<span className="simplified-badge">Упрощённый просмотр · без WebGL</span>}{failed&&<div className="scene-fallback"><span>3D-просмотр недоступен</span><p>Параметры, расчёт и сохранение проекта продолжают работать. Попробуйте обновить страницу или использовать устройство с WebGL.</p></div>}</div>{!hero&&!failed&&<DesignExperience config={config} inspection={inspection} explosion={explosion} autoRotate={autoRotate} reducedMotion={reducedMotion} selectedPart={selectedPart} onAutoRotateChange={setAutoRotate} onInspectionChange={setInspection} onExplosionChange={setExplosion} onSelectPart={setSelectedPart}/>}</>;
+ return <><div className="scene-host" ref={host}>{simplified&&!failed&&<span className="simplified-badge">Упрощённый просмотр · без WebGL</span>}{failed&&<div className="scene-fallback"><span>3D-просмотр недоступен</span><p>Параметры, расчёт и сохранение проекта продолжают работать. Попробуйте обновить страницу или использовать устройство с WebGL.</p></div>}</div>{!hero&&!failed&&<DesignExperience config={config} inspection={inspection} explosion={explosion} autoRotate={autoRotate} lighting={lighting} onLightingChange={setLighting} reducedMotion={reducedMotion} selectedPart={selectedPart} onAutoRotateChange={setAutoRotate} onInspectionChange={setInspection} onExplosionChange={setExplosion} onSelectPart={setSelectedPart}/>}</>;
 });
 export default Scene;

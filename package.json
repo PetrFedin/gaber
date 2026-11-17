@@ -10,7 +10,7 @@
     "verify:source": "node scripts/verify-source.mjs --check",
     "snapshot:source": "node scripts/verify-source.mjs --write",
     "test:node": "node --test tests/*.test.js",
-    "test:ui": "node tests/render-smoke.mjs && node tests/design-experience-ui.mjs && node tests/client-experience-ui.mjs && node tests/project-storage-ui.mjs && node tests/factory-editor-ui.mjs && node tests/order-workspace-ui.mjs && node tests/operations-workspace-ui.mjs && node tests/order-finance-ui.mjs && node tests/server-orders-ui.mjs && node tests/draft-and-boundary-ui.mjs",
+    "test:ui": "node tests/render-smoke.mjs && node tests/design-experience-ui.mjs && node tests/client-experience-ui.mjs && node tests/project-storage-ui.mjs && node tests/factory-editor-ui.mjs && node tests/order-workspace-ui.mjs && node tests/operations-workspace-ui.mjs && node tests/order-finance-ui.mjs && node tests/server-orders-ui.mjs && node tests/draft-and-boundary-ui.mjs && node tests/clearance-ui.mjs",
     "verify:repository": "npm run verify:source && node scripts/verify-repository.mjs",
     "server": "node --env-file=server/dev/dev.env server/index.js",
     "dev:db": "docker compose --env-file server/dev/dev.env -f server/dev/docker-compose.yml up -d",

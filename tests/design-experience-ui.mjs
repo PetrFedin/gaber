@@ -23,9 +23,10 @@ try{
   const [inspection,setInspection]=useState(false);
   const [explosion,setExplosion]=useState(0);
   const [autoRotate,setAutoRotate]=useState(false);
+  const [lighting,setLighting]=useState('day');
   const [selectedPart,setSelectedPart]=useState(null);
   return React.createElement(React.Fragment,null,
-   React.createElement(DesignExperience,{config,inspection,explosion,autoRotate,reducedMotion:false,selectedPart,
+   React.createElement(DesignExperience,{config,inspection,explosion,autoRotate,lighting,onLightingChange:setLighting,reducedMotion:false,selectedPart,
     onAutoRotateChange:setAutoRotate,onInspectionChange:setInspection,onExplosionChange:setExplosion,onSelectPart:setSelectedPart}),
    React.createElement(ConfiguratorPanel,{config,step:'details',change:patch=>setConfig(old=>({...old,...patch})),start:()=>{},onTechnical:()=>{},onCosting:()=>{}}));
  }
@@ -33,6 +34,8 @@ try{
  const button=label=>{const el=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===label);assert.ok(el,'Missing button: '+label);return el;};
  const click=async label=>act(async()=>button(label).click());
  const select=async(label,value)=>act(async()=>{const el=document.querySelector(`[aria-label="${label}"]`);assert.ok(el,'Missing select: '+label);Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype,'value').set.call(el,value);el.dispatchEvent(new window.Event('change',{bubbles:true}));});
+ await select('Освещение','evening');assert.equal(document.querySelector('[aria-label="Освещение"]').value,'evening');
+ await select('Освещение','cool');assert.equal(document.querySelector('[aria-label="Освещение"]').value,'cool');
  await click('Обзор 360°');assert.equal(button('Остановить 360°').getAttribute('aria-pressed'),'true');
  await click('Остановить 360°');assert.ok(button('Обзор 360°'));
  await click('Разобрать');assert.equal(document.querySelector('[aria-label="Разнесение элементов"]').value,'100');
@@ -59,5 +62,5 @@ try{
  await select('Подлокотники','rounded');
  await act(async()=>toggle('Встроенная зарядка USB').click());
  assert.match(document.querySelector('.design-advisories').textContent,/съёмн|чехл|сервис/i);
- console.log('✓ design DOM: 360°, explode/assemble, slider, dynamic part details, arm/electrics guard and advisories');
+ console.log('✓ design DOM: lighting presets, 360°, explode/assemble, slider, dynamic part details, arm/electrics guard and advisories');
 }finally{await act(async()=>root.unmount());await server.close();dom.window.close();}

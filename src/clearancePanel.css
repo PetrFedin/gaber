@@ -1,0 +1,8 @@
+.clearance-review {margin:24px 0;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.clearance-review > summary {cursor:pointer;font-weight:600;line-height:1.5}
+.clearance-review-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin:16px 0}
+.clearance-review-grid label {display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+.clearance-review-grid input,.clearance-review-grid select {width:100%;min-height:42px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);padding:8px;font-size:12px}
+.clearance-review-grid button {align-self:end;min-height:42px}
+.clearance-review-result {border-top:1px solid var(--line);padding-top:12px;font-size:12px;overflow-wrap:anywhere}
+.clearance-review-result p {margin:8px 0;line-height:1.65}

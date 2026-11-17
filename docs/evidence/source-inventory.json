@@ -74,6 +74,10 @@
       "sha": "bbd0ddedeb6eb51361f4656fc780102fbdbfa5c9"
     },
     {
+      "path": "docs/KINEMATIC-CLEARANCE-STAGE-1-2026-11-18.md",
+      "sha": "2a07c0ee0f3e15c12829b9b4156048b5a17daac0"
+    },
+    {
       "path": "docs/MVP-QUALITY-CONTRACT.md",
       "sha": "b8f5baaa9133a45c9f7191141d9ed8a5a6df0ab6"
     },
@@ -239,7 +243,7 @@
     },
     {
       "path": "package.json",
-      "sha": "1e2276685a1aea6f0fb022dd428a17c9782e9370"
+      "sha": "54f4ae125d75649ad3ee48447b280325fd5267e3"
     },
     {
       "path": "public/favicon.svg",
@@ -438,6 +442,10 @@
       "sha": "3790fe4b55de21f8f94100bf3bff37e1055fe37c"
     },
     {
+      "path": "src/ClearancePanel.jsx",
+      "sha": "eaac5b3cd344d630442bf26c1caeae4b8e858060"
+    },
+    {
       "path": "src/ClientOfferAssurance.jsx",
       "sha": "030d4c7068608ecf2b5f77fb9fea2c00037482a1"
     },
@@ -519,7 +527,7 @@
     },
     {
       "path": "src/TechnicalPage.jsx",
-      "sha": "b340e874e95e86fb083ce4be2858dc384e0c8a28"
+      "sha": "04adf8bb3590c24c4da96ecdc645ce88bb72ae2c"
     },
     {
       "path": "src/assemblyExplosion.js",
@@ -532,6 +540,10 @@
     {
       "path": "src/atelierExperience.css",
       "sha": "a92e00480a0f7a02a1c55ce6fd8ae4ff9fc9b340"
+    },
+    {
+      "path": "src/clearancePanel.css",
+      "sha": "1432c0b543c2301b6af93bf7b5940fb460e02aea"
     },
     {
       "path": "src/clientOffer.js",
@@ -598,6 +610,10 @@
       "sha": "57049541619a854e968bd6f26372c847272ec0f8"
     },
     {
+      "path": "src/kinematicClearance.js",
+      "sha": "21ef3f33924d038b018d08d9975dc91cd128b95f"
+    },
+    {
       "path": "src/leadTime.js",
       "sha": "fdfcf440a95808ca0e9576dc299c2224f38ac31d"
     },
@@ -652,6 +668,10 @@
     {
       "path": "src/productionSchedule.js",
       "sha": "33bf83b1fef35c0511cf72ac9a478d2e60b914b0"
+    },
+    {
+      "path": "src/registeredClearance.js",
+      "sha": "d05c3fdbe03136e17f4ee4f60447b52f6e390bf3"
     },
     {
       "path": "src/serverApi.js",
@@ -716,6 +736,10 @@
     {
       "path": "tests/chaise-structure.test.js",
       "sha": "8b9a3e4b05c11dc5fe18233a0b72c8e5821da25d"
+    },
+    {
+      "path": "tests/clearance-ui.mjs",
+      "sha": "ad39193042ad3a779580e86234aeed7b44d9c550"
     },
     {
       "path": "tests/client-experience-ui.mjs",
@@ -804,6 +828,10 @@
     {
       "path": "tests/joint-contract-v045.test.js",
       "sha": "62914067cb2401d978a59c98d4e1cad1d431c2e8"
+    },
+    {
+      "path": "tests/kinematic-clearance.test.js",
+      "sha": "e69fa9c36e2b2634b00cc188230a0970758e06ac"
     },
     {
       "path": "tests/lead-time.test.js",
@@ -896,6 +924,10 @@
     {
       "path": "tests/project-storage-ui.mjs",
       "sha": "6ebc65ed36c578df4e092bb052ca9645fd80a7f2"
+    },
+    {
+      "path": "tests/registered-clearance.test.js",
+      "sha": "3343690201ddafa0a8a997ff7e17ff0f355f293f"
     },
     {
       "path": "tests/render-smoke.mjs",

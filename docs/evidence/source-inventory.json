@@ -114,6 +114,10 @@
       "sha": "f015444c2c0a1af40700c62bd39495c71605aa8f"
     },
     {
+      "path": "docs/VISUAL-MOTION-INTEGRATION-2026-11-17.md",
+      "sha": "1dc5bc6b102ce53b8f5ec91e3584d20630a78da1"
+    },
+    {
       "path": "docs/architecture.md",
       "sha": "b74abbc07d090fefc523adee7f0e5fe76eaefbfb"
     },
@@ -455,7 +459,7 @@
     },
     {
       "path": "src/DesignExperience.jsx",
-      "sha": "d852723bcf0668219746b7ab56c7949582b6761c"
+      "sha": "d9aa699b64fc625afefea8e7461b07fa17409343"
     },
     {
       "path": "src/DesignKit.jsx",
@@ -507,7 +511,7 @@
     },
     {
       "path": "src/Scene.jsx",
-      "sha": "e41852d9aa431b0624f57df87b8d60dfc6f58bb6"
+      "sha": "00a64c7b2d847bd8c3944e963876b1222856dbae"
     },
     {
       "path": "src/ServerOrders.jsx",
@@ -547,7 +551,7 @@
     },
     {
       "path": "src/designExperience.css",
-      "sha": "a33781ebc1b882750975459b20391ed5fc49dd12"
+      "sha": "7e587404e5c2dd510ab5cfc4cf50d7a298367589"
     },
     {
       "path": "src/designGuidance.js",
@@ -638,6 +642,10 @@
       "sha": "c9dbed4b1f0f4685eb8fcee7e13c83764e66f7f6"
     },
     {
+      "path": "src/presentationTimeline.js",
+      "sha": "ff75eabc3667baa37f3fe0ae2e3a4e80e5e9b015"
+    },
+    {
       "path": "src/previewLayout.js",
       "sha": "e3414022d9a8a05713180c11b47532940b5f7e1c"
     },
@@ -684,6 +692,10 @@
     {
       "path": "src/visualDetailing.js",
       "sha": "fc79a86f2ab39501eb46f43721e2b736fea092be"
+    },
+    {
+      "path": "src/visualLighting.js",
+      "sha": "24ab54967c3fd0f6f2cec9c93a4fa85e265c23c2"
     },
     {
       "path": "tests/access-policy-v0415.test.js",
@@ -866,6 +878,10 @@
       "sha": "152d8bfc58f7ed94494bc68cd551af3e793c355f"
     },
     {
+      "path": "tests/presentation-timeline.test.js",
+      "sha": "17d870e0d4692f7229d9180f4418422d0909566f"
+    },
+    {
       "path": "tests/preview-layout.test.js",
       "sha": "14493f8c77195d2e72cea3d203ac1a9a9b0baf9d"
     },
@@ -928,6 +944,10 @@
     {
       "path": "tests/visual-detailing.test.js",
       "sha": "02244c05f7acecdfae6f3cb14f2b27d71cd63524"
+    },
+    {
+      "path": "tests/visual-lighting.test.js",
+      "sha": "db4f91f76ba557867876aa617547e94eab5f1e1e"
     },
     {
       "path": "vite.config.js",

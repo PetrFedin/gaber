@@ -66,6 +66,8 @@ test('invalid geometry, input, empty obstacles and overlapping roots fail closed
   assert.throws(()=>inspectPoseClearance({moving,stationary:[fixed],marginMm:-1}),/CLEARANCE_INVALID_MARGIN_MM/);
   const bad=box('bad');bad.geometry.attributes.position.setX(0,NaN);
   assert.throws(()=>inspectPoseClearance({moving:bad,stationary:[fixed]}),/CLEARANCE_NONFINITE_VERTEX/);
+  const collapsed=box('collapsed');collapsed.scale.x=0;
+  assert.throws(()=>inspectPoseClearance({moving:collapsed,stationary:[fixed]}),/CLEARANCE_INVALID_WORLD_TRANSFORM/);
   assert.throws(()=>inspectKinematicSweep({moving,stationary:[fixed],applyPose:()=>{},samples:[0,0,1]}),/CLEARANCE_INVALID_SAMPLES/);
 });
 

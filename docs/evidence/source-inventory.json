@@ -611,7 +611,7 @@
     },
     {
       "path": "src/kinematicClearance.js",
-      "sha": "21ef3f33924d038b018d08d9975dc91cd128b95f"
+      "sha": "4bfb87dc9f0ff3392dc4fd8c99ee0b85742f9bd2"
     },
     {
       "path": "src/leadTime.js",
@@ -831,7 +831,7 @@
     },
     {
       "path": "tests/kinematic-clearance.test.js",
-      "sha": "e69fa9c36e2b2634b00cc188230a0970758e06ac"
+      "sha": "7276bbc637f25001429d88d817c1cc0c487af9b2"
     },
     {
       "path": "tests/lead-time.test.js",

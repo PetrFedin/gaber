@@ -29,7 +29,8 @@ function positiveGeometryBox(mesh) {
     throw TypeError('CLEARANCE_DEGENERATE_ENVELOPE');
   }
   const obb = new OBB().fromBox3(localBox).applyMatrix4(mesh.matrixWorld);
-  if (![obb.center.x, obb.center.y, obb.center.z, obb.halfSize.x, obb.halfSize.y, obb.halfSize.z].every(Number.isFinite)) {
+  if (![obb.center.x, obb.center.y, obb.center.z].every(Number.isFinite) ||
+      ![obb.halfSize.x, obb.halfSize.y, obb.halfSize.z].every(v => Number.isFinite(v) && v > 0)) {
     throw TypeError('CLEARANCE_INVALID_WORLD_TRANSFORM');
   }
   return obb;

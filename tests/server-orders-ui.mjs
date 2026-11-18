@@ -116,11 +116,19 @@ try {
   // клиент создаёт заказ на сервере
   await login('c@x.test', 'client-pass-1');
   assert.match(text(), /Мои заказы/);
+  // The five local product templates contribute only configuration to a NEW
+  // protected server order. All local payment and production history is discarded.
+  await act(async()=>setValue(field('Исходная конфигурация сервера'),'GABER-DEMO-LINEA-01'));
   await click('Создать заказ на сервере');
   assert.equal(state().stage, 'requested');
   assert.match(text(), /Заявка/);
   const created = requests.find((r) => r.body?.type === 'create');
   assert.equal(created.body.expectedVersion, 0);
+  assert.equal(created.body.payload.config.category,'sofa');
+  assert.equal(created.body.payload.config.color,'sage');
+  assert.deepEqual(Object.keys(created.body.payload),['projectId','name','config']);
+  assert.equal('status' in created.body.payload,false);
+  assert.equal('payments' in created.body.payload,false);
   assert.ok(!('role' in created.body) && !('principal' in created.body), 'клиент не передаёт роль');
   await fill('Сообщение', 'Нужна доставка в пятницу');
   await click('Отправить сообщение');
@@ -190,6 +198,46 @@ try {
   await click('Принять предложение');
   assert.equal(state().stage, 'accepted');
   assert.equal(state().acceptedRevisionId, 'R1');
+
+  // --- repaired E2E gap: server R1 quote -> customer change -> operator
+  // updates actual 3D geometry -> independent S2/R2 factory and customer approval.
+  await fill('Что необходимо изменить','Ширина 300 см после замера помещения');
+  await click('Запросить изменение');
+  assert.equal(state().stage,'change_requested');
+  assert.equal(state().acceptedRevisionId,null);
+  await logout();
+  await login('p@x.test','partner-pass-1');
+  for(const [label,value] of Object.entries(spec)) await fillIn('Подготовить ТЗ и расчёт',label,value);
+  const beforeInvalid = requests.filter(r=>r.body?.type==='prepare_spec').length;
+  await fillIn('Подготовить ТЗ и расчёт','Ширина, см','305');
+  // Native HTML number step validation would block this click, so exercise
+  // the JS validation boundary directly as well.
+  await act(async()=>formOf('Подготовить ТЗ и расчёт').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true})));
+  assert.equal(requests.filter(r=>r.body?.type==='prepare_spec').length,beforeInvalid);
+  assert.match(document.querySelector('[role=alert]')?.textContent??'',/Проверьте размеры, материал и механизм/);
+  await fillIn('Подготовить ТЗ и расчёт','Ширина, см','300');
+  await click('Подготовить ТЗ и расчёт');
+  assert.equal(state().stage,'awaiting_factory');
+  assert.equal(state().specs[1].config.width,300);
+  assert.equal(state().specs[1].id,'S2');
+  await logout();
+  await login('f@x.test','factory-pass-1');
+  assert.equal(state().specs.at(-1).config.width,300);
+  await fillIn('Подтвердить ТЗ','Номер подтверждения','ACK-T-2');
+  await fillIn('Подтвердить ТЗ','Комментарий','Концептуальная ширина 300 см проверена');
+  await click('Подтвердить ТЗ');
+  await logout();
+  await login('p@x.test','partner-pass-1');
+  await fillIn('Опубликовать предложение клиенту','Комментарий клиенту','Пересчитанная ширина 300 см');
+  await click('Опубликовать предложение клиенту');
+  assert.equal(state().revisions.at(-1).config.width,300);
+  assert.equal(state().revisions.at(-1).id,'R2');
+  await logout();
+  await login('c@x.test','client-pass-1');
+  assert.match(text(),/300×100×82 см/);
+  await click('Принять предложение');
+  assert.equal(state().acceptedRevisionId,'R2');
+  assert.equal(state().stage,'accepted');
 
   // --- оплата: заявление клиента, учёт партнёром, остаток ---
   const has = (label) => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === label);

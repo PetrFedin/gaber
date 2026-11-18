@@ -333,8 +333,9 @@ function App() {
       notify('Не удалось открыть паспорт: конфигурация заказа недопустима.');
       return;
     }
-    setConfig(structuredClone(sourceConfig));
-    setOrderArticleSource({orderId,revisionId,section});
+    // Preserve the independent studio draft when browsing a local or server
+    // order. The preview configuration belongs only to the requested page.
+    setOrderArticleSource({orderId,revisionId,section,config:structuredClone(sourceConfig)});
     go(section);
   }
   function persist(next) {
@@ -1163,14 +1164,15 @@ function App() {
       )}
       {route === "costing" && (
         <CostingPage
-          config={config}
+          config={orderArticleSource?.section === "costing" ? orderArticleSource.config : config}
           profile={profile}
           onChange={updateProfile}
         />
       )}
       {route === "technical" && <>
         {orderArticleSource?.section === "technical" && <p className="order-local-notice" role="note">Инженерный паспорт конфигурации демо-заказа {orderArticleSource.orderId} · {orderArticleSource.revisionId ?? 'заявка'}. Это концептуальная ведомость по этому изделию, не утверждённая заводская КД.</p>}
-        <TechnicalPage config={config} orderContext={orderArticleSource?.section === "technical" ? orderArticleSource : null} />
+        <TechnicalPage config={orderArticleSource?.section === "technical" ? orderArticleSource.config : config}
+          orderContext={orderArticleSource?.section === "technical" ? orderArticleSource : null} />
       </>}
       {route === "partner" && (
         <>
@@ -1182,7 +1184,7 @@ function App() {
           />
         </>
       )}
-      {route === "orders" && <ServerOrders config={config} />}
+      {route === "orders" && <ServerOrders config={config} onInspectOrder={openOrderArticle} />}
       {route === "kit" && import.meta.env.DEV && <DesignKit />}
       {["projects", "factory", "partner"].includes(route) && (
         <OrderWorkspace

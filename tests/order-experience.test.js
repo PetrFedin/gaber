@@ -25,12 +25,12 @@ function state(stage = "requested") {
     name: "Диван Linea",
     stage,
     assignedFactoryId: "factory-linea",
-    sourceConfig: { category: "sofa", modules: 3, mechanism: "none" },
+    sourceConfig: { category: "sofa", moduleCount: 3, mechanism: "none" },
     specs: [{ id: "S1", economics }],
     revisions: [
       {
         id: "R1",
-        config: { category: "sofa", modules: 3, mechanism: "none" },
+        config: { category: "sofa", moduleCount: 3, mechanism: "none" },
         priceKopecks: 15000000,
         dueDate: "2026-12-15",
       },

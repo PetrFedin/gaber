@@ -111,6 +111,7 @@ try{
  assert.equal(state().payments.length,1);
  assert.equal(state().productionRelease.allowed,false);
  await render('factory');
+ assert.equal(document.querySelector('.order-payment-progress'),null,'Factory cannot see retail price or payment progress');
  assert.equal(document.querySelector('.order-payments'),null,'Factory cannot inspect client payment claims or operator money ledger');
  assert.doesNotMatch(document.body.textContent,/Комиссия Габер|LOCAL-NOT-BANK/);
  await click('Запустить производственный сценарий');

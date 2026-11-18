@@ -246,9 +246,9 @@ export function buildAssemblyGuide(state) {
       "Установите опоры и штатные соединения по утверждённой фабричной карте. В демо артикулы крепежа и моменты затяжки не заданы.",
     );
   }
-  if ((config.modules ?? 1) > 1) {
+  if (config.category === "sofa" && Number.isSafeInteger(config.moduleCount) && config.moduleCount > 1) {
     lines.push(
-      `Соедините ${config.modules} модуля в последовательности фабричной маркировки; не используйте неутверждённые соединители.`,
+      `Соедините ${config.moduleCount} модуля в последовательности фабричной маркировки; не используйте неутверждённые соединители.`,
     );
   }
   if (config.category === "headboard") {

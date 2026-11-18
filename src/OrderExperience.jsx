@@ -27,9 +27,12 @@ function downloadText(filename, text) {
 export function OrderJourney({ state, role, financials }) {
   const journey = getOrderJourney(state);
   // Клиент не видит цену отозванного предложения: после запроса изменений действующего предложения нет.
+  // Retail price and payment ledger are private to the client and operator.
+  // Factory sees its factory cost in the technical task, never a retail total.
   const showPayment =
     financials.priceKopecks > 0 &&
-    (role !== "client" || Boolean(getCurrentClientOffer(state)));
+    (role === "partner" ||
+      (role === "client" && Boolean(getCurrentClientOffer(state))));
   const paymentPercent = financials.priceKopecks
     ? Math.min(
         100,

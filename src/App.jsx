@@ -224,6 +224,7 @@ function App() {
         ? "partner"
         : location.hash.slice(1) || "home",
   );
+  const [orderArticleSource,setOrderArticleSource]=useState(null);
   const [config, setConfig] = useState(
     () => {
       const fromLink = configFromHash();
@@ -300,6 +301,7 @@ function App() {
     else location.hash = next;
   }
   function change(patch) {
+    setOrderArticleSource(null);
     const next = { ...config, ...patch };
     setHistory((h) => [...h.slice(-29), config]);
     setFuture([]);
@@ -318,11 +320,22 @@ function App() {
     setFuture((f) => f.slice(1));
   }
   function start(category = "sofa") {
+    setOrderArticleSource(null);
     setConfig(initialConfig(category));
     setHistory([]);
     setFuture([]);
     setStep("composition");
     go("studio");
+  }
+  function openOrderArticle({section,orderId,revisionId,config:sourceConfig}) {
+    if(!['technical','costing'].includes(section)||
+       typeof orderId!=='string'||!sourceConfig||validate(sourceConfig).length){
+      notify('Не удалось открыть паспорт: конфигурация заказа недопустима.');
+      return;
+    }
+    setConfig(structuredClone(sourceConfig));
+    setOrderArticleSource({orderId,revisionId,section});
+    go(section);
   }
   function persist(next) {
     try {
@@ -1145,6 +1158,9 @@ function App() {
           </p>
         </main>
       )}
+      {route === "costing" && orderArticleSource?.section === "costing" && (
+        <p className="order-local-notice" role="note">Расчётный макет по конфигурации демо-заказа {orderArticleSource.orderId} · {orderArticleSource.revisionId ?? 'заявка'}. Текущие ставки модели не равны сохранённым коммерческим условиям заказа и не заменяют фабричную смету.</p>
+      )}
       {route === "costing" && (
         <CostingPage
           config={config}
@@ -1152,7 +1168,10 @@ function App() {
           onChange={updateProfile}
         />
       )}
-      {route === "technical" && <TechnicalPage config={config} />}
+      {route === "technical" && <>
+        {orderArticleSource?.section === "technical" && <p className="order-local-notice" role="note">Инженерный паспорт конфигурации демо-заказа {orderArticleSource.orderId} · {orderArticleSource.revisionId ?? 'заявка'}. Это концептуальная ведомость по этому изделию, не утверждённая заводская КД.</p>}
+        <TechnicalPage config={config} orderContext={orderArticleSource?.section === "technical" ? orderArticleSource : null} />
+      </>}
       {route === "partner" && (
         <>
           <OperationsPage projects={projects} />
@@ -1170,6 +1189,7 @@ function App() {
           key={route + ":" + (selectedProject ?? "")}
           selectedProjectId={selectedProject}
           projects={projects}
+          onInspectOrder={openOrderArticle}
           role={
             route === "factory"
               ? "factory"

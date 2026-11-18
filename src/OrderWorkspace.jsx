@@ -12,6 +12,7 @@ import {
   exportOrderWorkspace,
 } from "./orderStorage.js";
 import ConfigurationDetails from "./ConfigurationDetails.jsx";
+import {seedInvestorDemoArticles} from "./investorDemo.js";
 import ClientOfferAssurance from "./ClientOfferAssurance.jsx";
 import { getCurrentClientOffer } from "./clientOffer.js";
 import {
@@ -88,6 +89,15 @@ function storage() {
     return null;
   }
 }
+const ORDER_SELECTION_KEY='gaber.local-order-selection.v1';
+function readSelectedOrder() {
+  try {return globalThis.sessionStorage?.getItem(ORDER_SELECTION_KEY) ?? "";}
+  catch{return "";}
+}
+function rememberSelectedOrder(id) {
+  try {globalThis.sessionStorage?.setItem(ORDER_SELECTION_KEY,id);}
+  catch{/* Order access does not depend on session preferences. */}
+}
 function amount(text) {
   if (!/^\d{1,10}([.,]\d{1,2})?$/.test(text.trim()))
     throw Error("Введите сумму в рублях, не более двух знаков после запятой.");
@@ -108,12 +118,27 @@ export default function OrderWorkspace({
   projects,
   role,
   selectedProjectId = null,
+  onInspectOrder = null,
 }) {
   const [store] = useState(storage),
     [workspace, setWorkspace] = useState(() => readOrderWorkspace(store));
-  const [selected, setSelected] = useState(selectedProjectId ?? ""),
+  const [selected, setSelected] = useState(() => selectedProjectId ?? readSelectedOrder()),
     [message, setMessage] = useState("");
+  const selectOrder = (id) => {setSelected(id);rememberSelectedOrder(id);};
   const refresh = () => setWorkspace(readOrderWorkspace(store));
+  const loadDemo = () => {
+    try {
+      const result=seedInvestorDemoArticles(store);
+      refresh();
+      selectOrder(result.created[0] ?? result.skipped[0] ?? "");
+      setMessage(result.created.length
+        ? `Добавлено ${result.created.length} демо-артикулов. Существующие заказы сохранены. Выберите изделие и роль.`
+        : 'Демо-артикулы уже существуют. Ничего не перезаписано.');
+    } catch(error) {
+      setMessage('Демо-набор не загружен: '+(error?.message??'неизвестная ошибка')+'. Существующие записи не удалялись.');
+      refresh();
+    }
+  };
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === ORDER_STORAGE_KEY || e.key === null) refresh();
@@ -206,6 +231,16 @@ export default function OrderWorkspace({
         браузера. Оплаты, производство и доставка здесь не подтверждают реальные
         операции. Производственный допуск закрыт.
       </p>
+      {role === "partner" && (
+        <section className="order-demo-showcase" aria-label="Инвесторский демо-набор">
+          <div>
+            <h3>Инвесторский маршрут · 5 предметов мебели</h3>
+            <p>LINEA — полный заказ и приёмка; CAMBIO — фабрика рассматривает ТЗ; NOTTE — новая ревизия, перенос аванса и производство; TELA — готовность с остатком оплаты; FORMA — замечание клиента. Цены, оплаты, подтверждения и события — исключительно демонстрационные.</p>
+            <small>Загрузка только по нажатию: без удаления других заказов и без замены существующих артикулов. Содержимое видно всем ролям этого браузера; это не настоящие учётные записи.</small>
+          </div>
+          <button className="button outline" type="button" disabled={workspace.status !== "ready"} onClick={loadDemo}>Загрузить 5 демо-артикулов</button>
+        </section>
+      )}
       <div className="technical-actions">
         <button className="button outline" onClick={refresh}>
           Обновить журнал заказов
@@ -286,7 +321,7 @@ export default function OrderWorkspace({
                 <select
                   value={selectedId}
                   onChange={(e) => {
-                    setSelected(e.target.value);
+                    selectOrder(e.target.value);
                     setMessage("");
                   }}
                 >
@@ -341,6 +376,7 @@ export default function OrderWorkspace({
                   role={role}
                   send={send}
                   onError={setMessage}
+                  onInspectOrder={onInspectOrder}
                 />
               )}
             </>
@@ -355,7 +391,7 @@ export default function OrderWorkspace({
     </section>
   );
 }
-function OrderDetail({ row, role, send, onError }) {
+function OrderDetail({ row, role, send, onError, onInspectOrder }) {
   const s = row.state,
     r = s.revisions.at(-1),
     spec = s.specs?.at(-1),
@@ -497,6 +533,11 @@ function OrderDetail({ row, role, send, onError }) {
               ? `Связь с инженерной моделью: ${engineering.integrityOk ? "цифровые ссылки согласованы" : "есть ошибки связей"} · маршрутов: ${engineering.routingCount}. Допуск к изготовлению закрыт: ${engineering.blockers.length} незакрытых проверок.`
               : "Комплектация предложения связана с инженерным составом."}
           </p>
+          {onInspectOrder && !(partner && spec) && <div className="technical-actions">
+            <button type="button" className="button outline" onClick={() => onInspectOrder({
+              section:'technical',orderId:s.projectId,revisionId:r?.id??spec?.id??null,config:displayConfig
+            })}>Открыть инженерный паспорт этого изделия</button>
+          </div>}
           {client && <ClientOfferAssurance state={s} />}
           {((client && activeClientOffer) || (partner && r)) && (
             <>
@@ -854,14 +895,20 @@ function OrderDetail({ row, role, send, onError }) {
                 </dl>
               )}
               <div className="technical-actions">
-                {partner && (
-                  <a className="button outline" href="#costing">
-                    Открыть смету и нормы
-                  </a>
+                {partner && onInspectOrder && (
+                  <button type="button" className="button outline" onClick={() => onInspectOrder({
+                    section:'costing', orderId:s.projectId, revisionId:r?.id??spec?.id??null,
+                    config:displayConfig
+                  })}>
+                    Открыть смету и нормы · этот артикул
+                  </button>
                 )}
-                <a className="button outline" href="#technical">
-                  BOM и схема сборки
-                </a>
+                {onInspectOrder && <button type="button" className="button outline" onClick={() => onInspectOrder({
+                  section:'technical', orderId:s.projectId, revisionId:r?.id??spec?.id??null,
+                  config:displayConfig
+                })}>
+                  BOM и схема сборки · этот артикул
+                </button>}
               </div>
               {factory &&
                 !!s.assignedFactoryId &&

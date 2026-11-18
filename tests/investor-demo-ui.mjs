@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import {JSDOM} from 'jsdom';
+import React,{act} from 'react';
+import {createServer} from 'vite';
+const dom=new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',{url:'https://gaber.example.test/#partner'});
+globalThis.window=dom.window;globalThis.document=dom.window.document;
+globalThis.localStorage=dom.window.localStorage;
+globalThis.sessionStorage=dom.window.sessionStorage;
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=await import('react-dom/client');
+const vite=await createServer({optimizeDeps:{noDiscovery:true,include:[]},server:{middlewareMode:true},appType:'custom'});
+const root=createRoot(document.getElementById('root'));
+try{
+ const {default:Workspace}=await vite.ssrLoadModule('/src/OrderWorkspace.jsx');
+ const {readOrderWorkspace}=await vite.ssrLoadModule('/src/orderStorage.js');
+ const inspections=[];let counter=0;
+ const render=async(role)=>act(async()=>root.render(React.createElement(Workspace,
+  {key:role+(++counter),projects:[],role,onInspectOrder:value=>inspections.push(value)})));
+ await render('partner');
+ const load=()=>[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='Загрузить 5 демо-артикулов');
+ assert.ok(load());await act(async()=>load().click());
+ const orders=readOrderWorkspace(localStorage);
+ assert.equal(orders.status,'ready');assert.equal(orders.orders.length,5);
+ assert.ok(document.querySelector('.order-demo-showcase'));
+ assert.match(document.body.textContent,/Добавлено 5 демо-артикулов/);
+ await act(async()=>load().click());
+ assert.equal(readOrderWorkspace(localStorage).orders.length,5);
+ assert.match(document.body.textContent,/уже существуют/);
+ const selectOrder=async(id)=>act(async()=>{
+  const select=document.querySelector('.order-workspace select');
+  assert.ok(select);
+  Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype,'value').set.call(select,id);
+  select.dispatchEvent(new window.Event('change',{bubbles:true}));
+ });
+ await selectOrder('GABER-DEMO-NOTTE-05');
+ assert.match(document.body.textContent,/NOTTE/);
+ assert.match(document.body.textContent,/Партнёр GABER/);
+ const button=()=>[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='BOM и схема сборки · этот артикул');
+ await act(async()=>button().click());
+ assert.equal(inspections.at(-1).section,'technical');
+ assert.equal(inspections.at(-1).orderId,'GABER-DEMO-NOTTE-05');
+ assert.equal(inspections.at(-1).config.width,200);
+ assert.equal(inspections.at(-1).revisionId,'R2');
+ await render('factory');
+ assert.equal(load(),undefined);
+ assert.equal(document.querySelector('.order-workspace select').value,'GABER-DEMO-NOTTE-05',
+  'Selected demo article must survive cabinet navigation without reopening wrong order');
+ await selectOrder('GABER-DEMO-LINEA-01');
+ assert.equal(document.querySelector('.order-payment-progress'),null);
+ assert.equal(document.querySelector('.partner-commission'),null);
+ assert.doesNotMatch(document.body.textContent,/460\s?000,00|Комиссия GABER|Плановый резерв|Цена предложения/);
+ assert.match(document.body.textContent,/Стоимость изготовления/);
+ await render('client');
+ await selectOrder('GABER-DEMO-LINEA-01');
+ assert.match(document.body.textContent,/Цена предложения/);
+ assert.match(document.body.textContent,/460\s?000,00/);
+ assert.doesNotMatch(document.body.textContent,/Плановый резерв|Стоимость изготовления|Комиссия GABER/);
+ await selectOrder('GABER-DEMO-CAMBIO-04');
+ assert.match(document.body.textContent,/CAMBIO/);
+ assert.doesNotMatch(document.body.textContent,/170\s?000,00|Цена предложения/);
+ console.log('✓ investor DOM: five actual articles, idempotent seed, partner NOTTE R2 → correct engineer config, factory retail privacy, client offer lifecycle');
+}finally{await act(async()=>root.unmount());await vite.close();dom.window.close();}

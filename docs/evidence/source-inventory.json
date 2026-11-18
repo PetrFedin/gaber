@@ -74,6 +74,10 @@
       "sha": "bbd0ddedeb6eb51361f4656fc780102fbdbfa5c9"
     },
     {
+      "path": "docs/INVESTOR-DEMO-ARTICLE-E2E-2026-11-18.md",
+      "sha": "de9a4f919a0b2a232aa873bd3b259afceaff7080"
+    },
+    {
       "path": "docs/KINEMATIC-CLEARANCE-STAGE-1-2026-11-18.md",
       "sha": "2a07c0ee0f3e15c12829b9b4156048b5a17daac0"
     },
@@ -140,6 +144,26 @@
     {
       "path": "docs/engineering-v0.4.md",
       "sha": "b096a5e403b4c6d641a4ccbb8c536d471f370346"
+    },
+    {
+      "path": "docs/evidence/investor-demo-20261118/01-order-linked-technical-1440.png",
+      "sha": "7b315585c6274d67ac195719395eacbe7e042d4d"
+    },
+    {
+      "path": "docs/evidence/investor-demo-20261118/02-factory-private-cost-1440.png",
+      "sha": "9e51c7a209ebe4c60608778823b37fac981cb738"
+    },
+    {
+      "path": "docs/evidence/investor-demo-20261118/03-client-article-states-1440.png",
+      "sha": "239463029fedea39640cc04925bd2d8a9e095f1b"
+    },
+    {
+      "path": "docs/evidence/investor-demo-20261118/04-mobile-order-linked-technical-375.png",
+      "sha": "a09aacabf59a12edb1c93b020e7502b358092c03"
+    },
+    {
+      "path": "docs/evidence/investor-demo-20261118/README.md",
+      "sha": "2bcf725ed6fb2891df8996dda0aea91ea9742149"
     },
     {
       "path": "docs/evidence/v0.4.19/local-summary.json",
@@ -243,7 +267,7 @@
     },
     {
       "path": "package.json",
-      "sha": "54f4ae125d75649ad3ee48447b280325fd5267e3"
+      "sha": "3610db17dddf73fad9065c495a4a3f2d339db1a3"
     },
     {
       "path": "public/favicon.svg",
@@ -256,6 +280,14 @@
     {
       "path": "scripts/design-audit.browser.js",
       "sha": "bb40e9178055dbe0ec3de280af62a1dd26dfff4c"
+    },
+    {
+      "path": "scripts/verify-disposable-postgres-e2e.sh",
+      "sha": "6461fa98034f81422e91ba4ec4961ec19e4a1b71"
+    },
+    {
+      "path": "scripts/verify-investor-browser.mjs",
+      "sha": "97bdfcaae368fb6a7a65c81158f249650e5f0b6b"
     },
     {
       "path": "scripts/verify-postgres-staging.sh",
@@ -431,7 +463,7 @@
     },
     {
       "path": "server/tests/postgres-http-e2e.mjs",
-      "sha": "cc649f2000681e4300de88a7a4c60266e58f9f75"
+      "sha": "35b9cc69e0912ad80126b233373e66820ac29783"
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",
@@ -439,7 +471,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "3790fe4b55de21f8f94100bf3bff37e1055fe37c"
+      "sha": "854a22ccffd247b6e5dea7564b73d6ab9fbcddd1"
     },
     {
       "path": "src/ClearancePanel.jsx",
@@ -507,11 +539,11 @@
     },
     {
       "path": "src/OrderExperience.jsx",
-      "sha": "237b626aa1cbb407bdb8248dd42054ac7ca91805"
+      "sha": "7042d10347f035c26363b3cb2fa53af8cea3a00e"
     },
     {
       "path": "src/OrderWorkspace.jsx",
-      "sha": "3232684059496ab961be30f48e8d3a92148b5dc8"
+      "sha": "bcdf7adc6ea531428f5fd2bc6d49b35dd07ebe54"
     },
     {
       "path": "src/ProjectStorageTools.jsx",
@@ -527,7 +559,7 @@
     },
     {
       "path": "src/TechnicalPage.jsx",
-      "sha": "04adf8bb3590c24c4da96ecdc645ce88bb72ae2c"
+      "sha": "3dfb58a825f99a48dc0f40e2efc024b07c421c08"
     },
     {
       "path": "src/assemblyExplosion.js",
@@ -606,6 +638,10 @@
       "sha": "c7620a80ffebf2f042817064cb97fa5bb2e53944"
     },
     {
+      "path": "src/investorDemo.js",
+      "sha": "275d54dc2957df9dda876aa74dea943458dbfc5f"
+    },
+    {
       "path": "src/jointLayout.js",
       "sha": "57049541619a854e968bd6f26372c847272ec0f8"
     },
@@ -631,11 +667,11 @@
     },
     {
       "path": "src/orderExperience.css",
-      "sha": "a4bc73b6946dd41d2e7f48e87cb184e00074bda9"
+      "sha": "a9d43f1b5b8327367dd460dd2416065ab3e6887a"
     },
     {
       "path": "src/orderExperience.js",
-      "sha": "471accd057d7a4143128bde84551c210e49da1e9"
+      "sha": "d3ca09eb827f055e47b260b41b7f556b877b95c0"
     },
     {
       "path": "src/orderMessageChannels.js",
@@ -826,6 +862,14 @@
       "sha": "4859cdf1ef34aaaeb882fe5308b85f59c68b6f7c"
     },
     {
+      "path": "tests/investor-demo-ui.mjs",
+      "sha": "6a2c79ff272f27ab1f652e719fd8559bbbffde28"
+    },
+    {
+      "path": "tests/investor-demo.test.js",
+      "sha": "223464d33d3e3343f29090dc5ec4e38f8a0163d1"
+    },
+    {
       "path": "tests/joint-contract-v045.test.js",
       "sha": "62914067cb2401d978a59c98d4e1cad1d431c2e8"
     },
@@ -859,7 +903,7 @@
     },
     {
       "path": "tests/order-experience.test.js",
-      "sha": "ab32ff0dc87424d47906b02e4ca85f42a92b841a"
+      "sha": "0e7473dd78444124292a2c9e74ae78ac073dd5df"
     },
     {
       "path": "tests/order-finance-ui.mjs",
@@ -895,7 +939,7 @@
     },
     {
       "path": "tests/order-workspace-ui.mjs",
-      "sha": "991ac50fed05e212e7230092249e335e64754d1e"
+      "sha": "3c99c60f85e982f4fb32b51f76d0f4340811b3c0"
     },
     {
       "path": "tests/partner-economics.test.js",

@@ -14,7 +14,8 @@ import {initialConfig} from '../../src/domain.js';
 
 const {Pool}=pg;
 const now=Date.parse('2026-11-01T16:00:00.000Z');
-const host='127.0.0.1',port=5432,database='gaber_staging';
+const host='127.0.0.1',port=Number(process.env.GABER_TEST_PG_PORT ?? 5432),database='gaber_staging';
+if(!Number.isSafeInteger(port)||port<1024||port>65535)throw Error('INVALID_DISPOSABLE_POSTGRES_PORT');
 const clientPool=new Pool({host,port,database,user:'gaber_http_ci',
  password:'gaber_http_disposable_only',max:12,connectionTimeoutMillis:5000});
 const adminPool=new Pool({host,port,database,user:'postgres',

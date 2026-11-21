@@ -451,7 +451,7 @@
     },
     {
       "path": "server/tests/browser-postgres-e2e.mjs",
-      "sha": "22743934af3da243f118efebbf4b10c458ac7621"
+      "sha": "c4fe6ac2a6ee3fd12d72940b026a8d343dd53944"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",
@@ -563,7 +563,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "0d07be13b7749840af0e09dd8cceccb7e9706646"
+      "sha": "1f18c0cc0e5fd75cb7346aa64be7db93fa12353c"
     },
     {
       "path": "src/TechnicalPage.jsx",

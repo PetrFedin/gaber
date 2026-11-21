@@ -130,6 +130,12 @@ try{
  await refresh(partner);
  const edit={...terms,'Цена клиенту, ₽':'2600,05','Ширина, см':'210'};
  await execute(partner,id,'Подготовить ТЗ и расчёт',edit);
+ const revised=await raw(partner,id);
+ if(revised.body?.order?.stage!=='awaiting_factory'){
+  const alerts=await partner.locator('[role="alert"]').allTextContents();
+  throw Error('R2_SPEC_NOT_COMMITTED status='+revised.status+' stage='+revised.body?.order?.stage+
+   ' error='+JSON.stringify(alerts)+' version='+revised.body?.order?.version);
+ }
  await refresh(factory);
  o=await stage(factory,id,'awaiting_factory');
  assert.equal(o.factoryTask.sourceConfig.width,210);

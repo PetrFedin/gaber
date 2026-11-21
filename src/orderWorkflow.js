@@ -3,6 +3,7 @@ import {factoryConfigKey} from './factoryDraftStorage.js';
 import {createManufacturingPackage} from './manufacturing.js';
 import {calculatePartnerEconomics} from './partnerEconomics.js';
 import {canAccessOrderMessageChannel,normalizeOrderMessageChannel} from './orderMessageChannels.js';
+import {validateConceptPackout,validateConceptReceipt,validateCorrectionProposal} from './fulfillmentInspection.js';
 
 export const ORDER_SCHEMA='gaber-order-three-roles/2';
 export const ORDER_STAGES={requested:'Заявка',awaiting_factory:'ТЗ на подтверждении фабрики',factory_confirmed:'Фабрика подтвердила ТЗ',factory_changes:'Фабрика запросила изменения',offered:'Предложение',accepted:'Согласовано',change_requested:'Корректировка',production:'В работе',quality:'Контроль качества',ready:'Готов к отгрузке',shipped:'Отгружен',delivered:'Доставлен',disputed:'Замечания',closed:'Принят клиентом'};
@@ -45,7 +46,9 @@ const TYPES={
  start:['factory',[]],complete:['factory',[]],quality_pass:['factory',['reference']],
  ship:['factory',['carrier','tracking','reference']],deliver:['factory',['reference']],
  accept_delivery:['client',[]],report_issue:['client',['note']],
- respond_issue:['factory_partner',['note']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
+ record_packout:['factory',['reference','note','lines']],amend_packout:['factory',['reference','note','lines']],
+ record_receipt:['client',['reference','note','lines']],
+ respond_issue:['factory_partner',['note','corrections']],reject_resolution:['client',['note']],confirm_resolution:['client',[]]
 };
 export function orderFinancials(state){
  const current=state.revisions.at(-1);
@@ -85,7 +88,7 @@ function apply(state,command){
   if(state||command.revisionId!==undefined||!id(p.projectId)||!text(p.name))fail('CREATE_INVALID');
   return {schemaVersion:ORDER_SCHEMA,projectId:p.projectId,name:p.name,sourceConfig:validConfig(p.config),version:1,
    stage:'requested',assignedFactoryId:null,specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
-   shipment:null,delivery:null,quality:null,issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
+   shipment:null,delivery:null,quality:null,packout:null,packouts:[],receipt:null,receipts:[],issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
    authority:'LOCAL_WORKFLOW_SIMULATION',productionRelease:{allowed:false}};
  }
  if(!state)fail('ORDER_MISSING');
@@ -175,14 +178,51 @@ function apply(state,command){
    case 'quality_pass':
     if(s.stage!=='quality'||!text(p.reference))fail('QUALITY_REQUIRED');
     s.quality={revisionId:current.id,reference:p.reference,at:command.at};s.stage='ready';break;
+   case 'record_packout':
+   case 'amend_packout':{
+    if(s.stage!=='ready'||s.acceptedRevisionId!==current.id||!text(p.reference)||!text(p.note)||
+      (command.type==='record_packout'&&s.packout!==null)||
+      (command.type==='amend_packout'&&s.packout===null))fail('PACKOUT_STAGE_INVALID');
+    if(s.packouts.some(x=>x.reference.trim().toLowerCase()===p.reference.trim().toLowerCase()))
+      fail('PACKOUT_DUPLICATE_REFERENCE');
+    const result=validateConceptPackout(current.config,p.lines);
+    s.packout={revisionId:current.id,reference:p.reference,note:p.note,
+      lines:result.lines,shortages:result.shortages,complete:result.complete,at:command.at,
+      authority:'FACTORY_SELF_REPORTED_CONCEPT_UNVERIFIED'};
+    s.packouts.push(copy(s.packout));break;
+   }
    case 'ship':
-    if(s.stage!=='ready'||f.balanceKopecks>0||!s.quality||!text(p.carrier)||!text(p.tracking)||!text(p.reference))fail('SHIPMENT_BLOCKED');
+    if(s.stage!=='ready'||f.balanceKopecks>0||!s.quality||s.packout?.complete===false||
+      !text(p.carrier)||!text(p.tracking)||!text(p.reference))fail('SHIPMENT_BLOCKED');
     s.shipment={revisionId:current.id,...copy(p),at:command.at};s.stage='shipped';break;
    case 'deliver':
     if(s.stage!=='shipped'||!text(p.reference))fail('DELIVERY_BLOCKED');
     s.delivery={revisionId:current.id,reference:p.reference,at:command.at};s.stage='delivered';break;
+   case 'record_receipt':{
+    if(s.stage!=='delivered'||!text(p.reference)||!text(p.note)||
+      !s.packout?.complete||s.packout.revisionId!==current.id||
+      (s.receipt&&s.receipt.status!=='correction_pending_reinspection')||
+      s.receipts.some(x=>x.reference.trim().toLowerCase()===p.reference.trim().toLowerCase()))
+      fail('RECEIPT_STAGE_INVALID');
+    const result=validateConceptReceipt(s.packout,p.lines);
+    const receipt={id:'RC'+(s.receipts.length+1),revisionId:current.id,
+      reference:p.reference,note:p.note,lines:result.lines,
+      discrepancies:result.discrepancies,at:command.at,
+      status:result.matched?'matched_unverified':'discrepancy',
+      authority:'CLIENT_SELF_REPORTED_CONCEPT_UNVERIFIED'};
+    s.receipt=receipt;s.receipts.push(copy(receipt));
+    if(!result.matched){
+      const issue={id:'I'+(s.issues.length+1),revisionId:current.id,
+        receiptId:receipt.id,note:p.note,at:command.at,fromStage:'delivered',
+        status:'open',response:null,rejections:[],resolvedAt:null};
+      s.issue=issue;s.issues.push(copy(issue));s.stage='disputed';
+    }else{s.issue=null;}
+    break;
+   }
    case 'accept_delivery':
-    if(s.stage!=='delivered')fail('ACCEPTANCE_BLOCKED');s.stage='closed';break;
+    if(s.stage!=='delivered'||(s.receipt&&s.receipt.status!=='matched_unverified'))
+      fail('ACCEPTANCE_BLOCKED');
+    s.stage='closed';break;
    case 'report_issue':
     if(!['shipped','delivered'].includes(s.stage)||!text(p.note))fail('ISSUE_INVALID');
     s.issue={id:'I'+(s.issues.length+1),revisionId:current.id,note:p.note,
@@ -190,7 +230,13 @@ function apply(state,command){
     s.issues.push(copy(s.issue));s.stage='disputed';break;
    case 'respond_issue':
     if(s.stage!=='disputed'||s.issue?.status!=='open'||!text(p.note))fail('ISSUE_RESPONSE_BLOCKED');
-    s.issue.status='response_proposed';s.issue.response={note:p.note,at:command.at};
+    if(s.issue.receiptId&&!Array.isArray(p.corrections))fail('CORRECTION_PLAN_REQUIRED');
+    const corrections=s.issue.receiptId?
+      validateCorrectionProposal(s.receipt.discrepancies,p.corrections):null;
+    if(!s.issue.receiptId&&p.corrections!==undefined)fail('CORRECTION_NOT_APPLICABLE');
+    s.issue.status='response_proposed';
+    s.issue.response={note:p.note,at:command.at,...(corrections?{corrections,
+      authority:'PROPOSED_PLAN_NO_REAL_REMEDY'}:{})};
     s.issues[s.issues.length-1]=copy(s.issue);break;
    case 'reject_resolution':
     if(s.stage!=='disputed'||s.issue?.status!=='response_proposed'||!text(p.note))fail('ISSUE_REJECTION_BLOCKED');
@@ -200,7 +246,13 @@ function apply(state,command){
    case 'confirm_resolution':
     if(s.stage!=='disputed'||s.issue?.status!=='response_proposed'||
      !['shipped','delivered'].includes(s.issue.fromStage))fail('ISSUE_CONFIRMATION_BLOCKED');
-    s.issue.status='resolved';s.issue.resolvedAt=command.at;
+    s.issue.status=s.issue.receiptId?'correction_plan_accepted':'resolved';
+    s.issue.resolvedAt=command.at;
+    if(s.issue.receiptId){
+      // Customer acceptance of a proposed plan is not physical remediation.
+      // A new independent receipt is required before delivery can close.
+      s.receipt.status='correction_pending_reinspection';
+    }
     s.stage=s.issue.fromStage;s.issues[s.issues.length-1]=copy(s.issue);break;
   }
  }

@@ -1,4 +1,5 @@
 import {validate,normalize} from './domain.js';
+import {factoryConfigKey} from './factoryDraftStorage.js';
 
 const ALLOWED_EDIT_KEYS=new Set([
   'width','depth','height','moduleCount','fabric','color','comfort','mechanism','storage'
@@ -24,7 +25,8 @@ export function buildServerSpecConfig(sourceConfig,patch={}){
  }
  const result={...structuredClone(sourceConfig),...structuredClone(patch)};
  const normalized=normalize(result);
- if(!normalized||validate(result).length)fail('SERVER_SPEC_CONFIG_INVALID');
+ if(!normalized||validate(result).length||factoryConfigKey(result)!==factoryConfigKey(normalized))
+  fail('SERVER_SPEC_CONFIG_INVALID');
  // The reducer will revalidate the full commercial offer and enforce
  // factory confirmation on the exact selected configuration.
  return structuredClone(result);

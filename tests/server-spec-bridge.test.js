@@ -38,6 +38,8 @@ test('malformed configurations and invented approval/financial fields fail close
   {materialSupplierApproved:true},{factoryCostKopecks:1},{category:'headboard'}
  ])assert.throws(()=>buildServerSpecConfig(c,patch),/SERVER_SPEC_(FIELD_FORBIDDEN|CONFIG_INVALID)/);
  assert.throws(()=>buildServerSpecConfig({},{}),/SERVER_SPEC_CONFIG_INVALID/);
+ assert.throws(()=>buildServerSpecConfig({...c,authority:'FACTORY_APPROVED'},{}),/SERVER_SPEC_CONFIG_INVALID/);
+ assert.throws(()=>buildServerSpecConfig({...c,unitCostRUB:0},{}),/SERVER_SPEC_CONFIG_INVALID/);
 });
 
 test('invalid mechanical options are blocked against the catalog constraint matrix',()=>{

@@ -225,6 +225,10 @@ function App() {
         : location.hash.slice(1) || "home",
   );
   const [orderArticleSource,setOrderArticleSource]=useState(null);
+  // A linked technical/costing dossier is only valid for its current route.
+  // Returning to the studio or another section must never revive an older
+  // customer's BOM when the operator opens a fresh article.
+  useEffect(()=>{setOrderArticleSource(current=>current && current.section!==route?null:current);},[route]);
   const [config, setConfig] = useState(
     () => {
       const fromLink = configFromHash();

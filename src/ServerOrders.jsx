@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {getFamily, getFabric, families, fabrics, colors, bounds,validate} from './domain.js';
+import {getFamily, getFabric, fabrics, colors, bounds,validate} from './domain.js';
 import {getInvestorDemoTemplates} from './investorDemo.js';
 import {buildServerSpecConfig, getServerDemoCatalog,serverCreateCommand} from './serverSpecBridge.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
@@ -379,7 +379,11 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
   // duplicate user orders. Editing the draft explicitly starts a new request.
   const pendingCreate = React.useRef(null);
   const submitting = React.useRef(false);
-  const resetCreate=()=>{pendingCreate.current=null;};
+  const [retryPending,setRetryPending] = useState(false);
+  const resetCreate=()=>{pendingCreate.current=null;setRetryPending(false);};
+  // Changing the active studio configuration is an explicit new draft choice;
+  // never silently retry an older unknown-response payload as a new model.
+  useEffect(()=>{pendingCreate.current=null;setRetryPending(false);},[config]);
   const role = user?.role;
   const refresh = useCallback(async () => {
     try {
@@ -436,11 +440,16 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
       }
       const submitted=pendingCreate.current;
       await serverApi.command(submitted);
-      pendingCreate.current=null;
+      resetCreate();
       setName('');setPresetId('');
       setNote('Создана новая серверная заявка без переноса локальных оплат, цены и этапов демо.');
     } catch (e) {
       setError(errorText(e));
+      // A network timeout may mean the request DID commit: preserve the same
+      // request ID for the retry. Other 4xx errors are not ambiguous.
+      if(e?.code==='SERVER_UNAVAILABLE'||(e?.status>=500&&e?.status<600))
+        setRetryPending(Boolean(pendingCreate.current));
+      else resetCreate();
     } finally {
       await refresh();
       setBusy(false);
@@ -503,7 +512,8 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
           <label className="advanced-field">Название заказа<input value={name} maxLength={120}
             onChange={(e) => {setName(e.target.value);resetCreate();}} /></label>
           <p className="helper">Пять исходных моделей передают только выбранную геометрию и обивку. Сервер создаёт новую заявку с нулевой историей — без переноса локальных цен, оплат, подтверждений и отгрузок.</p>
-          <button className="button dark" disabled={busy} onClick={createOrder}>Создать заказ на сервере</button>
+          {retryPending && <p className="inline-warning" role="note">Предыдущий ответ сервера не получен. Повторная отправка использует тот же идентификатор запроса, чтобы не дублировать заказ.</p>}
+          <button className="button dark" disabled={busy} onClick={createOrder}>{retryPending?'Повторить ту же заявку':'Создать заказ на сервере'}</button>
         </section>
       )}
       {user && (

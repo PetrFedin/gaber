@@ -209,6 +209,7 @@ try{
  assert.equal(templates.length,4);
  const matrix=[];
  for(const [i,template] of templates.entries()){
+   await partner.goto(base+'/#orders',{waitUntil:'networkidle'});
    const label='QA-'+template.id+'-'+randomBytes(3).toString('hex');
    await client.goto(base+'/#orders',{waitUntil:'networkidle'});
    await client.getByLabel('Исходная конфигурация сервера',{exact:true}).selectOption(template.id);

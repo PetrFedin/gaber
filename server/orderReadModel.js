@@ -2,6 +2,7 @@ import {orderFinancials} from '../src/orderWorkflow.js';
 import {createManufacturingPackage} from '../src/manufacturing.js';
 import {getCurrentClientOffer} from '../src/clientOffer.js';
 import {visibleOrderMessages} from '../src/orderMessageChannels.js';
+import {getConceptPackoutPlan} from '../src/fulfillmentInspection.js';
 
 export const ORDER_READ_SCHEMA='gaber-server-order-three-roles/1';
 const clone=x=>structuredClone(x);
@@ -36,6 +37,12 @@ export function projectOrderReadModel(state,role){
   productionRelease:{allowed:false}};
  const messages=clone(visibleOrderMessages(state.messages,role)),config=clone(current?.config??state.sourceConfig);
  const task=factoryTask(state);
+ const plan=(state.stage==='ready'||state.packout||state.delivery)?
+  getConceptPackoutPlan(current?.config??state.sourceConfig):null;
+ const fulfillment={plan,packout:clone(state.packout??null),
+  receipt:clone(state.receipt??null),
+  correctionPending:state.receipt?.status==='correction_pending_reinspection',
+  authority:'CONCEPT_INSPECTION_NOT_PHYSICAL_WAREHOUSE_PROOF'};
  if(role==='client'){
   // Repricing or a customer change immediately revokes the current payable
   // quote. Previous revisions remain in the journal but must not be presented
@@ -57,13 +64,13 @@ export function projectOrderReadModel(state,role){
     balanceKopecks:f?.balanceKopecks??null,
     localRecordedKopecks:f?.currentKopecks??null,
     verifiedBankKopecks:null,authority:'UNVERIFIED_NOT_SETTLEMENT'},
-   paymentClaims:clone(state.paymentClaims),messages,issue:clone(state.issue)};
+   paymentClaims:clone(state.paymentClaims),messages,issue:clone(state.issue),fulfillment};
  }
  if(role==='factory'){
   return {...base,name:state.name,config:clone(task?.sourceConfig??config),
    dueDate:task?.dueDate??null,
    factoryTask:task,acceptedRevisionId:state.acceptedRevisionId,
-   messages,issue:clone(state.issue)};
+   messages,issue:clone(state.issue),fulfillment};
  }
  const f=orderFinancials(state);
  return {...base,name:state.name,config:clone(task?.sourceConfig??config),
@@ -75,7 +82,7 @@ export function projectOrderReadModel(state,role){
   economics:clone(state.specs?.at(-1)?.economics??null),
   finance:{...f,authority:'UNVERIFIED_RECORDS_NOT_BANK_SETTLEMENT'},
   payments:clone(state.payments),paymentClaims:clone(state.paymentClaims),
-  messages,issue:clone(state.issue),
+  messages,issue:clone(state.issue),fulfillment,
   assignedFactoryId:state.assignedFactoryId??null,
   operatorScope:'TENANT_OPERATIONS'
  };

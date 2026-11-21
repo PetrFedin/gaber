@@ -19,6 +19,9 @@ const MAP=Object.freeze({
  deliver:['shipments.confirm_carrier','factory'],
  accept_delivery:['delivery.accept','client'],
  report_issue:['issues.report','client'],
+ record_packout:['factory.technical_review','factory'],
+ amend_packout:['factory.technical_review','factory'],
+ record_receipt:['delivery.accept','client'],
  respond_issue:['issues.respond',null],
  reject_resolution:['issues.reject','client'],
  confirm_resolution:['issues.accept','client']

@@ -75,7 +75,7 @@ function Field({field, value, onChange}) {
   return (
     <label className="advanced-field">
       {field.label}
-      <Tag value={value ?? ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+      <Tag name={field.name} value={value ?? ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
@@ -87,9 +87,14 @@ function ActionForm({action, order, role, busy, onRun}) {
   const changeConfiguration=(field,value)=>setConfigurationEdits(s=>({...s,[field]:value}));
   const submit = (e) => {
     e.preventDefault();
+    // Read the values actually present in the submitted form. React may still
+    // be reconciling controlled state after a geometry edit; never send a
+    // partially cleared commercial quote from a previous revision.
+    const submitted = new e.currentTarget.ownerDocument.defaultView.FormData(e.currentTarget);
     const payload = {};
     for (const f of action.fields ?? []) {
-      const raw = values[f.name] ?? '';
+      const input = submitted.get(f.name);
+      const raw = typeof input === 'string' ? input : '';
       try {
         payload[f.name] = f.kind === 'money'
           ? parseOrderKopecks(raw, {positive: POSITIVE_MONEY_FIELDS.has(f.name), allowEmpty: !POSITIVE_MONEY_FIELDS.has(f.name)})

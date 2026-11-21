@@ -141,7 +141,7 @@ try{
  o=await stage(client,id,'change_requested');
  assert.equal(o.offer,null);
  await refresh(partner);
- const edit={...terms,'Цена клиенту, ₽':'2600,05','Ширина, см':'210'};
+ const edit={'Ширина, см':'210',...terms,'Цена клиенту, ₽':'2600,05'};
  await execute(partner,id,'Подготовить ТЗ и расчёт',edit);
  const revised=await raw(partner,id);
  if(revised.body?.order?.stage!=='awaiting_factory'){

@@ -61,12 +61,25 @@ async function raw(page,id){
  },id);
 }
 async function stage(page,id,expected){
+ let last;
  for(let i=0;i<30;i++){
-  const res=await raw(page,id);
-  if(res.status===200 && res.body.order?.stage===expected)return res.body.order;
+  last=await raw(page,id);
+  if(last.status===200 && last.body.order?.stage===expected){
+   const version=last.body.order.version;
+   // HTTP may have committed before React's async refresh finishes. A
+   // subsequent button must use the exact current version, not stale props.
+   await page.waitForFunction(({orderId,version})=>{
+    const root=[...document.querySelectorAll('article.server-order')].find(node=>node.textContent.includes(orderId));
+    const displayed=Number(root?.querySelector('.server-facts dd')?.textContent?.trim());
+    return root && displayed===version;
+   },{orderId:id,version},{timeout:10000});
+   return last.body.order;
+  }
   await new Promise(resolve=>setTimeout(resolve,120));
  }
- throw Error('ORDER_STAGE_NOT_REACHED '+id+' '+expected);
+ const alerts=await page.locator('[role="alert"]').allTextContents();
+ throw Error('ORDER_STAGE_NOT_REACHED '+id+' '+expected+' actual='+last?.body?.order?.stage+
+  ' version='+last?.body?.order?.version+' code='+last?.body?.code+' alerts='+JSON.stringify(alerts));
 }
 try{
  server.listen(0,'127.0.0.1');

@@ -422,6 +422,10 @@
       "sha": "83842ff69d22c73e8712694e199e413c551471be"
     },
     {
+      "path": "server/migrations/010_concept_packout_receipt_hold.sql",
+      "sha": "25ba8df1cc52084c64b059814b10b5d876f3edc4"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
       "sha": "25eac9484c9480a5348994e5ef874a2ee6c05cca"
     },
@@ -483,7 +487,7 @@
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",
-      "sha": "58c6bf398f50b7890483b5f6d085a120d384de36"
+      "sha": "a81415d62170a6c3b8c830689df69d5aa0147d36"
     },
     {
       "path": "src/App.jsx",

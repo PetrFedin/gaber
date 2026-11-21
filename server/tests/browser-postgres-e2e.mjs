@@ -107,6 +107,7 @@ try{
  await refresh(factory);await card(factory,id).waitFor();
  mark('three_independent_cookie_sessions_and_factory_assignment');
  await execute(partner,id,'Подготовить ТЗ и расчёт',terms);
+ await refresh(factory); // A different browser session never auto-refreshes its DOM.
  o=await stage(factory,id,'awaiting_factory');
  assert.equal(o.factoryTask.sourceConfig.width,200);
  assert.equal('offer' in o,false);

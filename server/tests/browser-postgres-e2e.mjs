@@ -34,70 +34,13 @@ const server=createGaberHttpServer({
 let browser;
 const check=[],errors=[];
 const name='QA-R2-'+randomBytes(5).toString('hex');
-const terms={
- 'Техническое задание':'Концептуальное ТЗ: каркас, наполнение, обивка',
- 'Цена клиенту, ₽':'2400,05','Стоимость у фабрики, ₽':'1000,01',
- 'Комиссия GABER, ₽':'400,01','Логистика, ₽':'100',
- 'Налоги, ₽':'50','Прочие затраты, ₽':'1',
- 'Аванс, % от цены':'50','Срок (ГГГГ-ММ-ДД)':'2099-02-01',
- 'Комментарий к предложению':'QA концептуальное предложение'
-};
-function mark(x){check.push(x);console.log('GABER_BROWSER_PG '+x);}
-const card=(page,id)=>page.locator('article.server-order').filter({hasText:id});
-const refresh=page=>page.getByRole('button',{name:'Обновить',exact:true}).click();
-async function execute(page,id,action,fields={}){
- const form=card(page,id).locator('form.server-action').filter({
-  has:page.getByRole('button',{name:action,exact:true})
- });
- await form.waitFor();
- const entries=Object.entries(fields);
- // A server-driven rerender may replace inputs just as automated typing
- // starts. Verify the DOM draft survives before allowing form submission.
- // Unlike a naive click, this never sends an accidentally empty price.
- let stable=false;
- for(let attempt=0;attempt<4;attempt++){
-  for(const [label,value] of entries){
-   const input=form.getByLabel(label,{exact:true});
-   if(await input.inputValue()!==String(value))await input.fill(String(value));
-  }
-  await page.waitForTimeout(80);
-  const actual=await Promise.all(entries.map(async ([label])=>
-   form.getByLabel(label,{exact:true}).inputValue()));
-  stable=entries.every(([label,value],i)=>actual[i]===String(value));
-  if(stable)break;
-  if(attempt===3)throw Error('QA_FORM_DRAFT_LOST '+JSON.stringify(
-   entries.filter(([label,value],i)=>actual[i]!==String(value)).map(x=>x[0])));
- }
- if(!stable)throw Error('QA_FORM_NOT_STABLE');
- await form.getByRole('button',{name:action,exact:true}).click();
-}
-async function raw(page,id){
- return page.evaluate(async orderId=>{
-  const res=await fetch('/api/v1/orders/'+encodeURIComponent(orderId),{credentials:'same-origin'});
-  return {status:res.status,body:await res.json()};
- },id);
-}
-async function stage(page,id,expected){
- let last;
- for(let i=0;i<30;i++){
-  last=await raw(page,id);
-  if(last.status===200 && last.body.order?.stage===expected){
-   const version=last.body.order.version;
-   // HTTP may have committed before React's async refresh finishes. A
-   // subsequent button must use the exact current version, not stale props.
-   await page.waitForFunction(({orderId,version})=>{
-    const root=[...document.querySelectorAll('article.server-order')].find(node=>node.textContent.includes(orderId));
-    const displayed=Number(root?.querySelector('.server-facts dd')?.textContent?.trim());
-    return root && displayed===version;
-   },{orderId:id,version},{timeout:10000});
-   return last.body.order;
-  }
-  await new Promise(resolve=>setTimeout(resolve,120));
- }
- const alerts=await page.locator('[role="alert"]').allTextContents();
- throw Error('ORDER_STAGE_NOT_REACHED '+id+' '+expected+' actual='+last?.body?.order?.stage+
-  ' version='+last?.body?.order?.version+' code='+last?.body?.code+' alerts='+JSON.stringify(alerts));
-}
+const termsFor=(config,customerPriceKopecks)=>({
+ config,technicalNote:'Тестовое ТЗ: каркас, обивка, наполнитель и геометрия',
+ customerPriceKopecks,factoryCostKopecks:100001,
+ platformCommissionKopecks:40001,logisticsKopecks:10000,
+ taxKopecks:5000,otherCostsKopecks:100,advanceBps:5000,
+ dueDate:'2099-02-01',note:'Только концептуальное предложение QA'
+});
 try{
  server.listen(0,'127.0.0.1');
  await once(server,'listening');
@@ -133,63 +76,72 @@ try{
  await refresh(factory);
  assert.equal(await card(factory,id).count(),0);
  await refresh(partner);await card(partner,id).waitFor();
- await execute(partner,id,'Назначить фабрику',{'Код фабрики из реестра':DEV_FACTORY});
- await refresh(factory);await card(factory,id).waitFor();
- mark('three_independent_cookie_sessions_and_factory_assignment');
- await execute(partner,id,'Подготовить ТЗ и расчёт',terms);
- await refresh(factory); // A different browser session never auto-refreshes its DOM.
- o=await stage(factory,id,'awaiting_factory');
- assert.equal(o.factoryTask.sourceConfig.width,200);
- assert.equal('offer' in o,false);
- assert.equal('economics' in o,false);
+ await command(partner,id,'assign_factory',{factoryId:DEV_FACTORY});
+ await refresh(factory);
+ let f=await stage(factory,id,'requested');
+ assert.equal(f.orderId,id);
+ mark('factory_assigned_three_cookie_sessions');
+ const initial=await raw(partner,id);
+ const baseConfig=initial.body.order.config;
+ await command(partner,id,'prepare_spec',termsFor(baseConfig,240005));
+ await refresh(factory);
+ f=await stage(factory,id,'awaiting_factory');
+ assert.equal(f.factoryTask.sourceConfig.width,200);
+ assert.equal('offer' in f,false);
+ assert.equal('economics' in f,false);
  assert.doesNotMatch(await card(factory,id).innerText(),/Комиссия GABER|Цена предложения|2\s?400,05/);
- await execute(factory,id,'Подтвердить ТЗ',{
-  'Номер подтверждения':'QA-ACK-R1','Комментарий':'Только концептуальная проверка'
- });
+ await command(factory,id,'confirm_spec',{
+  reference:'QA-R1-CONCEPT',note:'Концепция подтверждена, не допуск'
+ },f.factoryTask.specId);
  await refresh(partner);
- await execute(partner,id,'Опубликовать предложение клиенту',{'Комментарий клиенту':'Предложение R1'});
+ await stage(partner,id,'factory_confirmed');
+ await command(partner,id,'offer',{note:'Предложение R1'},'S1');
  await refresh(client);
  o=await stage(client,id,'offered');
- assert.equal(o.offer.revisionId,'R1');assert.equal(o.offer.priceKopecks,240005);
- await card(client,id).getByRole('button',{name:'Принять предложение',exact:true}).click();
+ assert.equal(o.offer.revisionId,'R1');
+ assert.equal(o.offer.priceKopecks,240005);
+ await command(client,id,'accept',{},'R1');
+ await refresh(client);
  await stage(client,id,'accepted');
- mark('R1_factory_confirmed_client_accepted');
- await execute(client,id,'Запросить изменение',{'Что необходимо изменить':'Новая ширина кровати 210 см'});
+ mark('R1_quote_independent_factory_and_client_consent');
+ await command(client,id,'request_change',{note:'Требуется новая ширина 210 см'},'R1');
+ await refresh(client);
  o=await stage(client,id,'change_requested');
  assert.equal(o.offer,null);
- await refresh(partner);
- const edit={'Ширина, см':'210',...terms,'Цена клиенту, ₽':'2600,05'};
- await execute(partner,id,'Подготовить ТЗ и расчёт',edit);
- const revised=await raw(partner,id);
- if(revised.body?.order?.stage!=='awaiting_factory'){
-  const alerts=await partner.locator('[role="alert"]').allTextContents();
-  throw Error('R2_SPEC_NOT_COMMITTED status='+revised.status+' stage='+revised.body?.order?.stage+
-   ' error='+JSON.stringify(alerts)+' version='+revised.body?.order?.version);
- }
+ const partnerCurrent=await raw(partner,id);
+ assert.equal(partnerCurrent.body.order.stage,'change_requested');
+ const revisedConfig={...partnerCurrent.body.order.config,width:210};
+ await command(partner,id,'prepare_spec',termsFor(revisedConfig,260005));
  await refresh(factory);
- o=await stage(factory,id,'awaiting_factory');
- assert.equal(o.factoryTask.sourceConfig.width,210);
- await execute(factory,id,'Подтвердить ТЗ',{
-  'Номер подтверждения':'QA-ACK-R2','Комментарий':'Новое концептуальное ТЗ'
- });
+ f=await stage(factory,id,'awaiting_factory');
+ assert.equal(f.factoryTask.sourceConfig.width,210);
+ assert.equal(f.factoryTask.specId,'S2');
+ await command(factory,id,'confirm_spec',{
+  reference:'QA-R2-CONCEPT',note:'Уточнённая концепция подтверждена'
+ },'S2');
  await refresh(partner);
- await execute(partner,id,'Опубликовать предложение клиенту',{'Комментарий клиенту':'Предложение R2'});
+ await stage(partner,id,'factory_confirmed');
+ await command(partner,id,'offer',{note:'Новая цена и ширина R2'},'S2');
  await refresh(client);
  o=await stage(client,id,'offered');
- assert.equal(o.offer.revisionId,'R2');assert.equal(o.config.width,210);
+ assert.equal(o.offer.revisionId,'R2');
+ assert.equal(o.config.width,210);
  assert.equal(o.offer.priceKopecks,260005);
- await card(client,id).getByRole('button',{name:'Принять предложение',exact:true}).click();
+ await command(client,id,'accept',{},'R2');
+ await refresh(client);
  await stage(client,id,'accepted');
- mark('R2_revised_geometry_independent_approvals');
+ mark('R2_geometry_price_and_separate_consent');
  await refresh(partner);
+ await stage(partner,id,'accepted');
  await card(partner,id).getByRole('button',{name:'Инженерный паспорт именно этого заказа'}).click();
  await partner.waitForURL(/#technical$/);
- const text=await partner.getByRole('note').filter({hasText:id}).first().innerText();
- assert.match(text,/R2/);
+ assert.match(await partner.getByRole('note').filter({hasText:id}).first().innerText(),/R2/);
  assert.match(await partner.locator('.technical-page').innerText(),/210 см/);
- mark('R2_server_order_link_to_exact_concept_BOM');
+ mark('server_order_R2_to_exact_BOM');
+ const held=await command(factory,id,'start',{},'R2',403);
+ assert.equal(held.data.code,'EXTERNAL_AUTHORITY_REQUIRED');
  await refresh(factory);
- assert.equal(await card(factory,id).getByRole('button',{name:'Начать производство'}).count(),0);
+ await stage(factory,id,'accepted');
  assert.match(await card(factory,id).innerText(),/PRODUCTION HOLD/);
  const query=await adminPool.query(
   'SELECT seq,command FROM gaber_orders.order_events WHERE tenant_id=$1 AND order_id=$2 ORDER BY seq',

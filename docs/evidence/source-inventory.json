@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "cdc346fcf21667dbbc7e121b9da904874ad805a1"
+      "sha": "03cea93b046c4e5c82a32cc772ca16da104a7fae"
     },
     {
       "path": ".gitignore",
@@ -448,6 +448,10 @@
     {
       "path": "server/tests/auth-http-e2e.mjs",
       "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
+    },
+    {
+      "path": "server/tests/browser-postgres-e2e.mjs",
+      "sha": "e7361e0713a9f75be37073134621645c65b71add"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",

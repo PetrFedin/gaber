@@ -41,6 +41,54 @@ const termsFor=(config,customerPriceKopecks)=>({
  taxKopecks:5000,otherCostsKopecks:100,advanceBps:5000,
  dueDate:'2099-02-01',note:'Только концептуальное предложение QA'
 });
+function mark(message){
+ check.push(message);
+ console.log('GABER_BROWSER_PG '+message);
+}
+const card=(page,id)=>page.locator('article.server-order').filter({hasText:id});
+const refresh=page=>page.getByRole('button',{name:'Обновить',exact:true}).click();
+async function raw(page,id){
+ return page.evaluate(async orderId=>{
+  const res=await fetch('/api/v1/orders/'+encodeURIComponent(orderId),{credentials:'same-origin'});
+  return {status:res.status,body:await res.json()};
+ },id);
+}
+async function stage(page,id,expected){
+ let last;
+ for(let i=0;i<35;i++){
+  last=await raw(page,id);
+  if(last.status===200&&last.body.order?.stage===expected){
+   const version=last.body.order.version;
+   await page.waitForFunction(({id,version})=>{
+    const node=[...document.querySelectorAll('article.server-order')].find(x=>x.textContent.includes(id));
+    return node && Number(node.querySelector('.server-facts dd')?.textContent?.trim())===version;
+   },{id,version},{timeout:12000});
+   return last.body.order;
+  }
+  await new Promise(resolve=>setTimeout(resolve,120));
+ }
+ throw Error('QA_STAGE_MISMATCH '+expected+' status='+last?.status+
+  ' stage='+last?.body?.order?.stage+' code='+last?.body?.code);
+}
+async function command(page,id,type,payload={},revisionId=null,expected=201){
+ const current=await raw(page,id);
+ assert.equal(current.status,200,'Only authenticated order principals can issue commands');
+ const requestId='QA-'+randomBytes(10).toString('hex');
+ const answer=await page.evaluate(async args=>{
+  const res=await fetch('/api/v1/orders/'+encodeURIComponent(args.id)+'/commands',{
+   method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},
+   body:JSON.stringify({
+    requestId:args.requestId,expectedVersion:args.version,
+    type:args.type,payload:args.payload,
+    ...(args.revisionId?{revisionId:args.revisionId}:{})
+   })
+  });
+  return {status:res.status,data:await res.json()};
+ },{id,requestId,type,payload,revisionId,version:current.body.order.version});
+ assert.equal(answer.status,expected,
+  'QA_COMMAND_'+type+' returned '+answer.status+' '+JSON.stringify(answer.data));
+ return answer;
+}
 try{
  server.listen(0,'127.0.0.1');
  await once(server,'listening');

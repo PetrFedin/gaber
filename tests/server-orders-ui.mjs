@@ -118,7 +118,7 @@ try {
   assert.match(text(), /Мои заказы/);
   // The five local product templates contribute only configuration to a NEW
   // protected server order. All local payment and production history is discarded.
-  await act(async()=>setValue(field('Исходная конфигурация сервера'),'GABER-DEMO-LINEA-01'));
+  await act(async()=>setValue(field('Исходная конфигурация'),'GABER-DEMO-LINEA-01'));
   await click('Создать заказ на сервере');
   assert.equal(state().stage, 'requested');
   assert.match(text(), /Заявка/);

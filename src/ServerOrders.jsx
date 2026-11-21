@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {getFamily, getFabric, fabrics, colors, bounds,validate} from './domain.js';
 import {getInvestorDemoTemplates} from './investorDemo.js';
+import {PackoutForm,ReceiptForm,CorrectionForm,InspectionSummary} from './ServerFulfillment.jsx';
 import {SERVER_ORDER_SYNC_MS,shouldSyncOrders,sameOrderVersions} from './orderAutoSync.js';
 import {buildServerSpecConfig, getServerDemoCatalog,serverCreateCommand} from './serverSpecBridge.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
@@ -30,7 +31,7 @@ const ACTIONS = {
     {type: 'accept', label: 'Принять предложение', rev: 'current', when: (o) => o.stage === 'offered'},
     {type: 'request_change', label: 'Запросить изменение', rev: 'current', when: (o) => ['offered', 'accepted'].includes(o.stage), fields: [text('note', 'Что необходимо изменить')]},
     {type: 'report_payment', label: 'Сообщить об оплате', rev: 'current', when: (o) => ['accepted', 'production', 'quality', 'ready'].includes(o.stage), fields: [money('amountKopecks', 'Сумма, ₽'), text('reference', 'Номер платёжного документа')]},
-    {type: 'accept_delivery', label: 'Принять доставку', rev: 'current', when: (o) => o.stage === 'delivered'},
+    {type: 'accept_delivery', label: 'Принять доставку', rev: 'current', when: (o) => o.stage === 'delivered' && (!o.fulfillment?.receipt || o.fulfillment.receipt.status === 'matched_unverified')},
     {type: 'report_issue', label: 'Сообщить о проблеме', rev: 'current', when: (o) => ['shipped', 'delivered'].includes(o.stage), fields: [text('note', 'Описание проблемы')]},
     {type: 'reject_resolution', label: 'Отклонить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed', fields: [text('note', 'Почему не подходит')]},
     {type: 'confirm_resolution', label: 'Подтвердить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed'}
@@ -57,7 +58,7 @@ const ACTIONS = {
     },
     {type: 'offer', label: 'Опубликовать предложение клиенту', rev: 'spec', when: (o) => o.stage === 'factory_confirmed', fields: [text('note', 'Комментарий клиенту')]},
     {type: 'record_payment', label: 'Записать оплату', rev: 'current', when: (o) => ['accepted', 'production', 'quality', 'ready'].includes(o.stage), fields: [money('amountKopecks', 'Сумма, ₽'), text('reference', 'Номер платёжного документа')]},
-    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open', fields: [text('note', 'Предложение по решению')]}
+    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open' && !o.issue?.receiptId, fields: [text('note', 'Предложение по решению')]}
   ],
   factory: [
     {type: 'confirm_spec', label: 'Подтвердить ТЗ', rev: 'spec', when: (o) => o.stage === 'awaiting_factory', fields: [text('reference', 'Номер подтверждения'), text('note', 'Комментарий')]},
@@ -65,9 +66,9 @@ const ACTIONS = {
     {type: 'start', label: 'Начать производство', rev: 'current', when: (o) => o.stage === 'accepted'},
     {type: 'complete', label: 'Производство завершено', rev: 'current', when: (o) => o.stage === 'production'},
     {type: 'quality_pass', label: 'Контроль качества пройден', rev: 'current', when: (o) => o.stage === 'quality', fields: [text('reference', 'Номер акта')]},
-    {type: 'ship', label: 'Отгрузить', rev: 'current', when: (o) => o.stage === 'ready', fields: [text('carrier', 'Перевозчик'), text('tracking', 'Трек-номер'), text('reference', 'Номер документа')]},
+    {type: 'ship', label: 'Отгрузить', rev: 'current', when: (o) => o.stage === 'ready' && o.fulfillment?.packout?.complete !== false, fields: [text('carrier', 'Перевозчик'), text('tracking', 'Трек-номер'), text('reference', 'Номер документа')]},
     {type: 'deliver', label: 'Доставлено', rev: 'current', when: (o) => o.stage === 'shipped', fields: [text('reference', 'Номер документа')]},
-    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open', fields: [text('note', 'Предложение по решению')]}
+    {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open' && !o.issue?.receiptId, fields: [text('note', 'Предложение по решению')]}
   ]
 };
 
@@ -249,6 +250,7 @@ function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
           ))}
         </ul>
       )}
+      <InspectionSummary order={order}/>
       <p className="helper">Данные демонстрационные. Запись подтверждает только журнал сервера; оплата и производство не подтверждены.</p>
       {order.config && onInspectOrder && <div className="server-actions">
         <button className="button outline" type="button" onClick={()=>onInspectOrder({
@@ -257,6 +259,16 @@ function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
         })}>Инженерный паспорт именно этого заказа</button>
       </div>}
       <div className="server-actions">
+        {role==='factory'&&order.stage==='ready'&&order.fulfillment?.plan&&
+          <PackoutForm key={order.orderId+':'+(order.fulfillment.packout?.reference??'new')}
+            order={order} busy={busy} onRun={onRun}/>}
+        {role==='client'&&order.stage==='delivered'&&order.fulfillment?.packout?.complete&&
+          (!order.fulfillment.receipt||order.fulfillment.correctionPending)&&
+          <ReceiptForm key={order.orderId+':'+(order.fulfillment.receipt?.reference??'new')}
+            order={order} busy={busy} onRun={onRun}/>}
+        {['factory','partner'].includes(role)&&order.stage==='disputed'&&order.issue?.status==='open'&&
+          order.issue.receiptId&&
+          <CorrectionForm key={order.orderId+':'+order.issue.id} order={order} busy={busy} onRun={onRun}/>}
         {actions.map((a) => (
           <ActionForm key={a.type+':'+(order.revisionId??order.factoryTask?.specId??'unpriced')} action={a} order={order} role={role} busy={busy} onRun={(cmd, after, localError) => onRun(cmd, after, localError)} />
         ))}

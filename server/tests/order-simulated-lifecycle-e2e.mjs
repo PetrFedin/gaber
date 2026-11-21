@@ -12,6 +12,7 @@ import {wirePostgresOrderJournal} from '../orderJournalWiring.js';
 import {createPgAuthStore} from '../auth/authStore.js';
 import {createAuthService} from '../auth/authService.js';
 import {initialConfig} from '../../src/domain.js';
+import {getConceptPackoutPlan} from '../../src/fulfillmentInspection.js';
 import {devUsers, DEV_TENANT, DEV_FACTORY} from '../dev/seed-data.js';
 import {createDevExternalAuthority} from '../devExternalAuthority.js';
 
@@ -160,6 +161,74 @@ try {
   await must('factory', B, 'deliver', {reference: 'DLV-B1'}, 'current', 'доставка после спора');
   await must('client', B, 'accept_delivery', {}, 'current', 'приёмка после спора');
   check((await read('partner', B)).stage, 'closed', 'B закрыт');
+
+  // ---------- independent packout → customer short receipt → correction plan
+  // → customer reinspection on disposable PG, no real bank/carrier ----------
+  const C=await acceptedOrder('C');
+  await must('partner',C,'record_payment',{amountKopecks:210005,reference:'C-UNVERIFIED-FULL'},'current','C local settlement');
+  await must('factory',C,'start',{},'current','C DEV factory production start');
+  await deny('factory',C,'record_packout',{reference:'EARLY-C',note:'too early',lines:[]},'current',422,
+    'Factory cannot pack parts before quality gate');
+  await must('factory',C,'complete',{},'current','C production complete');
+  await must('factory',C,'quality_pass',{reference:'QC-C1'},'current','C quality');
+  const plan=getConceptPackoutPlan(initialConfig());
+  const full=plan.lines.map(row=>({partRef:row.partRef,packedQty:row.expectedQty}));
+  const partial=structuredClone(full);partial[0].packedQty--;
+  await deny('client',C,'record_packout',{reference:'CLIENT-FORGE',note:'forbidden',lines:full},'current',403,
+    'Customer cannot impersonate factory packout');
+  await must('factory',C,'record_packout',{reference:'PACK-C1',note:'Concept shortage',lines:partial},'current',
+    'Factory records concept packout with one shortage');
+  check((await read('factory',C)).fulfillment.packout.complete,false,'Packing incomplete with shortage');
+  await deny('factory',C,'ship',{carrier:'Demo',tracking:'C-T1',reference:'C-PACK-FAIL'},'current',422,
+    'Shipment blocked if factory-reported packing is incomplete');
+  await deny('factory',C,'amend_packout',{reference:'pack-c1',note:'duplicate',lines:full},'current',422,
+    'Packing amendment reference must not duplicate prior revision');
+  await must('factory',C,'amend_packout',{reference:'PACK-C2',note:'Packing complete',lines:full},'current',
+    'Amended packing version with full concept items');
+  check((await read('factory',C)).fulfillment.packout.complete,true,'Packout complete');
+  await must('factory',C,'ship',{carrier:'Demo carrier',tracking:'C-T2',reference:'C-SHIP'},'current',
+    'C shipped in dev simulation');
+  await must('factory',C,'deliver',{reference:'C-POD'},'current',
+    'C delivered in dev simulation');
+  const incomplete=full.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+  incomplete[0].receivedQty--;
+  await deny('factory',C,'record_receipt',{reference:'FACTORY-FORGE',note:'forbidden',lines:incomplete},'current',403,
+    'Factory cannot impersonate customer acceptance');
+  await must('client',C,'record_receipt',{reference:'C-RECEIPT-1',note:'One part missing',lines:incomplete},'current',
+    'Independent customer receipt reports shortage');
+  check((await read('client',C)).stage,'disputed','Receipt shortage opens dispute');
+  check((await read('client',C)).fulfillment.receipt.discrepancies.length,1,
+    'Exactly one missing part group');
+  await deny('client',C,'accept_delivery',{},'current',422,'Disputed receipt cannot close order');
+  await deny('partner',C,'respond_issue',{note:'unstructured promise'},'current',422,
+    'Discrepancy correction must specify exact affected part and quantity');
+  const firstPart=incomplete[0].partRef;
+  const corrections=[{partRef:firstPart,kind:'replace',quantity:1}];
+  await deny('partner',C,'respond_issue',{note:'invalid quantity',
+    corrections:[{partRef:firstPart,kind:'replace',quantity:999}]},'current',422,
+    'Cannot over-promise a repair for non-missing quantities');
+  await must('partner',C,'respond_issue',{note:'Supply missing part',corrections},'current',
+    'Partner proposes bounded corrective plan');
+  await deny('factory',C,'confirm_resolution',{},'current',403,
+    'Factory cannot accept correction for customer');
+  await must('client',C,'reject_resolution',{note:'Need dated plan'},'current',
+    'Customer rejects first plan');
+  await must('factory',C,'respond_issue',{note:'Replacement by factory',
+    corrections},'current','Factory creates revised correction plan');
+  await must('client',C,'confirm_resolution',{},'current',
+    'Customer accepts plan, not proof of replacement');
+  check((await read('client',C)).fulfillment.receipt.status,'correction_pending_reinspection',
+    'Accepted correction does not fake repaired inventory');
+  await deny('client',C,'accept_delivery',{},'current',422,
+    'Cannot close after plan-only acceptance without reinspection');
+  const completeReceipt=full.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+  await must('client',C,'record_receipt',{reference:'C-RECEIPT-2',note:'Rechecked by client',
+    lines:completeReceipt},'current','Customer rechecks all parts');
+  check((await read('client',C)).fulfillment.receipt.status,'matched_unverified',
+    'Reinspection records customer-reported quantity without warehouse evidence');
+  await must('client',C,'accept_delivery',{},'current','Customer finally closes C');
+  check((await read('client',C)).stage,'closed','C workflow closes only after successful customer reinspection');
+  check((await read('client',C)).productionRelease.allowed,false,'Production release remains HOLD on C');
 
   // ---------- след в логе и видимость ----------
   ok(logged.length >= 12 && logged.every((m) => m.startsWith('DEV_SIMULATED_EXTERNAL_AUTHORITY:')), 'каждая симулированная команда записана в лог сервера');

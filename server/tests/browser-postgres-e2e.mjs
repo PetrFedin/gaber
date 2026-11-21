@@ -12,6 +12,7 @@ import {wirePostgresOrderJournal} from '../orderJournalWiring.js';
 import {createPgAuthStore} from '../auth/authStore.js';
 import {createAuthService} from '../auth/authService.js';
 import {devUsers,DEV_TENANT,DEV_FACTORY} from '../dev/seed-data.js';
+import {getInvestorDemoTemplates} from '../../src/investorDemo.js';
 
 if(process.env.NODE_ENV==='production')throw Error('QA_PRODUCTION_FORBIDDEN');
 for(const k of ['GABER_ORDERS_DATABASE_URL','GABER_AUTH_DATABASE_URL','GABER_DEV_ADMIN_DATABASE_URL']){
@@ -125,8 +126,11 @@ try{
  assert.equal(await card(factory,id).count(),0);
  await refresh(partner);await card(partner,id).waitFor();
  await command(partner,id,'assign_factory',{factoryId:DEV_FACTORY});
- await refresh(factory);
+ // Crucial independence check: NEVER manually refresh the factory session.
+ // Its visibility-aware 7-second poll must discover the newly assigned order.
+ await card(factory,id).waitFor({timeout:16000});
  let f=await stage(factory,id,'requested');
+ mark('factory_assignment_auto_synced_without_manual_refresh');
  assert.equal(f.orderId,id);
  mark('factory_assigned_three_cookie_sessions');
  const initial=await raw(partner,id);
@@ -200,8 +204,67 @@ try{
  assert.equal(query.rows[7].command.payload.config.width,210);
  assert.equal(query.rows.at(-1).command.type,'accept');
  assert.ok(query.rows.every(x=>x.command.type!=='start'));
- assert.deepEqual(errors,[]);
  mark('database_11_immutable_events_and_factory_HOLD');
+
+ // Matrix: 4 more physical product categories, each an isolated real
+ // HTTP/PostgreSQL order with fresh journal, verified roles and concept BOM.
+ const templates=getInvestorDemoTemplates().filter(x=>x.config.category!=='bed');
+ assert.equal(templates.length,4);
+ const matrix=[];
+ for(const [i,template] of templates.entries()){
+   await partner.goto(base+'/#orders',{waitUntil:'networkidle'});
+   const label='QA-'+template.id+'-'+randomBytes(3).toString('hex');
+   await client.goto(base+'/#orders',{waitUntil:'networkidle'});
+   await client.getByLabel('Исходная конфигурация сервера',{exact:true}).selectOption(template.id);
+   await client.getByLabel('Название заказа',{exact:true}).fill(label);
+   await client.getByRole('button',{name:'Создать заказ на сервере',exact:true}).click();
+   const created=card(client,label);
+   await created.waitFor();
+   const freshId=(await created.locator('header .eyebrow').textContent()).trim();
+   assert.match(freshId,/^ORD-[0-9a-f]{24}$/);
+   const draft=await stage(client,freshId,'requested');
+   assert.equal(draft.config.category,template.config.category);
+   assert.deepEqual(draft.config,template.config);
+   assert.equal(draft.offer,null);
+   assert.equal(draft.finance.verifiedBankKopecks,null);
+   await refresh(factory);
+   assert.equal(await card(factory,freshId).count(),0);
+   await refresh(partner);
+   await card(partner,freshId).waitFor();
+   await command(partner,freshId,'assign_factory',{factoryId:DEV_FACTORY});
+   await refresh(factory);
+   await card(factory,freshId).waitFor();
+   const price=220005+i*10000;
+   await command(partner,freshId,'prepare_spec',termsFor(template.config,price));
+   await refresh(factory);
+   const spec=await stage(factory,freshId,'awaiting_factory');
+   assert.equal(spec.factoryTask.specId,'S1');
+   assert.deepEqual(spec.factoryTask.sourceConfig,template.config);
+   assert.equal(spec.factoryTask.integrity.ok,true);
+   assert.equal('economics' in spec,false);
+   const forbidden=await command(client,freshId,'confirm_spec',{reference:'FORGE',note:'not factory'},'S1',403);
+   assert.ok(['ROLE_FORBIDDEN','PERSPECTIVE_MISMATCH'].includes(forbidden.data.code));
+   await command(factory,freshId,'confirm_spec',{reference:'QA-'+template.id,note:'Concept only'},'S1');
+   await command(partner,freshId,'offer',{note:'Concept article matrix'},'S1');
+   await refresh(client);
+   const offer=await stage(client,freshId,'offered');
+   assert.equal(offer.offer.priceKopecks,price);
+   await command(client,freshId,'accept',{},'R1');
+   await refresh(client);
+   const accepted=await stage(client,freshId,'accepted');
+   assert.equal(accepted.productionRelease.allowed,false);
+   const noRelease=await command(factory,freshId,'start',{},'R1',403);
+   assert.equal(noRelease.data.code,'EXTERNAL_AUTHORITY_REQUIRED');
+   const saved=await adminPool.query(
+    'SELECT seq,command FROM gaber_orders.order_events WHERE tenant_id=$1 AND order_id=$2 ORDER BY seq',
+    [DEV_TENANT,freshId]);
+   assert.deepEqual(saved.rows.map(x=>x.command.type),
+    ['create','assign_factory','prepare_spec','confirm_spec','offer','accept']);
+   matrix.push(template.config.category);
+ }
+ assert.deepEqual(matrix,['sofa','chairbed','headboard','chair']);
+ mark('all_five_furniture_categories_are_protected_and_immutable');
+ assert.deepEqual(errors,[]);
  console.log('GABER_BROWSER_HTTP_POSTGRES_E2E_GREEN order='+id+' stages='+check.length);
 }finally{
  await browser?.close();

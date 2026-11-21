@@ -54,7 +54,7 @@ jobs:
   # discarded after the GitHub-hosted job completes.
   postgres-staging:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     services:
       postgres:
         image: postgres:17
@@ -123,6 +123,17 @@ jobs:
           node server/tests/order-lifecycle-e2e.mjs
           node server/tests/order-simulated-lifecycle-e2e.mjs
           node server/tests/mfa-e2e.mjs
+      - name: Build frontend and install Chromium in isolated PostgreSQL QA
+        run: |
+          npm run build
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.65.1
+          npx playwright install --with-deps chromium
+      - name: Chromium users → cookie → HTTP → RLS → PostgreSQL → revised BOM
+        env:
+          GABER_DEV_ADMIN_DATABASE_URL: postgres://postgres:gaber_ci_disposable_only@127.0.0.1:5432/gaber_staging
+          GABER_ORDERS_DATABASE_URL: postgres://gaber_app_orders:ci-orders-disposable@127.0.0.1:5432/gaber_staging
+          GABER_AUTH_DATABASE_URL: postgres://gaber_app_auth:ci-auth-disposable@127.0.0.1:5432/gaber_staging
+        run: node server/tests/browser-postgres-e2e.mjs
 
   # Real installed Chromium against compiled Vite preview. This is a local
   # browser UX smoke test, NOT identity/payment/production E2E.

@@ -92,7 +92,8 @@ try{
  await client.getByRole('button',{name:'Создать заказ на сервере'}).click();
  const row=client.locator('article.server-order').filter({hasText:name});
  await row.waitFor();
- const id=(await row.locator('header .eyebrow').innerText()).trim();
+ // CSS uppercases visible text; read raw order ID, not text-transform output.
+ const id=(await row.locator('header .eyebrow').textContent()).trim();
  assert.match(id,/^ORD-[0-9a-f]{24}$/);
  let o=await stage(client,id,'requested');
  assert.equal(o.config.category,'bed');assert.equal(o.config.width,200);

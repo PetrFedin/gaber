@@ -1,7 +1,20 @@
 -- Disposable PostgreSQL 17 contract exercise for GABER three-role schema.
--- Run only after 001..007 in an isolated GitHub-hosted service container.
+-- Run only after 001..010 in an isolated GitHub-hosted service container.
 -- This is NOT an authentication, bank, or production acceptance test.
 \set ON_ERROR_STOP on
+DO $pg$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE
+   conrelid='gaber_orders.order_events'::regclass
+   AND conname='gaber_three_role_commands_v10') THEN
+  RAISE EXCEPTION 'MIGRATION_010_NOT_APPLIED';
+ END IF;
+ IF EXISTS(SELECT 1 FROM pg_constraint WHERE
+   conrelid='gaber_orders.order_events'::regclass
+   AND conname='gaber_three_role_commands_v6') THEN
+  RAISE EXCEPTION 'STALE_COMMAND_ALLOWLIST';
+ END IF;
+END $pg$;
 CREATE ROLE gaber_runtime_contract NOLOGIN;
 GRANT USAGE ON SCHEMA gaber_orders TO gaber_runtime_contract;
 GRANT SELECT,INSERT,UPDATE ON gaber_orders.order_resources TO gaber_runtime_contract;
@@ -99,6 +112,38 @@ INSERT INTO gaber_orders.order_events(
 UPDATE gaber_orders.order_heads SET version=1,head_hash=repeat('b',64)
  WHERE tenant_id='TENANT-A' AND order_id='ORDER-A';
 
+-- Even direct INSERTs (bypassing HTTP) cannot forge the new inspection roles.
+DO $pg$
+BEGIN
+ BEGIN
+  INSERT INTO gaber_orders.order_events(
+   tenant_id,order_id,seq,actor_id,request_id,request_hash,
+   previous_hash,event_hash,command
+  ) VALUES(
+   'TENANT-A','ORDER-A',2,'BUYER-A','REQ-FORGE-PACK',repeat('c',64),
+   repeat('b',64),repeat('d',64),
+   '{"id":"REQ-FORGE-PACK","role":"client","type":"record_packout",
+      "revisionId":"R1","expectedVersion":1,
+      "payload":{"reference":"fake","lines":[]}}'::jsonb
+  );
+  RAISE EXCEPTION 'CLIENT_FORGED_FACTORY_PACKOUT_IN_DB';
+ EXCEPTION WHEN check_violation THEN NULL;
+ END;
+ BEGIN
+  INSERT INTO gaber_orders.order_events(
+   tenant_id,order_id,seq,actor_id,request_id,request_hash,
+   previous_hash,event_hash,command
+  ) VALUES(
+   'TENANT-A','ORDER-A',2,'FACTORY-A','REQ-FORGE-RECEIPT',repeat('c',64),
+   repeat('b',64),repeat('d',64),
+   '{"id":"REQ-FORGE-RECEIPT","role":"factory","type":"record_receipt",
+      "revisionId":"R1","expectedVersion":1,
+      "payload":{"reference":"fake","lines":[]}}'::jsonb
+  );
+  RAISE EXCEPTION 'FACTORY_FORGED_CUSTOMER_RECEIPT_IN_DB';
+ EXCEPTION WHEN check_violation THEN NULL;
+ END;
+END $pg$;
 -- RLS alone must not let a client inject a factory-private message.
 DO $pg$
 BEGIN

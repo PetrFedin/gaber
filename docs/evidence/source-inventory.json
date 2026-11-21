@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "5dffaa7543be554c27675864d047e85f1aa9fb4e"
+      "sha": "03cea93b046c4e5c82a32cc772ca16da104a7fae"
     },
     {
       "path": ".gitignore",
@@ -108,6 +108,10 @@
     {
       "path": "docs/SERVER-AUTH.md",
       "sha": "ef271b9ebd5d140b6b5b55a4902081521fb8b8d3"
+    },
+    {
+      "path": "docs/SERVER-CONFIG-BRIDGE-2026-11-18.md",
+      "sha": "4957d82f331ffc244a8b41388b553c8ece306cf9"
     },
     {
       "path": "docs/STATUS.md",
@@ -446,6 +450,10 @@
       "sha": "fede83ca52f29e93bdf3a1e823c8e5ee61268c64"
     },
     {
+      "path": "server/tests/browser-postgres-e2e.mjs",
+      "sha": "cbd96ec9b1f2de212d585af9c6e789ba8d837d50"
+    },
+    {
       "path": "server/tests/mfa-e2e.mjs",
       "sha": "b367eb4e09fd446602b987930d87c70767ac49ad"
     },
@@ -471,7 +479,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "854a22ccffd247b6e5dea7564b73d6ab9fbcddd1"
+      "sha": "2198bd826d1a0a925a71b302b72b11e31a9a586d"
     },
     {
       "path": "src/ClearancePanel.jsx",
@@ -555,11 +563,11 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "6f5c27b9c5e6f7c8d72909f6ef35a906a73afb84"
+      "sha": "1f18c0cc0e5fd75cb7346aa64be7db93fa12353c"
     },
     {
       "path": "src/TechnicalPage.jsx",
-      "sha": "3dfb58a825f99a48dc0f40e2efc024b07c421c08"
+      "sha": "e345c804ccea9cca72896512dfcbe0e14f138d1d"
     },
     {
       "path": "src/assemblyExplosion.js",
@@ -639,7 +647,7 @@
     },
     {
       "path": "src/investorDemo.js",
-      "sha": "275d54dc2957df9dda876aa74dea943458dbfc5f"
+      "sha": "2f294d392df6b4d0dd53cf8f2d8d4679c1037913"
     },
     {
       "path": "src/jointLayout.js",
@@ -716,6 +724,10 @@
     {
       "path": "src/serverOrderMoney.js",
       "sha": "0f3e6c174b701793a871bdd10b862e3331fd30d9"
+    },
+    {
+      "path": "src/serverSpecBridge.js",
+      "sha": "2af42b754f6bdfd827493e25ad39951538ee6640"
     },
     {
       "path": "src/softLayout.js",
@@ -991,7 +1003,11 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "6acf7fbb212408e97645c48531b497f9e4fe9eeb"
+      "sha": "e7bf0a64969787822354d28a0acedaa39d7dd153"
+    },
+    {
+      "path": "tests/server-spec-bridge.test.js",
+      "sha": "823875ff6b0059814816e91bb19e271ce4ee8274"
     },
     {
       "path": "tests/static-files.test.js",

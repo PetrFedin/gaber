@@ -1,5 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {getFamily, getFabric} from './domain.js';
+import {getFamily, getFabric, fabrics, colors, bounds,validate} from './domain.js';
+import {getInvestorDemoTemplates} from './investorDemo.js';
+import {buildServerSpecConfig, getServerDemoCatalog,serverCreateCommand} from './serverSpecBridge.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
 import {serverApi, errorText, randomId} from './serverApi.js';
 import {parseOrderKopecks, parseOrderBasisPoints} from './serverOrderMoney.js';
@@ -73,19 +75,26 @@ function Field({field, value, onChange}) {
   return (
     <label className="advanced-field">
       {field.label}
-      <Tag value={value ?? ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+      <Tag name={field.name} value={value ?? ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
 
 function ActionForm({action, order, role, busy, onRun}) {
   const [values, setValues] = useState({});
+  const [configurationEdits,setConfigurationEdits] = useState({});
   const set = (name, v) => setValues((s) => ({...s, [name]: v}));
+  const changeConfiguration=(field,value)=>setConfigurationEdits(s=>({...s,[field]:value}));
   const submit = (e) => {
     e.preventDefault();
+    // Read the values actually present in the submitted form. React may still
+    // be reconciling controlled state after a geometry edit; never send a
+    // partially cleared commercial quote from a previous revision.
+    const submitted = new e.currentTarget.ownerDocument.defaultView.FormData(e.currentTarget);
     const payload = {};
     for (const f of action.fields ?? []) {
-      const raw = values[f.name] ?? '';
+      const input = submitted.get(f.name);
+      const raw = typeof input === 'string' ? input : '';
       try {
         payload[f.name] = f.kind === 'money'
           ? parseOrderKopecks(raw, {positive: POSITIVE_MONEY_FIELDS.has(f.name), allowEmpty: !POSITIVE_MONEY_FIELDS.has(f.name)})
@@ -99,12 +108,52 @@ function ActionForm({action, order, role, busy, onRun}) {
         return onRun(null, null, `Проверьте поле «${f.label}»: ${help}.`);
       }
     }
-    if (action.withConfig) payload.config = order.config;
+    if (action.withConfig){
+      try{payload.config=buildServerSpecConfig(order.config,configurationEdits);}
+      catch{return onRun(null,null,'Проверьте размеры, материал и механизм изделия. Данные ТЗ не отправлены.');}
+    }
     const revisionId = action.rev === 'spec' ? order.factoryTask?.specId : action.rev === 'current' ? order.revisionId : undefined;
     onRun({type: action.type, payload, revisionId});
   };
   return (
     <form className="server-action" onSubmit={submit}>
+      {action.withConfig && order.config && <fieldset className="server-spec-geometry">
+        <legend>Уточнение конструкции для новой ревизии ТЗ</legend>
+        <p className="helper">Изменения размеров и материала попадут в новое ТЗ. Старая цена и согласование фабрики не переносятся.</p>
+        {['width','depth','height'].map(field=>{
+          const limits=field==='width' ? [getFamily(order.config)?.min,getFamily(order.config)?.max,getFamily(order.config)?.step]
+            : bounds(order.config)[field];
+          return <label className="advanced-field" key={field}>
+            {{width:'Ширина, см',depth:'Глубина, см',height:'Высота, см'}[field]}
+            <input type="number" step={limits?.[2]??1} min={limits?.[0]} max={limits?.[1]}
+              value={configurationEdits[field]??order.config[field]}
+              onChange={e=>changeConfiguration(field,e.target.value.trim()===''?NaN:Number(e.target.value))}/>
+          </label>;
+        })}
+        <label className="advanced-field">Ткань
+          <select value={configurationEdits.fabric??order.config.fabric} onChange={e=>changeConfiguration('fabric',e.target.value)}>
+            {fabrics.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </label>
+        <label className="advanced-field">Цвет
+          <select value={configurationEdits.color??order.config.color} onChange={e=>changeConfiguration('color',e.target.value)}>
+            {colors.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+        {order.config.category==='sofa' && <label className="advanced-field">Модулей
+          <input type="number" min="2" max="5" step="1" value={configurationEdits.moduleCount??order.config.moduleCount}
+            onChange={e=>changeConfiguration('moduleCount',e.target.value.trim()===''?NaN:Number(e.target.value))}/>
+        </label>}
+        {order.config.category==='chairbed' && <label className="advanced-field">Механизм
+          <select value={configurationEdits.mechanism??order.config.mechanism} onChange={e=>changeConfiguration('mechanism',e.target.value)}>
+            <option value="fold">Раскладной</option><option value="slide">Выдвижной</option>
+          </select>
+        </label>}
+        {order.config.category==='bed' && <label className="advanced-field">Ящик хранения
+          <input type="checkbox" checked={configurationEdits.storage??order.config.storage}
+            onChange={e=>changeConfiguration('storage',e.target.checked)}/>
+        </label>}
+      </fieldset>}
       {(action.fields ?? []).map((f) => (
         <Field key={f.name} field={f} value={values[f.name]} onChange={(v) => set(f.name, v)} />
       ))}
@@ -141,7 +190,7 @@ function MessageForm({role, order, busy, onRun}) {
   );
 }
 
-function OrderCard({order, role, busy, onRun, holdDisabled}) {
+function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
   const family = getFamily(order.config ?? {}) ?? null;
   const fabric = order.config ? getFabric(order.config) : null;
   const all = ACTIONS[role].filter((a) => a.when(order));
@@ -200,6 +249,12 @@ function OrderCard({order, role, busy, onRun, holdDisabled}) {
         </ul>
       )}
       <p className="helper">Данные демонстрационные. Запись подтверждает только журнал сервера; оплата и производство не подтверждены.</p>
+      {order.config && onInspectOrder && <div className="server-actions">
+        <button className="button outline" type="button" onClick={()=>onInspectOrder({
+          section:'technical',orderId:order.orderId,revisionId:order.revisionId,
+          config:order.config,source:'SERVER_ORDER_JOURNAL_PROJECTION'
+        })}>Инженерный паспорт именно этого заказа</button>
+      </div>}
       <div className="server-actions">
         {actions.map((a) => (
           <ActionForm key={a.type} action={a} order={order} role={role} busy={busy} onRun={(cmd, after, localError) => onRun(cmd, after, localError)} />
@@ -313,7 +368,7 @@ function LoginForm({onDone, busy, setBusy, setError}) {
 }
 
 /** Рабочее пространство заказов на сервере: вход, список и действия по ролям. Источник истины — журнал сервера. */
-export default function ServerOrders({config, holdDisabled: holdOverride}) {
+export default function ServerOrders({config, holdDisabled: holdOverride,onInspectOrder}) {
   const [user, setUser] = useState(undefined);
   const [serverInfo, setServerInfo] = useState({});
   // Закрытые HOLD этапы показываются только если сервер сам сообщил о dev-имитации внешних полномочий.
@@ -323,6 +378,17 @@ export default function ServerOrders({config, holdDisabled: holdOverride}) {
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
   const [name, setName] = useState('');
+  const [presetId,setPresetId] = useState('');
+  const presetCatalog = React.useMemo(()=>getServerDemoCatalog(getInvestorDemoTemplates()),[]);
+  // A lost HTTP response must retry the SAME create ID+requestId to prevent
+  // duplicate user orders. Editing the draft explicitly starts a new request.
+  const pendingCreate = React.useRef(null);
+  const submitting = React.useRef(false);
+  const [retryPending,setRetryPending] = useState(false);
+  const resetCreate=()=>{pendingCreate.current=null;setRetryPending(false);};
+  // Changing the active studio configuration is an explicit new draft choice;
+  // never silently retry an older unknown-response payload as a new model.
+  useEffect(()=>{pendingCreate.current=null;setRetryPending(false);},[config]);
   const role = user?.role;
   const refresh = useCallback(async () => {
     try {
@@ -362,19 +428,37 @@ export default function ServerOrders({config, holdDisabled: holdOverride}) {
     }
   }
   async function createOrder() {
+    if(submitting.current)return;
+    submitting.current=true;
     setBusy(true);
     setError('');
     setNote('');
     try {
-      const orderId = randomId('ORD');
-      await serverApi.command({orderId, type: 'create', expectedVersion: 0, payload: {projectId: orderId, name: name.trim() || 'Заказ из конструктора', config}});
-      setName('');
-      setNote('Заказ создан на сервере.');
+      const preset=presetCatalog.find(p=>p.id===presetId);
+      const source=preset?.config??config;
+      if(validate(source).length)throw Object.assign(Error('CONFIG_INVALID'),{code:'CONFIG_INVALID'});
+      if(!pendingCreate.current){
+        pendingCreate.current=serverCreateCommand({
+          orderId:randomId('ORD'),requestId:randomId('REQ'),
+          name:name.trim()||preset?.name||'Заказ из конструктора',config:source
+        });
+      }
+      const submitted=pendingCreate.current;
+      await serverApi.command(submitted);
+      resetCreate();
+      setName('');setPresetId('');
+      setNote('Создана новая серверная заявка без переноса локальных оплат, цены и этапов демо.');
     } catch (e) {
       setError(errorText(e));
+      // A network timeout may mean the request DID commit: preserve the same
+      // request ID for the retry. Other 4xx errors are not ambiguous.
+      if(e?.code==='SERVER_UNAVAILABLE'||(e?.status>=500&&e?.status<600))
+        setRetryPending(Boolean(pendingCreate.current));
+      else resetCreate();
     } finally {
       await refresh();
       setBusy(false);
+      submitting.current=false;
     }
   }
   return (
@@ -423,8 +507,18 @@ export default function ServerOrders({config, holdDisabled: holdOverride}) {
       {user && role === 'client' && (
         <section className="server-create">
           <h2>Новый заказ из конструктора</h2>
-          <label className="advanced-field">Название заказа<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
-          <button className="button dark" disabled={busy} onClick={createOrder}>Создать заказ на сервере</button>
+          <label className="advanced-field">Исходная конфигурация
+            <select aria-label="Исходная конфигурация сервера" value={presetId}
+              onChange={e=>{setPresetId(e.target.value);resetCreate();}}>
+              <option value="">Текущий проект конструктора</option>
+              {presetCatalog.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          <label className="advanced-field">Название заказа<input value={name} maxLength={120}
+            onChange={(e) => {setName(e.target.value);resetCreate();}} /></label>
+          <p className="helper">Пять исходных моделей передают только выбранную геометрию и обивку. Сервер создаёт новую заявку с нулевой историей — без переноса локальных цен, оплат, подтверждений и отгрузок.</p>
+          {retryPending && <p className="inline-warning" role="note">Предыдущий ответ сервера не получен. Повторная отправка использует тот же идентификатор запроса, чтобы не дублировать заказ.</p>}
+          <button className="button dark" disabled={busy} onClick={createOrder}>{retryPending?'Повторить ту же заявку':'Создать заказ на сервере'}</button>
         </section>
       )}
       {user && (
@@ -432,7 +526,8 @@ export default function ServerOrders({config, holdDisabled: holdOverride}) {
           <h2>{role === 'client' ? 'Мои заказы' : role === 'factory' ? 'Назначенные заказы' : 'Все заказы оператора'}</h2>
           {orders.length === 0 && <p className="helper">Заказов пока нет.</p>}
           {orders.map((o) => (
-            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} holdDisabled={holdDisabled} onRun={(cmd, after, localError) => run(o, cmd, after, localError)} />
+            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} holdDisabled={holdDisabled}
+              onInspectOrder={onInspectOrder} onRun={(cmd, after, localError) => run(o, cmd, after, localError)} />
           ))}
         </section>
       )}

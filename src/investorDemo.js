@@ -24,7 +24,7 @@ function terms(article,config,dueDate,price=article.price){
   taxKopecks:article.tax,otherCostsKopecks:article.other,
   advanceBps:article.advanceBps,dueDate,note:`DEMO ${article.id}: плановые условия только для инвесторского сценария`};
 }
-function construct(article,nowMs){
+function productConfig(article){
  let config=initialConfig(article.category);
  if(article.category==='sofa')config={...config,width:280,moduleCount:3,layout:'straight',fabric:'boucle',color:'sage'};
  if(article.category==='chairbed')config={...config,width:100,mechanism:'fold',fabric:'velvet',color:'blue'};
@@ -32,6 +32,16 @@ function construct(article,nowMs){
  if(article.category==='headboard')config={...config,width:220,panels:5,color:'clay',fabric:'velvet'};
  if(article.category==='chair')config={...config,width:95,mechanism:'recliner',color:'ink',fabric:'microfiber'};
  if(validate(config).length)throw Error('DEMO_INVALID_ARTICLE_CONFIGURATION');
+ return config;
+}
+/** Only validated product templates cross into the protected server create form.
+ * These are NOT copied local orders, quotes, payments, approvals or events. */
+export function getInvestorDemoTemplates(){
+ return FIXTURE_ARTICLES.map(article=>({id:article.id,name:article.name,
+  config:article.category==='bed'?{...productConfig(article),width:200}:productConfig(article)}));
+}
+function construct(article,nowMs){
+ let config=productConfig(article);
  const dueDate=new Date(nowMs+90*86400000).toISOString().slice(0,10);
  const at=new Date(nowMs).toISOString();
  let events=[],eventIndex=0;

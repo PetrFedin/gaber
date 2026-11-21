@@ -50,15 +50,25 @@ async function execute(page,id,action,fields={}){
   has:page.getByRole('button',{name:action,exact:true})
  });
  await form.waitFor();
- for(const [label,value] of Object.entries(fields))
-  await form.getByLabel(label,{exact:true}).fill(String(value));
- if(fields['Ширина, см']){
-  const diagnostic=await form.evaluate(node=>({
-   captured:Object.fromEntries(new node.ownerDocument.defaultView.FormData(node)),
-   visible:[...node.querySelectorAll('input')].filter(e=>e.name==='customerPriceKopecks').map(e=>e.value)
-  }));
-  console.log('GABER_R2_FORM_INPUT_DIAGNOSTIC '+JSON.stringify(diagnostic));
+ const entries=Object.entries(fields);
+ // A server-driven rerender may replace inputs just as automated typing
+ // starts. Verify the DOM draft survives before allowing form submission.
+ // Unlike a naive click, this never sends an accidentally empty price.
+ let stable=false;
+ for(let attempt=0;attempt<4;attempt++){
+  for(const [label,value] of entries){
+   const input=form.getByLabel(label,{exact:true});
+   if(await input.inputValue()!==String(value))await input.fill(String(value));
+  }
+  await page.waitForTimeout(80);
+  const actual=await Promise.all(entries.map(async ([label])=>
+   form.getByLabel(label,{exact:true}).inputValue()));
+  stable=entries.every(([label,value],i)=>actual[i]===String(value));
+  if(stable)break;
+  if(attempt===3)throw Error('QA_FORM_DRAFT_LOST '+JSON.stringify(
+   entries.filter(([label,value],i)=>actual[i]!==String(value)).map(x=>x[0])));
  }
+ if(!stable)throw Error('QA_FORM_NOT_STABLE');
  await form.getByRole('button',{name:action,exact:true}).click();
 }
 async function raw(page,id){

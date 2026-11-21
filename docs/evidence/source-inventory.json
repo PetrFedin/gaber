@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "5dffaa7543be554c27675864d047e85f1aa9fb4e"
+      "sha": "7107b2d2cddbebfb69ee0d19443a08122f8a8e79"
     },
     {
       "path": ".gitignore",
@@ -999,7 +999,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "31de538f89483dd1117c64cd6e36ea17946607a5"
+      "sha": "e7bf0a64969787822354d28a0acedaa39d7dd153"
     },
     {
       "path": "tests/server-spec-bridge.test.js",

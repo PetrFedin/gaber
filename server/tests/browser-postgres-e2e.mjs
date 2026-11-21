@@ -126,8 +126,11 @@ try{
  assert.equal(await card(factory,id).count(),0);
  await refresh(partner);await card(partner,id).waitFor();
  await command(partner,id,'assign_factory',{factoryId:DEV_FACTORY});
- await refresh(factory);
+ // Crucial independence check: NEVER manually refresh the factory session.
+ // Its visibility-aware 7-second poll must discover the newly assigned order.
+ await card(factory,id).waitFor({timeout:16000});
  let f=await stage(factory,id,'requested');
+ mark('factory_assignment_auto_synced_without_manual_refresh');
  assert.equal(f.orderId,id);
  mark('factory_assigned_three_cookie_sessions');
  const initial=await raw(partner,id);

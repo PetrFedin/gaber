@@ -52,6 +52,13 @@ async function execute(page,id,action,fields={}){
  await form.waitFor();
  for(const [label,value] of Object.entries(fields))
   await form.getByLabel(label,{exact:true}).fill(String(value));
+ if(fields['Ширина, см']){
+  const diagnostic=await form.evaluate(node=>({
+   captured:Object.fromEntries(new node.ownerDocument.defaultView.FormData(node)),
+   visible:[...node.querySelectorAll('input')].filter(e=>e.name==='customerPriceKopecks').map(e=>e.value)
+  }));
+  console.log('GABER_R2_FORM_INPUT_DIAGNOSTIC '+JSON.stringify(diagnostic));
+ }
  await form.getByRole('button',{name:action,exact:true}).click();
 }
 async function raw(page,id){

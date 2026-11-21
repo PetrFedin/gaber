@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {getFamily, getFabric, fabrics, colors, bounds,validate} from './domain.js';
 import {getInvestorDemoTemplates} from './investorDemo.js';
+import {SERVER_ORDER_SYNC_MS,shouldSyncOrders,sameOrderVersions} from './orderAutoSync.js';
 import {buildServerSpecConfig, getServerDemoCatalog,serverCreateCommand} from './serverSpecBridge.js';
 import {ORDER_STAGES} from './orderWorkflow.js';
 import {serverApi, errorText, randomId} from './serverApi.js';
@@ -257,7 +258,7 @@ function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
       </div>}
       <div className="server-actions">
         {actions.map((a) => (
-          <ActionForm key={a.type} action={a} order={order} role={role} busy={busy} onRun={(cmd, after, localError) => onRun(cmd, after, localError)} />
+          <ActionForm key={a.type+':'+(order.revisionId??order.factoryTask?.specId??'unpriced')} action={a} order={order} role={role} busy={busy} onRun={(cmd, after, localError) => onRun(cmd, after, localError)} />
         ))}
         <MessageForm role={role} order={order} busy={busy} onRun={onRun} />
       </div>
@@ -390,14 +391,47 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
   // never silently retry an older unknown-response payload as a new model.
   useEffect(()=>{pendingCreate.current=null;setRetryPending(false);},[config]);
   const role = user?.role;
+  const currentSession=React.useRef(null);
+  // Read responses from an earlier login/logout cannot paint a new user's
+  // list, including when network requests resolve out of order.
+  currentSession.current=user?.email??null;
+  const refreshing=React.useRef(false);
   const refresh = useCallback(async () => {
+    const key=currentSession.current;
+    if(!key||refreshing.current)return;
+    refreshing.current=true;
     try {
-      setOrders(await serverApi.listOrders());
+      const fresh=await serverApi.listOrders();
+      if(currentSession.current===key){
+        setOrders(previous=>sameOrderVersions(previous,fresh)?previous:fresh);
+      }
     } catch (e) {
-      if (e.status === 401) setUser(null);
-      setError(errorText(e));
+      if(currentSession.current===key){
+        if(e.status===401)setUser(null);
+        else if(e.code!=='SERVER_UNAVAILABLE')setError(errorText(e));
+      }
+    } finally {
+      refreshing.current=false;
     }
   }, []);
+  useEffect(()=>{
+    if(!user)return;
+    const sync=()=>{
+      const element=document.activeElement;
+      const editing=Boolean(element?.matches?.('input,textarea,select,[contenteditable="true"]') &&
+        element.closest?.('.server-orders'));
+      if(shouldSyncOrders({authenticated:Boolean(currentSession.current),busy,
+         hidden:document.hidden,editing}))void refresh();
+    };
+    const timer=window.setInterval(sync,SERVER_ORDER_SYNC_MS);
+    window.addEventListener('focus',sync);
+    document.addEventListener('visibilitychange',sync);
+    return ()=>{
+      window.clearInterval(timer);
+      window.removeEventListener('focus',sync);
+      document.removeEventListener('visibilitychange',sync);
+    };
+  },[user,busy,refresh]);
   useEffect(() => {
     serverApi.me().then((r) => {
       setUser(r.user);
@@ -472,6 +506,7 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
         {user && (
           <div className="server-session">
             <span>{user.email} · {ROLE_LABELS[user.role]}</span>
+            <span className="helper" title="Автоматическое обновление активного кабинета каждые 7 секунд, кроме редактирования">Автообновление · 7 с</span>
             <button className="button outline" onClick={refresh} disabled={busy}>Обновить</button>
             <button
               className="button outline"
@@ -526,7 +561,7 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
           <h2>{role === 'client' ? 'Мои заказы' : role === 'factory' ? 'Назначенные заказы' : 'Все заказы оператора'}</h2>
           {orders.length === 0 && <p className="helper">Заказов пока нет.</p>}
           {orders.map((o) => (
-            <OrderCard key={o.orderId + ':' + o.version} order={o} role={role} busy={busy} holdDisabled={holdDisabled}
+            <OrderCard key={o.orderId} order={o} role={role} busy={busy} holdDisabled={holdDisabled}
               onInspectOrder={onInspectOrder} onRun={(cmd, after, localError) => run(o, cmd, after, localError)} />
           ))}
         </section>

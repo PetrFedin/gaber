@@ -46,6 +46,10 @@
       "sha": "2e432ca58141a16ee35d4569cb15e690a53edacd"
     },
     {
+      "path": "docs/ARTICLE-MATRIX-SYNC-2026-11-21.md",
+      "sha": "f2df945941037158c01831e229014e8614216ccd"
+    },
+    {
       "path": "docs/CI-RECOVERY-RUNBOOK.md",
       "sha": "16d65a05d5f848f95d7d7ab22ddfa4b99d2f7e7f"
     },
@@ -64,6 +68,10 @@
     {
       "path": "docs/E2E-ROLE-ACCEPTANCE.md",
       "sha": "38d3398b56d7be433a1f19e3b5a883bf525e1e71"
+    },
+    {
+      "path": "docs/GABER-ARTICLE-SYNC-FULFILLMENT-2026-11-21.md",
+      "sha": "6ae96cbfaee515254db550fc31fb9e3b14a27054"
     },
     {
       "path": "docs/HTTP-POSTGRES-E2E-CONTRACT.md",
@@ -415,7 +423,7 @@
     },
     {
       "path": "server/orderCommandAdmission.js",
-      "sha": "0751dce833c1c221ef96a2a99de6984f912243a3"
+      "sha": "25eac9484c9480a5348994e5ef874a2ee6c05cca"
     },
     {
       "path": "server/orderHttpApi.js",
@@ -431,7 +439,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "87bf7d7dffd5144a191d3fe2f1d9d776507df1a6"
+      "sha": "d42aaae957a71796b55439a5e0511a0c02c6f9a6"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -451,7 +459,7 @@
     },
     {
       "path": "server/tests/browser-postgres-e2e.mjs",
-      "sha": "cbd96ec9b1f2de212d585af9c6e789ba8d837d50"
+      "sha": "50e42c355067d1cfa4c42047697d3040df758700"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",
@@ -463,7 +471,7 @@
     },
     {
       "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
-      "sha": "c9269b4e58df368615bf038c1aab0d82d4f6b1a7"
+      "sha": "8b7c1fc6b88c2e6bba73ba609d9bd7460517abcf"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -562,8 +570,12 @@
       "sha": "00a64c7b2d847bd8c3944e963876b1222856dbae"
     },
     {
+      "path": "src/ServerFulfillment.jsx",
+      "sha": "a5c7b7dcde261cd1e4ed1a4321f18ef7a6931a51"
+    },
+    {
       "path": "src/ServerOrders.jsx",
-      "sha": "1f18c0cc0e5fd75cb7346aa64be7db93fa12353c"
+      "sha": "ce769b9c0bba26733a64de3ae4f3ef683e194f36"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -642,6 +654,10 @@
       "sha": "7380cc74f1277be2b156f2f6c79d99ec1f61e459"
     },
     {
+      "path": "src/fulfillmentInspection.js",
+      "sha": "18ed26a72e11439832c1fd45889e3a7215b1d7b0"
+    },
+    {
       "path": "src/icons.jsx",
       "sha": "c7620a80ffebf2f042817064cb97fa5bb2e53944"
     },
@@ -674,6 +690,10 @@
       "sha": "60ad93f8baa32cbd0e04c2a1389759be206664e5"
     },
     {
+      "path": "src/orderAutoSync.js",
+      "sha": "31922ec39e1d96be31785123ec603ef26ac0bc6f"
+    },
+    {
       "path": "src/orderExperience.css",
       "sha": "a9d43f1b5b8327367dd460dd2416065ab3e6887a"
     },
@@ -695,7 +715,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "85c2c073914241f357207c88c84b854f146193b8"
+      "sha": "6b4acf41db118dfb8d93696922aacdad1b1b7a32"
     },
     {
       "path": "src/partnerEconomics.js",
@@ -874,6 +894,10 @@
       "sha": "4859cdf1ef34aaaeb882fe5308b85f59c68b6f7c"
     },
     {
+      "path": "tests/fulfillment-inspection.test.js",
+      "sha": "b51fea4a04d7ae32e28f906bdda71266a14243ff"
+    },
+    {
       "path": "tests/investor-demo-ui.mjs",
       "sha": "6a2c79ff272f27ab1f652e719fd8559bbbffde28"
     },
@@ -904,6 +928,10 @@
     {
       "path": "tests/order-analytics-v0415.test.js",
       "sha": "e73e4a9411dd142cba7cbf14189e7086630a0408"
+    },
+    {
+      "path": "tests/order-auto-sync.test.js",
+      "sha": "67b3fad310ac9cd52ce6622091d60765f7924465"
     },
     {
       "path": "tests/order-command-admission-v0417.test.js",
@@ -1003,7 +1031,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "e7bf0a64969787822354d28a0acedaa39d7dd153"
+      "sha": "b7fa2baeb660d683cca9394479ac8b2c0f610259"
     },
     {
       "path": "tests/server-spec-bridge.test.js",

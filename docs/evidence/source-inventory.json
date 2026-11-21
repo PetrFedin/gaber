@@ -110,6 +110,10 @@
       "sha": "ef271b9ebd5d140b6b5b55a4902081521fb8b8d3"
     },
     {
+      "path": "docs/SERVER-CONFIG-BRIDGE-2026-11-18.md",
+      "sha": "4957d82f331ffc244a8b41388b553c8ece306cf9"
+    },
+    {
       "path": "docs/STATUS.md",
       "sha": "d4dc79467157c3023b4ee21b67b7f7b11290e57c"
     },
@@ -471,7 +475,7 @@
     },
     {
       "path": "src/App.jsx",
-      "sha": "854a22ccffd247b6e5dea7564b73d6ab9fbcddd1"
+      "sha": "2198bd826d1a0a925a71b302b72b11e31a9a586d"
     },
     {
       "path": "src/ClearancePanel.jsx",
@@ -555,11 +559,11 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "6f5c27b9c5e6f7c8d72909f6ef35a906a73afb84"
+      "sha": "0d07be13b7749840af0e09dd8cceccb7e9706646"
     },
     {
       "path": "src/TechnicalPage.jsx",
-      "sha": "3dfb58a825f99a48dc0f40e2efc024b07c421c08"
+      "sha": "e345c804ccea9cca72896512dfcbe0e14f138d1d"
     },
     {
       "path": "src/assemblyExplosion.js",
@@ -639,7 +643,7 @@
     },
     {
       "path": "src/investorDemo.js",
-      "sha": "275d54dc2957df9dda876aa74dea943458dbfc5f"
+      "sha": "2f294d392df6b4d0dd53cf8f2d8d4679c1037913"
     },
     {
       "path": "src/jointLayout.js",
@@ -716,6 +720,10 @@
     {
       "path": "src/serverOrderMoney.js",
       "sha": "0f3e6c174b701793a871bdd10b862e3331fd30d9"
+    },
+    {
+      "path": "src/serverSpecBridge.js",
+      "sha": "2af42b754f6bdfd827493e25ad39951538ee6640"
     },
     {
       "path": "src/softLayout.js",
@@ -991,7 +999,11 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "6acf7fbb212408e97645c48531b497f9e4fe9eeb"
+      "sha": "31de538f89483dd1117c64cd6e36ea17946607a5"
+    },
+    {
+      "path": "tests/server-spec-bridge.test.js",
+      "sha": "823875ff6b0059814816e91bb19e271ce4ee8274"
     },
     {
       "path": "tests/static-files.test.js",

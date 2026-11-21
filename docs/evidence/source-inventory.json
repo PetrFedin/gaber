@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "7107b2d2cddbebfb69ee0d19443a08122f8a8e79"
+      "sha": "cdc346fcf21667dbbc7e121b9da904874ad805a1"
     },
     {
       "path": ".gitignore",

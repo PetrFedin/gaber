@@ -149,7 +149,7 @@ jobs:
         run: npm run build
       - name: Install pinned Playwright browser QA dependency (ephemeral CI only)
         run: |
-          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.0
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.65.1
           npx playwright install --with-deps chromium
       - name: Test actual Chromium roles and viewport overflow at 375, 768 and 1440
         run: node scripts/browser-smoke.mjs

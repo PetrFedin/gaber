@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "8d77e872a510121b5764986723afe7f3a23215ec"
+      "sha": "e236ae4e00cac2b9c8432a381e8c0a7616550939"
     },
     {
       "path": ".gitignore",
@@ -375,7 +375,7 @@
     },
     {
       "path": "server/dev/seedStock.js",
-      "sha": "f826213222f97b8f4b0d8333c4e422cdec9281f9"
+      "sha": "a01bc28a9f3afdd34696d6f7ddfc8c4f7a0dc159"
     },
     {
       "path": "server/dev/setup.mjs",
@@ -391,7 +391,7 @@
     },
     {
       "path": "server/devStockService.js",
-      "sha": "671d8b84b73f8db206875b53cc3c6287238a7ed2"
+      "sha": "2d28cd11de1cd41f5d85670885c806203fe9c96a"
     },
     {
       "path": "server/factoryReviewPolicy.js",
@@ -499,7 +499,7 @@
     },
     {
       "path": "server/tests/dev-stock-batch-e2e.mjs",
-      "sha": "4db224c3b59bda6e0087e2c286aee1a31ae16d51"
+      "sha": "6f6a4c544bac71e4c57fd635cb53f33c335feaf0"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",

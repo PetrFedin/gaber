@@ -14,9 +14,9 @@ export async function seedDevStockConfig({pool,tenantId,factoryId,config,copies=
   await c.query('BEGIN');
   for(const line of plan.lines){
    const qty=line.requiredQty*copies;
-   await c.query(\`INSERT INTO gaber_orders.dev_stock_skus
+   await c.query(`INSERT INTO gaber_orders.dev_stock_skus
     (tenant_id,factory_id,sku_id,part_ref,source_signature,name,on_hand_qty)
-    VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING\`,
+    VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`,
     [tenantId,factoryId,line.skuId,line.partRef,line.sourceSignature,line.name,qty]);
   }
   await c.query('COMMIT');

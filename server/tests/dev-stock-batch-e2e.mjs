@@ -46,7 +46,7 @@ const call=async(role,method,path,body)=>{
 };
 const who={};
 let seq=0;
-const reqId=()=>\`DEV-STOCK-\${run}-\${++seq}\`;
+const reqId=()=>`DEV-STOCK-${run}-${++seq}`;
 const order=async(role,id)=>(await call(role,'GET','/api/v1/orders/'+id)).data.order;
 const stockRead=async(role,id)=>call(role,'GET','/api/v1/orders/'+id+'/dev-stock');
 const send=async(role,id,type,payload,revision)=>{
@@ -78,7 +78,7 @@ const economics=config=>({
  otherCostsKopecks:0,advanceBps:5000,dueDate:'2099-02-01',note:'DEV-only'
 });
 const accepted=async(label,config)=>{
- const id=\`BATCH-\${label}-\${run}\`;
+ const id=`BATCH-${label}-${run}`;
  await must('client',id,'create',{projectId:id,name:'DEV stock '+label,config},null,'create '+label);
  await must('partner',id,'assign_factory',{factoryId:DEV_FACTORY},null,'assign '+label);
  await must('partner',id,'prepare_spec',economics(config),null,'spec '+label);
@@ -89,7 +89,7 @@ const accepted=async(label,config)=>{
 };
 try{
  const guest=await call(null,'POST','/api/v1/auth/register',
-  {email:\`stock-\${run}@example.test\`,password:'stock-demo-safe-'+run});
+  {email:`stock-${run}@example.test`,password:'stock-demo-safe-'+run});
  ok([200,201].includes(guest.status)&&guest.cookie,'fresh independent client server cookie');
  who.client=guest.cookie;
  for(const u of devUsers.filter(x=>['partner','factory'].includes(x.role))){
@@ -113,11 +113,11 @@ try{
   const o=await order('factory',id);
   const reserveBody={requestId,expectedVersion:o.version,revisionId:o.revisionId,
    type:'reserve',payload:{reference:'RES-'+i}};
-  const reserved=await call('factory','POST',\`/api/v1/orders/\${id}/dev-stock/commands\`,reserveBody);
+  const reserved=await call('factory','POST',`/api/v1/orders/${id}/dev-stock/commands`,reserveBody);
   ck(reserved.status,201,'factory locks full BOM inventory '+article.id);
-  ck((await call('factory','POST',\`/api/v1/orders/\${id}/dev-stock/commands\`,reserveBody)).status,200,
+  ck((await call('factory','POST',`/api/v1/orders/${id}/dev-stock/commands`,reserveBody)).status,200,
    'Same ID retries are idempotent');
-  ck((await call('factory','POST',\`/api/v1/orders/\${id}/dev-stock/commands\`,
+  ck((await call('factory','POST',`/api/v1/orders/${id}/dev-stock/commands`,
    {...reserveBody,payload:{reference:'CHANGED-RES-'+i}})).status,409,
    'Different payload with identical id denied');
   ck((await stockCommand('factory',id,'ship_batch',

@@ -42,26 +42,26 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
  }
  const fetchReservations=async(tx,actor,orderId,rev,lock=false)=>{
   const q=await tx.stockQuery(
-   \`SELECT part_ref AS "partRef",sku_id AS "skuId",required_qty AS "requiredQty",
+   `SELECT part_ref AS "partRef",sku_id AS "skuId",required_qty AS "requiredQty",
      reserved_qty AS "reservedQty",shipped_qty AS "shippedQty",factory_id AS "factoryId"
     FROM gaber_orders.dev_stock_reservations WHERE tenant_id=$1 AND order_id=$2
-     AND revision_id=$3 ORDER BY part_ref\${lock?' FOR UPDATE':''}\`,
+     AND revision_id=$3 ORDER BY part_ref${lock?' FOR UPDATE':''}`,
    [actor.tenantId,orderId,rev]);
   return q.rows;
  };
  const fetchDocuments=async(tx,actor,orderId)=>{
   const docs=(await tx.stockQuery(
-   \`SELECT document_id AS "documentId",revision_id AS "revisionId",kind,
+   `SELECT document_id AS "documentId",revision_id AS "revisionId",kind,
      reference,batch_id AS "batchId",actor_id AS "actorId",
      order_version AS "orderVersion",evidence,created_at AS "createdAt"
     FROM gaber_orders.dev_stock_documents
-    WHERE tenant_id=$1 AND order_id=$2 ORDER BY created_at,document_id\`,
+    WHERE tenant_id=$1 AND order_id=$2 ORDER BY created_at,document_id`,
    [actor.tenantId,orderId])).rows;
   const lines=(await tx.stockQuery(
-   \`SELECT l.document_id AS "documentId",l.part_ref AS "partRef",
+   `SELECT l.document_id AS "documentId",l.part_ref AS "partRef",
      l.sku_id AS "skuId",l.quantity,l.damaged_qty AS "damagedQty"
     FROM gaber_orders.dev_stock_document_lines l
-    WHERE l.tenant_id=$1 AND l.order_id=$2 ORDER BY l.document_id,l.part_ref\`,
+    WHERE l.tenant_id=$1 AND l.order_id=$2 ORDER BY l.document_id,l.part_ref`,
    [actor.tenantId,orderId])).rows;
   for(const d of docs)d.lines=lines.filter(x=>x.documentId===d.documentId)
    .map(({documentId,...x})=>x);
@@ -120,8 +120,8 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
     if(input.expectedVersion!==s.version)return reject('STALE_ORDER_VERSION',{currentVersion:s.version});
     const plan=planFor(s,rev),factoryId=ctx.resource.factoryId;
     const requestHash=hash({tenantId:actor.tenantId,orderId,actorId:actor.subject,request:input});
-    const old=await tx.stockQuery(\`SELECT document_id,request_hash FROM gaber_orders.dev_stock_documents
-     WHERE tenant_id=$1 AND order_id=$2 AND request_id=$3\`,
+    const old=await tx.stockQuery(`SELECT document_id,request_hash FROM gaber_orders.dev_stock_documents
+     WHERE tenant_id=$1 AND order_id=$2 AND request_id=$3`,
      [actor.tenantId,orderId,input.requestId]);
     if(old.rowCount){
      if(old.rows[0].request_hash!==requestHash)return reject('STOCK_IDEMPOTENCY_CONFLICT');
@@ -147,11 +147,11 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
      // multiple orders and concurrent operators under SERIALIZABLE retries.
      for(const line of [...lines].sort((a,b)=>a.skuId.localeCompare(b.skuId,'en'))){
       const expected=plan.lines.find(x=>x.partRef===line.partRef);
-      const q=await tx.stockQuery(\`SELECT part_ref AS "partRef",
+      const q=await tx.stockQuery(`SELECT part_ref AS "partRef",
          source_signature AS "sourceSignature",on_hand_qty AS "onHand",
          reserved_qty AS "reservedQty",supplier_sku AS "supplierSku"
         FROM gaber_orders.dev_stock_skus WHERE tenant_id=$1 AND factory_id=$2
-         AND sku_id=$3 FOR UPDATE\`,
+         AND sku_id=$3 FOR UPDATE`,
         [actor.tenantId,factoryId,line.skuId]);
       if(q.rowCount!==1)return reject('STOCK_SKU_NOT_SEEDED');
       const stock=q.rows[0];
@@ -160,12 +160,12 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
       if(stock.onHand-stock.reservedQty<line.quantity)return reject('STOCK_INSUFFICIENT');
      }
      for(const line of lines){
-      await tx.stockQuery(\`UPDATE gaber_orders.dev_stock_skus SET reserved_qty=reserved_qty+$4
-       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3\`,
+      await tx.stockQuery(`UPDATE gaber_orders.dev_stock_skus SET reserved_qty=reserved_qty+$4
+       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3`,
        [actor.tenantId,factoryId,line.skuId,line.quantity]);
-      await tx.stockQuery(\`INSERT INTO gaber_orders.dev_stock_reservations
+      await tx.stockQuery(`INSERT INTO gaber_orders.dev_stock_reservations
        (tenant_id,order_id,revision_id,part_ref,factory_id,sku_id,required_qty,reserved_qty)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$7)\`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$7)`,
        [actor.tenantId,orderId,rev,line.partRef,factoryId,line.skuId,line.quantity]);
      }
     }else if(kind==='ship_batch'){
@@ -176,27 +176,27 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
      const byPart=Object.fromEntries(reserves.map(x=>[x.partRef,x.reservedQty-x.shippedQty]));
      lines=validateBatchPick(plan,p.lines,byPart);
      for(const line of [...lines].sort((a,b)=>a.skuId.localeCompare(b.skuId,'en'))){
-      const locked=await tx.stockQuery(\`SELECT on_hand_qty AS "onHand",
+      const locked=await tx.stockQuery(`SELECT on_hand_qty AS "onHand",
        reserved_qty AS "reservedQty" FROM gaber_orders.dev_stock_skus
-       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3 FOR UPDATE\`,
+       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3 FOR UPDATE`,
        [actor.tenantId,factoryId,line.skuId]);
       if(locked.rowCount!==1||locked.rows[0].reservedQty<line.quantity||
        locked.rows[0].onHand<line.quantity)return reject('STOCK_BALANCE_INVALID');
      }
      for(const line of lines){
-      await tx.stockQuery(\`UPDATE gaber_orders.dev_stock_reservations
+      await tx.stockQuery(`UPDATE gaber_orders.dev_stock_reservations
        SET shipped_qty=shipped_qty+$5 WHERE tenant_id=$1 AND order_id=$2
-       AND revision_id=$3 AND part_ref=$4\`,
+       AND revision_id=$3 AND part_ref=$4`,
        [actor.tenantId,orderId,rev,line.partRef,line.quantity]);
-      await tx.stockQuery(\`UPDATE gaber_orders.dev_stock_skus SET
+      await tx.stockQuery(`UPDATE gaber_orders.dev_stock_skus SET
        reserved_qty=reserved_qty-$4,on_hand_qty=on_hand_qty-$4
-       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3\`,
+       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3`,
        [actor.tenantId,factoryId,line.skuId,line.quantity]);
      }
     }else if(kind==='receive_batch'){
      if(!['ready','shipped','delivered'].includes(s.stage))
       return reject('STOCK_RECEIPT_STAGE');
-     const shipped=await tx.stockQuery(\`SELECT d.document_id AS "documentId",
+     const shipped=await tx.stockQuery(`SELECT d.document_id AS "documentId",
        d.revision_id AS "revisionId",l.part_ref AS "partRef",l.sku_id AS "skuId",
        l.quantity
        FROM gaber_orders.dev_stock_documents d JOIN
@@ -204,7 +204,7 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
         l.tenant_id=d.tenant_id AND l.order_id=d.order_id
         AND l.document_id=d.document_id
        WHERE d.tenant_id=$1 AND d.order_id=$2 AND d.kind='ship_batch'
-       AND d.batch_id=$3 ORDER BY l.part_ref\`,
+       AND d.batch_id=$3 ORDER BY l.part_ref`,
        [actor.tenantId,orderId,p.batchId]);
      if(!shipped.rowCount||shipped.rows.some(x=>x.revisionId!==rev))
       return reject('STOCK_BATCH_NOT_FOUND');
@@ -224,34 +224,34 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
          quantity:x.reservedQty-x.shippedQty}));
      if(!lines.length)return reject('STOCK_NOTHING_TO_RELEASE');
      for(const line of [...lines].sort((a,b)=>a.skuId.localeCompare(b.skuId,'en'))){
-      const locked=await tx.stockQuery(\`SELECT reserved_qty FROM gaber_orders.dev_stock_skus
-       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3 FOR UPDATE\`,
+      const locked=await tx.stockQuery(`SELECT reserved_qty FROM gaber_orders.dev_stock_skus
+       WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3 FOR UPDATE`,
        [actor.tenantId,factoryId,line.skuId]);
       if(locked.rowCount!==1||locked.rows[0].reserved_qty<line.quantity)
        return reject('STOCK_BALANCE_INVALID');
      }
      for(const line of lines){
-      await tx.stockQuery(\`UPDATE gaber_orders.dev_stock_reservations
+      await tx.stockQuery(`UPDATE gaber_orders.dev_stock_reservations
        SET reserved_qty=shipped_qty WHERE tenant_id=$1 AND order_id=$2
-       AND revision_id=$3 AND part_ref=$4\`,
+       AND revision_id=$3 AND part_ref=$4`,
        [actor.tenantId,orderId,rev,line.partRef]);
-      await tx.stockQuery(\`UPDATE gaber_orders.dev_stock_skus
+      await tx.stockQuery(`UPDATE gaber_orders.dev_stock_skus
        SET reserved_qty=reserved_qty-$4 WHERE tenant_id=$1
-       AND factory_id=$2 AND sku_id=$3\`,
+       AND factory_id=$2 AND sku_id=$3`,
        [actor.tenantId,factoryId,line.skuId,line.quantity]);
      }
     }
     const documentId=input.requestId;
-    await tx.stockQuery(\`INSERT INTO gaber_orders.dev_stock_documents
+    await tx.stockQuery(`INSERT INTO gaber_orders.dev_stock_documents
      (tenant_id,order_id,revision_id,document_id,request_id,request_hash,
       kind,batch_id,reference,actor_id,order_version)
-     VALUES($1,$2,$3,$4,$4,$5,$6,$7,$8,$9,$10)\`,
+     VALUES($1,$2,$3,$4,$4,$5,$6,$7,$8,$9,$10)`,
      [actor.tenantId,orderId,rev,documentId,requestHash,kind,p.batchId??null,
       p.reference,actor.subject,s.version]);
     for(const line of lines){
-     await tx.stockQuery(\`INSERT INTO gaber_orders.dev_stock_document_lines
+     await tx.stockQuery(`INSERT INTO gaber_orders.dev_stock_document_lines
       (tenant_id,order_id,document_id,part_ref,sku_id,quantity,damaged_qty)
-      VALUES($1,$2,$3,$4,$5,$6,$7)\`,
+      VALUES($1,$2,$3,$4,$5,$6,$7)`,
       [actor.tenantId,orderId,documentId,line.partRef,line.skuId,line.quantity,
        line.damagedQty??0]);
     }

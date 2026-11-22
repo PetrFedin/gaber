@@ -30,7 +30,11 @@ export async function setupDevDatabase({adminUrl, ordersPassword, authPassword, 
     GRANT SELECT,INSERT,UPDATE ON gaber_orders.order_heads TO gaber_runtime_contract;
     GRANT SELECT,INSERT ON gaber_orders.order_events TO gaber_runtime_contract;
     GRANT SELECT,INSERT ON gaber_orders.order_factory_assignments TO gaber_runtime_contract;
-    GRANT SELECT ON gaber_orders.factory_directory TO gaber_runtime_contract`);
+    GRANT SELECT ON gaber_orders.factory_directory TO gaber_runtime_contract;
+    GRANT SELECT,UPDATE ON gaber_orders.dev_stock_skus TO gaber_runtime_contract;
+    GRANT SELECT,INSERT,UPDATE ON gaber_orders.dev_stock_reservations TO gaber_runtime_contract;
+    GRANT SELECT,INSERT ON gaber_orders.dev_stock_documents TO gaber_runtime_contract;
+    GRANT SELECT,INSERT ON gaber_orders.dev_stock_document_lines TO gaber_runtime_contract`);
     for (const [name, group, password] of [
       ['gaber_app_orders', 'gaber_runtime_contract', ordersPassword],
       ['gaber_app_auth', 'gaber_auth_runtime', authPassword]

@@ -22,6 +22,16 @@ GRANT SELECT,INSERT,UPDATE ON gaber_orders.order_heads TO gaber_runtime_contract
 GRANT SELECT,INSERT ON gaber_orders.order_events TO gaber_runtime_contract;
 GRANT SELECT,INSERT ON gaber_orders.order_factory_assignments TO gaber_runtime_contract;
 GRANT SELECT ON gaber_orders.factory_directory TO gaber_runtime_contract;
+GRANT SELECT,UPDATE ON gaber_orders.dev_stock_skus TO gaber_runtime_contract;
+GRANT SELECT,INSERT,UPDATE ON gaber_orders.dev_stock_reservations TO gaber_runtime_contract;
+GRANT SELECT,INSERT ON gaber_orders.dev_stock_documents TO gaber_runtime_contract;
+GRANT SELECT,INSERT ON gaber_orders.dev_stock_document_lines TO gaber_runtime_contract;
+DO $pg$
+BEGIN
+ IF to_regclass('gaber_orders.dev_stock_skus') IS NULL OR
+    to_regclass('gaber_orders.dev_stock_documents') IS NULL
+ THEN RAISE EXCEPTION 'GABER_MIGRATION_011_REQUIRED'; END IF;
+END $pg$;
 
 -- A real onboarding process is outside this script. Fixture rows are explicit
 -- admin-created test data and must not be used as verified real factories.

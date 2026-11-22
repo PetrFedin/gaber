@@ -1,4 +1,4 @@
-import {orderFinancials} from '../src/orderWorkflow.js';
+import {orderFinancials,SERVER_FULFILLMENT_POLICY} from '../src/orderWorkflow.js';
 import {createManufacturingPackage} from '../src/manufacturing.js';
 import {getCurrentClientOffer} from '../src/clientOffer.js';
 import {visibleOrderMessages} from '../src/orderMessageChannels.js';
@@ -32,6 +32,7 @@ export function projectOrderReadModel(state,role){
  const current=state.revisions.at(-1);
  const base={schemaVersion:ORDER_READ_SCHEMA,orderId:state.projectId,
   version:state.version,stage:state.stage,updatedAt:state.updatedAt,
+  fulfillmentRequired:state.fulfillmentPolicy===SERVER_FULFILLMENT_POLICY,
   revisionId:current?.id??null,dueDate:current?.dueDate??null,
   authority:'SERVER_JOURNAL_UNVERIFIED_OPERATIONS',
   productionRelease:{allowed:false}};

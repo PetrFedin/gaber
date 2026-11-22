@@ -104,7 +104,7 @@ export function InspectionSummary({order}){
   {f.receipt&&<p>Приёмка: {f.receipt.status} · {f.receipt.reference}</p>}
   {f.receipt?.discrepancies?.map(row=><p className="inline-warning" key={row.partRef}>
    {row.partRef}: недостача {row.missingQty}, повреждено {row.damagedQty} шт.</p>)}
-  {order.issue?.receiptId&&<p className="helper">Согласование плана не закрывает претензию: нужна повторная независимая приёмка.</p>}
+  {(order.issue?.receiptId||f.correctionPending)&&<p className="helper">Согласование плана не доказывает выполнение работ: нужна повторная независимая приёмка.</p>}
   <p className="helper">Данные концептуальные: склад, материальные документы и реальные внешние подтверждения отсутствуют.</p>
  </section>;
 }

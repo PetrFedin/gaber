@@ -1047,7 +1047,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "9e6f0c0510af85a3baa98efbbd1dd96f8b570967"
+      "sha": "c0e3db154342cfbe4064b9bcd3e2ea96e8327c6a"
     },
     {
       "path": "tests/server-spec-bridge.test.js",

@@ -128,6 +128,13 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
      return {accepted:true,code:'STOCK_ALREADY_COMMITTED',
       documentId:old.rows[0].document_id,productionRelease:{allowed:false}};
     }
+    if(kind==='ship_batch'||kind==='receive_batch'){
+     const existing=await tx.stockQuery(`SELECT document_id FROM gaber_orders.dev_stock_documents
+      WHERE tenant_id=$1 AND order_id=$2 AND kind=$3 AND batch_id=$4`,
+      [actor.tenantId,orderId,kind,p.batchId]);
+     if(existing.rowCount)return reject(kind==='ship_batch'?
+       'STOCK_BATCH_ALREADY_SHIPPED':'STOCK_BATCH_ALREADY_RECEIVED');
+    }
     let lines=[];
     const active=s.acceptedRevisionId===rev&&s.revisions.at(-1)?.id===rev;
     if(kind==='reserve'){
@@ -197,7 +204,7 @@ export function createDevStockService({repository,clock=Date.now,enabled=false})
         l.tenant_id=d.tenant_id AND l.order_id=d.order_id
         AND l.document_id=d.document_id
        WHERE d.tenant_id=$1 AND d.order_id=$2 AND d.kind='ship_batch'
-       AND d.batch_id=$3 ORDER BY l.part_ref FOR UPDATE OF d\`,
+       AND d.batch_id=$3 ORDER BY l.part_ref\`,
        [actor.tenantId,orderId,p.batchId]);
      if(!shipped.rowCount||shipped.rows.some(x=>x.revisionId!==rev))
       return reject('STOCK_BATCH_NOT_FOUND');

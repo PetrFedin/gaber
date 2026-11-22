@@ -131,7 +131,15 @@ try {
   assert.equal('payments' in created.body.payload,false);
   assert.ok(!('role' in created.body) && !('principal' in created.body), 'клиент не передаёт роль');
   await fill('Сообщение', 'Нужна доставка в пятницу');
-  await click('Отправить сообщение');
+  const beforeDouble=requests.filter(r=>r.body?.type==='message').length;
+  // Two same-tick clicks must not enqueue competing command IDs, even before
+  // React paints the "busy" state. This is a real event-handler regression.
+  await act(async()=>{
+    const sendButton=button('Отправить сообщение');
+    sendButton.click();sendButton.click();
+  });
+  assert.equal(requests.filter(r=>r.body?.type==='message').length,beforeDouble+1,
+   'Double-click creates exactly one server message command');
   assert.match(text(), /Нужна доставка в пятницу/);
   await logout();
 

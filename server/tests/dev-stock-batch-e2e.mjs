@@ -188,8 +188,26 @@ try{
  // SERIALIZABLE oversell scenario across two different orders with the same
  // distinct config/SKU and exactly one available stock copy.
  const scarceConfig=initialConfig('sofa');
- await seedDevStockConfig({pool:adminPool,tenantId:DEV_TENANT,factoryId:DEV_FACTORY,
-  config:scarceConfig,copies:1});
+ const scarcePlan=await seedDevStockConfig({
+  pool:adminPool,tenantId:DEV_TENANT,factoryId:DEV_FACTORY,
+  config:scarceConfig,copies:1
+ });
+ // The standard five-article seed starts with TEN copies. Some generated
+ // SKU geometries can overlap, so set and VERIFY exactly ONE available
+ // fixture copy before the concurrent transactions. No production data.
+ for(const line of scarcePlan.lines){
+  await adminPool.query(`UPDATE gaber_orders.dev_stock_skus
+   SET on_hand_qty=$4,reserved_qty=0
+   WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3
+   AND reserved_qty=0`,[DEV_TENANT,DEV_FACTORY,line.skuId,line.requiredQty]);
+  const q=await adminPool.query(`SELECT on_hand_qty,reserved_qty
+   FROM gaber_orders.dev_stock_skus
+   WHERE tenant_id=$1 AND factory_id=$2 AND sku_id=$3`,
+   [DEV_TENANT,DEV_FACTORY,line.skuId]);
+  ck(q.rowCount,1,'Scarcity fixture SKU exists');
+  ck(q.rows[0].on_hand_qty,line.requiredQty,'Exactly one free fixture copy');
+  ck(q.rows[0].reserved_qty,0,'No outstanding fixture reservation');
+ }
  const a=await accepted('SCARCE-A',scarceConfig);
  const b=await accepted('SCARCE-B',scarceConfig);
  const concurrent=await Promise.all([

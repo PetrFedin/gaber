@@ -35,8 +35,17 @@ export function ReceiptForm({order,busy,onRun}){
  const [qty,setQty]=useState(()=>Object.fromEntries(
   (packed?.lines??[]).map(row=>[row.partRef,{receivedQty:row.packedQty,damagedQty:0}])));
  if(!packed?.complete)return null;
- const change=(id,key,value)=>setQty(prev=>({...prev,[id]:{
-  ...prev[id],[key]:value===''?NaN:Number(value)}}));
+ const change=(id,key,value)=>setQty(prev=>{
+  const current=prev[id]??{receivedQty:0,damagedQty:0};
+  const next={...current,[key]:value===''?'':Number(value)};
+  // Damaged units must be a subset of the units actually received.
+  // Otherwise an otherwise legitimate shortage entered by the client
+  // silently turns into an impossible receipt at submission.
+  if(key==='receivedQty'&&Number.isSafeInteger(next.receivedQty)&&
+    Number.isSafeInteger(next.damagedQty)&&next.damagedQty>next.receivedQty)
+    next.damagedQty=next.receivedQty;
+  return {...prev,[id]:next};
+ });
  return <form className="server-action server-inspection" data-inspection="receipt" onSubmit={e=>{
   e.preventDefault();
   onRun({type:'record_receipt',revisionId:order.revisionId,
@@ -52,7 +61,7 @@ export function ReceiptForm({order,busy,onRun}){
      value={qty[row.partRef]?.receivedQty??''}
      onChange={e=>change(row.partRef,'receivedQty',e.target.value)}/></label>
    <label className="advanced-field">Повреждено · {row.partRef}
-    <input required type="number" step="1" min="0" max={row.packedQty}
+    <input required type="number" step="1" min="0" max={Number.isSafeInteger(qty[row.partRef]?.receivedQty)?qty[row.partRef].receivedQty:row.packedQty}
      value={qty[row.partRef]?.damagedQty??''}
      onChange={e=>change(row.partRef,'damagedQty',e.target.value)}/></label>
   </fieldset>)}

@@ -380,8 +380,11 @@ try {
   await fill('Комментарий клиента','Повторная проверка: заявлено всё');
   await click('Зафиксировать приёмку по позициям');
   assert.equal(state().receipt.status,'matched_unverified');
-  assert.equal(state().issues[0].reinspectionReceiptId,'RC2');
-  assert.equal(state().issues[0].status,'reinspected_matched_unverified');
+  assert.equal(state().issues.length,2,'Earlier shipped complaint is a separate incident');
+  assert.equal(state().issues[0].reinspectionReceiptId,undefined,'Earlier shipped complaint is immutable');
+  assert.equal(state().issues.at(-1).reinspectionReceiptId,'RC2',
+    'The new receipt links to the later packing shortage incident');
+  assert.equal(state().issues.at(-1).status,'reinspected_matched_unverified');
   assert.match(text(),/Журнал подтверждений/);
   assert.match(text(),/повторная приёмка RC2/);
   await click('Принять доставку');

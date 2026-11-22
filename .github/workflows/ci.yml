@@ -39,6 +39,13 @@ jobs:
       - name: Verify inventory and repository structure
         id: source
         run: npm run verify:repository
+      - name: Syntax-check isolated DEV stock server, seed and batch E2E scripts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: |
+          node --check server/dev/seedStock.js
+          node --check server/devStockService.js
+          node --check server/devStockHttpApi.js
+          node --check server/tests/dev-stock-batch-e2e.mjs
       - name: Node domain, engineering and API regression tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
         run: npm run test:node

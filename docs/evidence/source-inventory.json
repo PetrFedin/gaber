@@ -499,7 +499,7 @@
     },
     {
       "path": "server/tests/dev-stock-batch-e2e.mjs",
-      "sha": "6f6a4c544bac71e4c57fd635cb53f33c335feaf0"
+      "sha": "8648778332598ff47b62bdd062eaf455a72d34c8"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",

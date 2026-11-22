@@ -416,25 +416,34 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
   // Read responses from an earlier login/logout cannot paint a new user's
   // list, including when network requests resolve out of order.
   currentSession.current=user?.email??null;
-  const refreshing=React.useRef(false);
-  const refresh = useCallback(async () => {
-    const key=currentSession.current;
-    if(!key||refreshing.current)return;
-    refreshing.current=true;
-    try {
-      const fresh=await serverApi.listOrders();
-      if(currentSession.current===key){
-        setOrders(previous=>sameOrderVersions(previous,fresh)?previous:fresh);
-      }
-    } catch (e) {
-      if(currentSession.current===key){
-        if(e.status===401)setUser(null);
-        else if(e.code!=='SERVER_UNAVAILABLE')setError(errorText(e));
-      }
-    } finally {
-      refreshing.current=false;
+  const refreshInFlight=React.useRef(null);
+  const refresh=useCallback(async (options={})=>{
+    // Never let an old user's request repaint a newly authenticated cabinet.
+    const previous=refreshInFlight.current;
+    if(previous){
+      await previous;
+      // A mutation MUST obtain a new snapshot after earlier reads settle.
+      if(!options?.afterWrite)return;
     }
-  }, []);
+    const key=currentSession.current;
+    if(!key)return;
+    const work=(async()=>{
+      try{
+        const fresh=await serverApi.listOrders();
+        if(currentSession.current===key)
+          setOrders(old=>sameOrderVersions(old,fresh)?old:fresh);
+      }catch(e){
+        if(currentSession.current===key){
+          if(e.status===401)setUser(null);
+          else if(e.code!=='SERVER_UNAVAILABLE')setError(errorText(e));
+        }
+      }
+    })();
+    refreshInFlight.current=work;
+    try{await work;}finally{
+      if(refreshInFlight.current===work)refreshInFlight.current=null;
+    }
+  },[]);
   useEffect(()=>{
     if(!user)return;
     const sync=()=>{
@@ -466,20 +475,21 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
     if (user) refresh();
     else setOrders([]);
   }, [user, refresh]);
-  async function run(order, cmd, after, localError) {
-    if (!cmd) return setError(localError);
-    setBusy(true);
-    setError('');
-    setNote('');
-    try {
-      await serverApi.command({orderId: order.orderId, expectedVersion: order.version, ...cmd});
+  const actionInFlight=React.useRef(false);
+  async function run(order,cmd,after,localError){
+    if(!cmd){setError(localError);return;}
+    // React busy state updates asynchronously: block same-tick double clicks.
+    if(actionInFlight.current)return;
+    actionInFlight.current=true;
+    setBusy(true);setError('');setNote('');
+    try{
+      await serverApi.command({orderId:order.orderId,expectedVersion:order.version,...cmd});
       after?.();
       setNote('Готово: действие записано в журнал заказа.');
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      await refresh();
-      setBusy(false);
+    }catch(e){setError(errorText(e));}
+    finally{
+      try{await refresh({afterWrite:true});}
+      finally{actionInFlight.current=false;setBusy(false);}
     }
   }
   async function createOrder() {
@@ -511,7 +521,7 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
         setRetryPending(Boolean(pendingCreate.current));
       else resetCreate();
     } finally {
-      await refresh();
+      await refresh({afterWrite:true});
       setBusy(false);
       submitting.current=false;
     }

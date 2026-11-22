@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {authorizeGaberAction} from './accessPolicy.js';
 import {projectOrderReadModel} from './orderReadModel.js';
-import {DEV_EXECUTION_MODE} from '../src/orderWorkflow.js';
+import {DEV_EXECUTION_MODE,SERVER_FULFILLMENT_POLICY} from '../src/orderWorkflow.js';
 export const ORDER_JOURNAL_SCHEMA='gaber-server-order-journal/0.4.18';
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(v);
 const deny=(code,more={})=>({accepted:false,code,...more,productionRelease:{allowed:false}});
@@ -154,6 +154,9 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(state&&now<Date.parse(state.updatedAt))return deny('SERVER_CLOCK_BEHIND_ORDER');
    const command={id:requestId,at:new Date(now).toISOString(),type,role,payload,expectedVersion};
    if(revisionId!==undefined)command.revisionId=revisionId;
+   // Only the trusted server can stamp the mandatory fulfillment protocol.
+   // The HTTP body does not accept this field; historical events stay unchanged.
+   if(type==='create')command.fulfillmentPolicy=SERVER_FULFILLMENT_POLICY;
    // Only a trusted DEV server may stamp this value. Requests containing
    // executionMode are rejected by the command input schema above.
    if(forbidden.has(type))command.executionMode=DEV_EXECUTION_MODE;

@@ -6,6 +6,8 @@ import {canAccessOrderMessageChannel,normalizeOrderMessageChannel} from './order
 import {validateConceptPackout,validateConceptReceipt,validateCorrectionProposal} from './fulfillmentInspection.js';
 
 export const ORDER_SCHEMA='gaber-order-three-roles/2';
+/** Only newly authenticated server orders receive this mandatory check. */
+export const SERVER_FULFILLMENT_POLICY='REQUIRED_INDEPENDENT_RECEIPT_V1';
 export const ORDER_STAGES={requested:'Заявка',awaiting_factory:'ТЗ на подтверждении фабрики',factory_confirmed:'Фабрика подтвердила ТЗ',factory_changes:'Фабрика запросила изменения',offered:'Предложение',accepted:'Согласовано',change_requested:'Корректировка',production:'В работе',quality:'Контроль качества',ready:'Готов к отгрузке',shipped:'Отгружен',delivered:'Доставлен',disputed:'Замечания',closed:'Принят клиентом'};
 const fail=code=>{throw Error(code);};
 const text=x=>typeof x==='string'&&x.trim().length>0&&x.length<=500;
@@ -70,10 +72,13 @@ function validConfig(config){
  return copy(normalized);
 }
 function apply(state,command){
- if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion','executionMode'])||!id(command.id)||!timestamp(command.at)||
+ if(!only(command,['id','at','role','type','payload','revisionId','expectedVersion','executionMode','fulfillmentPolicy'])||!id(command.id)||!timestamp(command.at)||
   !Number.isSafeInteger(command.expectedVersion)||!TYPES[command.type]||!only(command.payload,TYPES[command.type][1]))fail('COMMAND_INVALID');
  if(command.executionMode!==undefined &&
     (command.executionMode!==DEV_EXECUTION_MODE||!SIMULATED_COMMAND_TYPES.has(command.type)))
+  fail('COMMAND_INVALID');
+ if(command.fulfillmentPolicy!==undefined&&
+    (command.type!=='create'||command.fulfillmentPolicy!==SERVER_FULFILLMENT_POLICY))
   fail('COMMAND_INVALID');
  const requiredRole=TYPES[command.type][0];
  if(!['client','factory','partner'].includes(command.role)||
@@ -87,7 +92,7 @@ function apply(state,command){
  if(command.type==='create'){
   if(state||command.revisionId!==undefined||!id(p.projectId)||!text(p.name))fail('CREATE_INVALID');
   return {schemaVersion:ORDER_SCHEMA,projectId:p.projectId,name:p.name,sourceConfig:validConfig(p.config),version:1,
-   stage:'requested',assignedFactoryId:null,specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
+   stage:'requested',fulfillmentPolicy:command.fulfillmentPolicy??null,assignedFactoryId:null,specs:[],pendingSpecId:null,revisions:[],acceptedRevisionId:null,changeNote:null,payments:[],paymentClaims:[],transfers:[],messages:[],
    shipment:null,delivery:null,quality:null,packout:null,packouts:[],receipt:null,receipts:[],issue:null,issues:[],createdAt:command.at,updatedAt:command.at,
    authority:'LOCAL_WORKFLOW_SIMULATION',productionRelease:{allowed:false}};
  }
@@ -192,7 +197,9 @@ function apply(state,command){
     s.packouts.push(copy(s.packout));break;
    }
    case 'ship':
-    if(s.stage!=='ready'||f.balanceKopecks>0||!s.quality||s.packout?.complete===false||
+    if(s.stage!=='ready'||f.balanceKopecks>0||!s.quality||
+      (s.fulfillmentPolicy===SERVER_FULFILLMENT_POLICY&&s.packout?.complete!==true)||
+      s.packout?.complete===false||
       !text(p.carrier)||!text(p.tracking)||!text(p.reference))fail('SHIPMENT_BLOCKED');
     s.shipment={revisionId:current.id,...copy(p),at:command.at};s.stage='shipped';break;
    case 'deliver':
@@ -220,7 +227,9 @@ function apply(state,command){
     break;
    }
    case 'accept_delivery':
-    if(s.stage!=='delivered'||(s.receipt&&s.receipt.status!=='matched_unverified'))
+    if(s.stage!=='delivered'||
+      (s.fulfillmentPolicy===SERVER_FULFILLMENT_POLICY&&s.receipt?.status!=='matched_unverified')||
+      (s.receipt&&s.receipt.status!=='matched_unverified'))
       fail('ACCEPTANCE_BLOCKED');
     s.stage='closed';break;
    case 'report_issue':

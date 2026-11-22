@@ -31,7 +31,9 @@ const ACTIONS = {
     {type: 'accept', label: 'Принять предложение', rev: 'current', when: (o) => o.stage === 'offered'},
     {type: 'request_change', label: 'Запросить изменение', rev: 'current', when: (o) => ['offered', 'accepted'].includes(o.stage), fields: [text('note', 'Что необходимо изменить')]},
     {type: 'report_payment', label: 'Сообщить об оплате', rev: 'current', when: (o) => ['accepted', 'production', 'quality', 'ready'].includes(o.stage), fields: [money('amountKopecks', 'Сумма, ₽'), text('reference', 'Номер платёжного документа')]},
-    {type: 'accept_delivery', label: 'Принять доставку', rev: 'current', when: (o) => o.stage === 'delivered' && (!o.fulfillment?.receipt || o.fulfillment.receipt.status === 'matched_unverified')},
+    {type: 'accept_delivery', label: 'Принять доставку', rev: 'current', when: (o) => o.stage === 'delivered' &&
+      (!o.fulfillmentRequired || o.fulfillment?.receipt?.status === 'matched_unverified') &&
+      (!o.fulfillment?.receipt || o.fulfillment.receipt.status === 'matched_unverified')},
     {type: 'report_issue', label: 'Сообщить о проблеме', rev: 'current', when: (o) => ['shipped', 'delivered'].includes(o.stage), fields: [text('note', 'Описание проблемы')]},
     {type: 'reject_resolution', label: 'Отклонить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed', fields: [text('note', 'Почему не подходит')]},
     {type: 'confirm_resolution', label: 'Подтвердить решение', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'response_proposed'}
@@ -66,7 +68,9 @@ const ACTIONS = {
     {type: 'start', label: 'Начать производство', rev: 'current', when: (o) => o.stage === 'accepted'},
     {type: 'complete', label: 'Производство завершено', rev: 'current', when: (o) => o.stage === 'production'},
     {type: 'quality_pass', label: 'Контроль качества пройден', rev: 'current', when: (o) => o.stage === 'quality', fields: [text('reference', 'Номер акта')]},
-    {type: 'ship', label: 'Отгрузить', rev: 'current', when: (o) => o.stage === 'ready' && o.fulfillment?.packout?.complete !== false, fields: [text('carrier', 'Перевозчик'), text('tracking', 'Трек-номер'), text('reference', 'Номер документа')]},
+    {type: 'ship', label: 'Отгрузить', rev: 'current', when: (o) => o.stage === 'ready' &&
+      (!o.fulfillmentRequired || o.fulfillment?.packout?.complete === true) &&
+      o.fulfillment?.packout?.complete !== false, fields: [text('carrier', 'Перевозчик'), text('tracking', 'Трек-номер'), text('reference', 'Номер документа')]},
     {type: 'deliver', label: 'Доставлено', rev: 'current', when: (o) => o.stage === 'shipped', fields: [text('reference', 'Номер документа')]},
     {type: 'respond_issue', label: 'Ответить на проблему', rev: 'current', when: (o) => o.stage === 'disputed' && o.issue?.status === 'open' && !o.issue?.receiptId, fields: [text('note', 'Предложение по решению')]}
   ]
@@ -251,6 +255,11 @@ function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
         </ul>
       )}
       <InspectionSummary order={order}/>
+      {order.fulfillmentRequired && order.stage==='ready' && !order.fulfillment?.packout?.complete &&
+       <p className="inline-warning" role="note">Отгрузка закрыта: фабрика должна зафиксировать полную комплектацию по BOM.</p>}
+      {order.fulfillmentRequired && order.stage==='delivered' &&
+        order.fulfillment?.receipt?.status!=='matched_unverified' &&
+       <p className="inline-warning" role="note">Закрытие заказа невозможно без отдельной приёмки по количествам и повреждениям.</p>}
       <p className="helper">Данные демонстрационные. Запись подтверждает только журнал сервера; оплата и производство не подтверждены.</p>
       {order.config && onInspectOrder && <div className="server-actions">
         <button className="button outline" type="button" onClick={()=>onInspectOrder({

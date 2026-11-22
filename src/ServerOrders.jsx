@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {getFamily, getFabric, fabrics, colors, bounds,validate} from './domain.js';
 import {getInvestorDemoTemplates} from './investorDemo.js';
+import DevStockPanel from './DevStockPanel.jsx';
 import {PackoutForm,ReceiptForm,CorrectionForm,InspectionSummary} from './ServerFulfillment.jsx';
 import {SERVER_ORDER_SYNC_MS,shouldSyncOrders,sameOrderVersions} from './orderAutoSync.js';
 import {buildServerSpecConfig, getServerDemoCatalog,serverCreateCommand} from './serverSpecBridge.js';
@@ -196,7 +197,7 @@ function MessageForm({role, order, busy, onRun}) {
   );
 }
 
-function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
+function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder,stockEnabled=false}) {
   const family = getFamily(order.config ?? {}) ?? null;
   const fabric = order.config ? getFabric(order.config) : null;
   const all = ACTIONS[role].filter((a) => a.when(order));
@@ -255,6 +256,8 @@ function OrderCard({order, role, busy, onRun, holdDisabled,onInspectOrder}) {
         </ul>
       )}
       <InspectionSummary order={order}/>
+      {stockEnabled&&<DevStockPanel order={order} role={role}/>}
+
       {order.fulfillmentRequired && order.stage==='ready' && !order.fulfillment?.packout?.complete &&
        <p className="inline-warning" role="note">Отгрузка закрыта: фабрика должна зафиксировать полную комплектацию по BOM.</p>}
       {order.fulfillmentRequired && order.stage==='delivered' &&
@@ -592,7 +595,8 @@ export default function ServerOrders({config, holdDisabled: holdOverride,onInspe
           <h2>{role === 'client' ? 'Мои заказы' : role === 'factory' ? 'Назначенные заказы' : 'Все заказы оператора'}</h2>
           {orders.length === 0 && <p className="helper">Заказов пока нет.</p>}
           {orders.map((o) => (
-            <OrderCard key={o.orderId} order={o} role={role} busy={busy} holdDisabled={holdDisabled}
+            <OrderCard key={o.orderId+':'+role} order={o} role={role} busy={busy} holdDisabled={holdDisabled}
+              stockEnabled={Boolean(serverInfo.devSimulatedAuthority)}
               onInspectOrder={onInspectOrder} onRun={(cmd, after, localError) => run(o, cmd, after, localError)} />
           ))}
         </section>

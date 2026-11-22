@@ -121,6 +121,21 @@ try{
  assert.equal(o.config.category,'bed');assert.equal(o.config.width,200);
  assert.equal(o.offer,null);assert.equal(o.revisionId,null);
  assert.equal(o.productionRelease.allowed,false);
+ assert.equal(o.fulfillmentRequired,true,'Server creates mandatory packing and receiving protocol');
+ // A browser may never disable mandatory fulfillment in user-supplied JSON.
+ const forgedPolicy=await client.evaluate(async args=>{
+   const res=await fetch('/api/v1/orders/'+encodeURIComponent(args.id)+'/commands',{
+     method:'POST',credentials:'same-origin',
+     headers:{'content-type':'application/json'},
+     body:JSON.stringify({requestId:'QA-FORGE-'+args.id,expectedVersion:1,
+       type:'message',payload:{channel:'shared',note:'Attempt bypass'},
+       fulfillmentPolicy:null})
+   });
+   return {status:res.status,data:await res.json()};
+ },{id});
+ assert.equal(forgedPolicy.status,400);
+ assert.equal(forgedPolicy.data.code,'INVALID_ORDER_REQUEST');
+ mark('server_stamped_fulfillment_cannot_be_overridden_by_client');
  mark('client_new_product_template_server_order');
  await refresh(factory);
  assert.equal(await card(factory,id).count(),0);
@@ -226,6 +241,7 @@ try{
    assert.equal(draft.config.category,template.config.category);
    assert.deepEqual(draft.config,template.config);
    assert.equal(draft.offer,null);
+   assert.equal(draft.fulfillmentRequired,true,'Each article receives mandatory server fulfillment');
    assert.equal(draft.finance.verifiedBankKopecks,null);
    await refresh(factory);
    assert.equal(await card(factory,freshId).count(),0);

@@ -105,6 +105,23 @@ export function InspectionSummary({order}){
   {f.receipt?.discrepancies?.map(row=><p className="inline-warning" key={row.partRef}>
    {row.partRef}: недостача {row.missingQty}, повреждено {row.damagedQty} шт.</p>)}
   {(order.issue?.receiptId||f.correctionPending)&&<p className="helper">Согласование плана не доказывает выполнение работ: нужна повторная независимая приёмка.</p>}
+  {(f.packoutHistory?.length>0||f.receiptHistory?.length>0||f.issueHistory?.length>0)&&
+   <details className="server-evidence-history" data-inspection="history">
+    <summary>Журнал подтверждений · комплектация {f.packoutHistory?.length??0} · приёмка {f.receiptHistory?.length??0} · претензии {f.issueHistory?.length??0}</summary>
+    <ul className="server-messages">
+     {(f.packoutHistory??[]).map((x,index)=><li key={'pack-'+index}>
+      <b>Комплектация {index+1}:</b> {x.reference} · {x.complete?'полная по заявлению':'есть недостачи'} · версия {x.revisionId} · самоотчёт фабрики
+     </li>)}
+     {(f.receiptHistory??[]).map((x,index)=><li key={'receipt-'+index}>
+      <b>Акт приёмки {x.id}:</b> {x.reference} · {x.status} · {x.discrepancies.length} групп с расхождениями · заявлено клиентом
+     </li>)}
+     {(f.issueHistory??[]).map(x=><li key={x.id}>
+      <b>Претензия {x.id}:</b> {x.status}
+      {x.reinspectionReceiptId? ` · повторная приёмка ${x.reinspectionReceiptId} · ${x.reinspectionOutcome}` : ''}
+      {x.status==='correction_plan_accepted'?' · согласован только план, факт работ не подтверждён':''}
+     </li>)}
+    </ul>
+   </details>}
   <p className="helper">Данные концептуальные: склад, материальные документы и реальные внешние подтверждения отсутствуют.</p>
  </section>;
 }

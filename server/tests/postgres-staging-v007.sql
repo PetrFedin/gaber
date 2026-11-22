@@ -154,6 +154,28 @@ BEGIN
  EXCEPTION WHEN check_violation THEN NULL;
  END;
 END $pg$;
+-- Runtime role may read synthetic DEV SKU catalog and edit quantities under
+-- application-controlled serializable transactions, but never register a fake
+-- factory item by directly inserting its own vendor SKU mapping.
+DO $pg$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM pg_class
+ WHERE oid IN ('gaber_orders.dev_stock_skus'::regclass,
+  'gaber_orders.dev_stock_reservations'::regclass,
+  'gaber_orders.dev_stock_documents'::regclass,
+  'gaber_orders.dev_stock_document_lines'::regclass)
+ AND relrowsecurity AND relforcerowsecurity;
+ IF n<>4 THEN RAISE EXCEPTION 'DEV_STOCK_RLS_OR_FORCE_MISSING'; END IF;
+ BEGIN
+  INSERT INTO gaber_orders.dev_stock_skus
+   (tenant_id,factory_id,sku_id,part_ref,source_signature,name,on_hand_qty)
+  VALUES('TENANT-A','FACTORY-A','FORGED-VENDOR','FRAME',repeat('f',64),
+   'Forged vendor stock',9999);
+  RAISE EXCEPTION 'RUNTIME_FORGED_STOCK_CATALOG';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+END $pg$;
 -- RLS alone must not let a client inject a factory-private message.
 DO $pg$
 BEGIN

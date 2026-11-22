@@ -13,6 +13,7 @@ import {createPgAuthStore} from '../auth/authStore.js';
 import {createAuthService} from '../auth/authService.js';
 import {initialConfig} from '../../src/domain.js';
 import {getConceptPackoutPlan} from '../../src/fulfillmentInspection.js';
+import {getInvestorDemoTemplates} from '../../src/investorDemo.js';
 import {devUsers, DEV_TENANT, DEV_FACTORY} from '../dev/seed-data.js';
 import {createDevExternalAuthority} from '../devExternalAuthority.js';
 
@@ -95,11 +96,11 @@ const spec = {
   note: 'Цена после проверки (демо)'
 };
 // Заказ доводится до принятого предложения.
-async function acceptedOrder(tag) {
+async function acceptedOrder(tag,config=initialConfig()) {
   const id = `ORDER-LC-${tag}-${run}`;
-  await must('client', id, 'create', {projectId: id, name: 'Жизненный цикл ' + tag, config: initialConfig()}, null, 'создание ' + tag);
+  await must('client', id, 'create', {projectId: id, name: 'Жизненный цикл ' + tag, config}, null, 'создание ' + tag);
   await must('partner', id, 'assign_factory', {factoryId: DEV_FACTORY}, null, 'назначение ' + tag);
-  await must('partner', id, 'prepare_spec', spec, null, 'ТЗ ' + tag);
+  await must('partner', id, 'prepare_spec', {...spec,config}, null, 'ТЗ ' + tag);
   await must('factory', id, 'confirm_spec', {reference: 'ACK-' + tag, note: 'Проверено'}, 'spec', 'подтверждение ' + tag);
   await must('partner', id, 'offer', {note: 'Предложение'}, 'spec', 'предложение ' + tag);
   await must('client', id, 'accept', {}, 'current', 'принятие ' + tag);
@@ -244,6 +245,102 @@ try {
   await must('client',C,'accept_delivery',{},'current','Customer finally closes C');
   check((await read('client',C)).stage,'closed','C workflow closes only after successful customer reinspection');
   check((await read('client',C)).productionRelease.allowed,false,'Production release remains HOLD on C');
+
+  // ---------- Five actual article configs, one non-shared PostgreSQL journal
+  // per article; each exercises full DEV-only intake, packout, complaints,
+  // correction agreement and final independent customer reinspection. ----------
+  const categories=[];
+  const articles=getInvestorDemoTemplates();
+  check(articles.length,5,'Exactly five planned investor article categories');
+  for (const [index,article] of articles.entries()){
+    const tag='M'+index;
+    const articleId=await acceptedOrder(tag,article.config);
+    const initial=await read('client',articleId);
+    check(initial.config,article.config,'Exact configured engineering source for '+article.id);
+    check(initial.fulfillmentRequired,true,'Mandatory receipt for '+article.id);
+    check(initial.productionRelease.allowed,false,'No factory release for '+article.id);
+    await must('partner',articleId,'record_payment',
+      {amountKopecks:210005,reference:'DEV-LOCAL-'+tag},'current',
+      'Recorded only by simulated partner '+article.id);
+    for(const [type,payload] of [
+      ['start',{}],['complete',{}],['quality_pass',{reference:'DEV-QC-'+tag}]
+    ])await must('factory',articleId,type,payload,'current',
+       'DEV factory action '+type+' for '+article.id);
+    const engineering=getConceptPackoutPlan(article.config);
+    const packed=engineering.lines.map(x=>({partRef:x.partRef,packedQty:x.expectedQty}));
+    await deny('factory',articleId,'ship',
+      {carrier:'Demo',tracking:'NO-PACK-'+tag,reference:'NO-PACK-'+tag},
+      'current',422,'No packing → no shipment '+article.id);
+    await must('factory',articleId,'record_packout',
+      {reference:'PACK-'+tag,note:'Concept packing by factory',lines:packed},
+      'current','Record exact group BOM '+article.id);
+    await must('factory',articleId,'ship',
+      {carrier:'Demo',tracking:'TRACK-'+tag,reference:'SHIP-'+tag},'current',
+      'Simulated shipping '+article.id);
+    await must('factory',articleId,'deliver',{reference:'DELIVERY-'+tag},'current',
+      'Simulated delivery '+article.id);
+    await deny('client',articleId,'accept_delivery',{},'current',422,
+      'No independent client receipt → no closure '+article.id);
+    const receipt=packed.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+    const isMissing=index%2===0;
+    if(isMissing)receipt[0].receivedQty--;
+    else receipt[0].damagedQty++;
+    await must('client',articleId,'record_receipt',
+      {reference:'RECEIPT-'+tag+'-1',note:'Client reported discrepancy',lines:receipt},
+      'current','Client inspection '+article.id);
+    const clientView=await read('client',articleId);
+    check(clientView.stage,'disputed','Discrepancy opens dispute '+article.id);
+    check(clientView.fulfillment.receiptHistory.length,1,'Receipt history kept for '+article.id);
+    check(clientView.fulfillment.receipt.discrepancies.length,1,
+      'One group differs for '+article.id);
+    const group=clientView.fulfillment.receipt.discrepancies[0];
+    check(group.partRef,receipt[0].partRef,'Inspection tied to original BOM '+article.id);
+    const invalidCorrection=await deny('partner',articleId,'respond_issue',
+      {note:'Impossible repair quantity',
+       corrections:[{partRef:group.partRef,kind:'repair',quantity:group.missingQty+group.damagedQty+1}]},
+      'current',422,'Cannot overstate repair '+article.id);
+    check(invalidCorrection.body.reason??null,null,'HTTP exposes refusal code only');
+    if(isMissing)await deny('partner',articleId,'respond_issue',
+      {note:'Missing physical item cannot be repaired',
+       corrections:[{partRef:group.partRef,kind:'repair',quantity:1}]},
+      'current',422,'No repair for missing item '+article.id);
+    const corrective=[{partRef:group.partRef,
+      kind:isMissing?'replace':'repair',quantity:1}];
+    await must('partner',articleId,'respond_issue',
+      {note:'Specific correction proposal, not proof of work',corrections:corrective},
+      'current','Operator proposes correction '+article.id);
+    await must('client',articleId,'confirm_resolution',{},'current',
+      'Customer accepts plan only '+article.id);
+    const beforeReinspection=await read('client',articleId);
+    check(beforeReinspection.fulfillment.correctionPending,true,
+      'Plan acceptance alone not proof of repair '+article.id);
+    await deny('client',articleId,'accept_delivery',{},'current',422,
+      'No closure without fresh receipt '+article.id);
+    receipt[0].receivedQty=packed[0].packedQty;receipt[0].damagedQty=0;
+    await must('client',articleId,'record_receipt',
+      {reference:'RECEIPT-'+tag+'-2',note:'Independent reinspection claimed',lines:receipt},
+      'current','Second independent receipt '+article.id);
+    const reinspected=await read('client',articleId);
+    check(reinspected.fulfillment.receiptHistory.length,2,'Both records persist '+article.id);
+    check(reinspected.fulfillment.issueHistory.length,1,'Original claim persists '+article.id);
+    check(reinspected.fulfillment.issueHistory[0].reinspectionReceiptId,'RC2',
+      'Correction linked to second receipt '+article.id);
+    check(reinspected.fulfillment.issueHistory[0].status,'reinspected_matched_unverified',
+      'Claim linked to reported reinspection, never verified factory remedy');
+    check(reinspected.fulfillment.issueHistory[0].reinspectionOutcome,'REPORTED_MATCH_UNVERIFIED',
+      'Provenance stays self reported '+article.id);
+    await must('client',articleId,'accept_delivery',{},'current',
+      'Customer closes only after reinspection '+article.id);
+    const factoryView=await read('factory',articleId);
+    check(factoryView.stage,'closed','Factory sees closed order '+article.id);
+    ok(!('finance' in factoryView)&&!('offer' in factoryView),
+      'No client economics leak to factory '+article.id);
+    check(factoryView.productionRelease.allowed,false,
+      'Real production release remains HOLD '+article.id);
+    categories.push(article.config.category);
+  }
+  check(categories,['sofa','chairbed','bed','headboard','chair'],
+    'Five categories passed full independent PostgreSQL fulfillment');
 
   // ---------- след в логе и видимость ----------
   ok(logged.length >= 12 && logged.every((m) => m.startsWith('DEV_SIMULATED_EXTERNAL_AUTHORITY:')), 'каждая симулированная команда записана в лог сервера');

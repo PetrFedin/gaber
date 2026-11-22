@@ -41,7 +41,10 @@ export function projectOrderReadModel(state,role){
  const plan=(state.stage==='ready'||state.packout||state.delivery)?
   getConceptPackoutPlan(current?.config??state.sourceConfig):null;
  const fulfillment={plan,packout:clone(state.packout??null),
+  packoutHistory:clone(state.packouts??[]),
   receipt:clone(state.receipt??null),
+  receiptHistory:clone(state.receipts??[]),
+  issueHistory:clone(state.issues??[]),
   correctionPending:state.receipt?.status==='correction_pending_reinspection',
   authority:'CONCEPT_INSPECTION_NOT_PHYSICAL_WAREHOUSE_PROOF'};
  if(role==='client'){

@@ -88,3 +88,24 @@ test('a shortage and accepted correction plan still require independent rereceip
  f.send('client','record_receipt',{reference:'RECEIPT2',note:'Rechecked',lines:receipt},'R1');
  assert.equal(f.send('client','accept_delivery',{},'R1').stage,'closed');
 });
+
+test('quality complaint after matched receipt still invalidates closure until customer reinspection',()=>{
+ const f=makeScenario(true),plan=getConceptPackoutPlan(f.config);
+ const packed=plan.lines.map(x=>({partRef:x.partRef,packedQty:x.expectedQty}));
+ const receipt=packed.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+ f.send('factory','record_packout',{reference:'PACK-Q',note:'Concept packing',lines:packed},'R1');
+ f.send('factory','ship',{carrier:'Demo',tracking:'Q-TRK',reference:'SHIP-Q'},'R1');
+ f.send('factory','deliver',{reference:'POD-Q'},'R1');
+ f.send('client','record_receipt',{reference:'RECEIPT-Q1',note:'No missing groups',lines:receipt},'R1');
+ assert.equal(f.state.receipt.status,'matched_unverified');
+ f.send('client','report_issue',{note:'Visible upholstery seam defect after unpacking'},'R1');
+ assert.equal(f.state.issue.requiresReinspection,true);
+ f.send('factory','respond_issue',{note:'Offer a new upholstery repair inspection'},'R1');
+ f.send('client','confirm_resolution',{},'R1');
+ assert.equal(f.state.stage,'delivered');
+ assert.equal(f.state.issue.status,'resolved_pending_reinspection');
+ assert.equal(f.state.receipt.status,'correction_pending_reinspection');
+ assert.throws(()=>f.send('client','accept_delivery',{},'R1'),/ACCEPTANCE_BLOCKED/);
+ f.send('client','record_receipt',{reference:'RECEIPT-Q2',note:'Second independent inspection',lines:receipt},'R1');
+ assert.equal(f.send('client','accept_delivery',{},'R1').stage,'closed');
+});

@@ -127,6 +127,12 @@ try {
   await must('factory', A, 'complete', {}, 'current', 'производство завершено');
   await deny('factory', A, 'ship', {carrier: 'ТК', tracking: 'T1', reference: 'SHIP-0'}, 'current', 422, 'отгрузка до контроля качества');
   await must('factory', A, 'quality_pass', {reference: 'QC-A1'}, 'current', 'контроль качества пройден');
+  const plan=getConceptPackoutPlan(initialConfig());
+  const full=plan.lines.map(row=>({partRef:row.partRef,packedQty:row.expectedQty}));
+  await deny('factory',A,'ship',{carrier:'ТК Демо',tracking:'A-NO-PACK',reference:'A-NO-PACK'},'current',422,
+    'New server orders cannot ship without factory packing report');
+  await must('factory',A,'record_packout',{reference:'PACK-A1',note:'Self-reported complete concept BOM',lines:full},'current',
+    'Factory creates mandatory packing document');
   await deny('factory', A, 'ship', {carrier: 'ТК Демо', tracking: 'TRK-A', reference: 'SHIP-A0'}, 'current', 422, 'отгрузка при неоплаченном остатке');
   await must('partner', A, 'record_payment', {amountKopecks: 105002, reference: 'BANK-A2'}, 'current', 'партнёр записывает остаток');
   await deny('factory', A, 'ship', {carrier: '', tracking: 'T1', reference: 'SHIP-A0'}, 'current', 422, 'отгрузка без перевозчика');
@@ -134,6 +140,10 @@ try {
   await deny('client', A, 'accept_delivery', {}, 'current', 422, 'приёмка до доставки');
   await deny('client', A, 'deliver', {reference: 'DLV-X'}, 'current', 403, 'клиент не подтверждает доставку перевозчика');
   await must('factory', A, 'deliver', {reference: 'DLV-A1'}, 'current', 'доставка');
+  await deny('client',A,'accept_delivery',{},'current',422,'Closing without independent receipt forbidden');
+  const receivedFull=full.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+  await must('client',A,'record_receipt',{reference:'RECEIPT-A1',note:'Customer claims all items received',
+     lines:receivedFull},'current','Independent full receipt');
   await must('client', A, 'accept_delivery', {}, 'current', 'клиент принимает доставку');
   check((await read('client', A)).stage, 'closed', 'заказ закрыт');
   const dto = await read('client', A);
@@ -148,8 +158,12 @@ try {
   // ---------- спор после отгрузки ----------
   const B = await acceptedOrder('B');
   await must('partner', B, 'record_payment', {amountKopecks: 210005, reference: 'BANK-B1'}, 'current', 'полная оплата B');
-  for (const [t, pl] of [['start', {}], ['complete', {}], ['quality_pass', {reference: 'QC-B1'}], ['ship', {carrier: 'ТК Демо', tracking: 'TRK-B-' + run, reference: 'SHIP-B1'}]])
+  for (const [t, pl] of [['start', {}], ['complete', {}], ['quality_pass', {reference: 'QC-B1'}]])
     await must('factory', B, t, pl, 'current', 'B ' + t);
+  await must('factory',B,'record_packout',{reference:'PACK-B1',note:'Self-reported full concept BOM',lines:full},
+    'current','B factory packing');
+  await must('factory', B, 'ship', {carrier: 'ТК Демо', tracking: 'TRK-B-' + run,
+    reference: 'SHIP-B1'},'current','B shipping');
   await must('client', B, 'report_issue', {note: 'Повреждена обивка'}, 'current', 'клиент сообщает о проблеме');
   check((await read('client', B)).stage, 'disputed', 'этап: спор');
   await deny('client', B, 'confirm_resolution', {}, 'current', 422, 'подтверждать решение, которого нет');
@@ -159,6 +173,9 @@ try {
   await must('client', B, 'confirm_resolution', {}, 'current', 'клиент подтверждает решение');
   check((await read('client', B)).stage, 'shipped', 'после спора заказ возвращается к отгрузке');
   await must('factory', B, 'deliver', {reference: 'DLV-B1'}, 'current', 'доставка после спора');
+  await deny('client',B,'accept_delivery',{},'current',422,'Resolved ordinary claim does not waive independent receipt');
+  await must('client',B,'record_receipt',{reference:'RECEIPT-B1',note:'Independent reported receiving',
+    lines:receivedFull},'current','B customer receiving');
   await must('client', B, 'accept_delivery', {}, 'current', 'приёмка после спора');
   check((await read('partner', B)).stage, 'closed', 'B закрыт');
 
@@ -171,8 +188,6 @@ try {
     'Factory cannot pack parts before quality gate');
   await must('factory',C,'complete',{},'current','C production complete');
   await must('factory',C,'quality_pass',{reference:'QC-C1'},'current','C quality');
-  const plan=getConceptPackoutPlan(initialConfig());
-  const full=plan.lines.map(row=>({partRef:row.partRef,packedQty:row.expectedQty}));
   const partial=structuredClone(full);partial[0].packedQty--;
   await deny('client',C,'record_packout',{reference:'CLIENT-FORGE',note:'forbidden',lines:full},'current',403,
     'Customer cannot impersonate factory packout');

@@ -1,6 +1,8 @@
 import pg from 'pg';
 import {loadConfig} from './config.js';
 import {wirePostgresOrderJournal} from './orderJournalWiring.js';
+import {createPostgresOrderRepository} from './postgresOrderRepository.js';
+import {createDevStockService} from './devStockService.js';
 import {createPgAuthStore} from './auth/authStore.js';
 import {createAuthService} from './auth/authService.js';
 import {createGaberHttpServer} from './httpServer.js';
@@ -26,6 +28,9 @@ const simulated = config.simulateExternalAuthority
 const server = createGaberHttpServer({
   serverInfo: {devMfaAssumed: config.mfaAssumed, devSimulatedAuthority: Boolean(simulated)},
   journal: wirePostgresOrderJournal({pool: ordersPool, simulatedExternalAuthority: simulated}),
+  devStockService:simulated ? createDevStockService({
+    repository:createPostgresOrderRepository({pool:ordersPool}),enabled:true
+  }) : null,
   authService,
   allowedOrigins: config.allowedOrigins,
   staticDir: config.staticDir,

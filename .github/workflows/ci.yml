@@ -39,6 +39,13 @@ jobs:
       - name: Verify inventory and repository structure
         id: source
         run: npm run verify:repository
+      - name: Syntax-check isolated DEV stock server, seed and batch E2E scripts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
+        run: |
+          node --check server/dev/seedStock.js
+          node --check server/devStockService.js
+          node --check server/devStockHttpApi.js
+          node --check server/tests/dev-stock-batch-e2e.mjs
       - name: Node domain, engineering and API regression tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.source.outcome == 'success' }}
         run: npm run test:node
@@ -79,7 +86,7 @@ jobs:
         run: |
           actual=$(git rev-parse HEAD)
           test "$actual" = "$EXPECTED_SHA" || { echo "POSTGRES_SHA_MISMATCH" >&2; exit 1; }
-      - name: Apply staging migrations 001-009 and run real PostgreSQL tenant/RLS contract
+      - name: Apply staging migrations 001-011 and run real PostgreSQL tenant/RLS contract
         env:
           GABER_TEST_PG_PASSWORD: gaber_ci_disposable_only
         run: bash scripts/verify-postgres-staging.sh
@@ -117,12 +124,18 @@ jobs:
           GABER_ORDERS_DATABASE_URL: postgres://gaber_app_orders:ci-orders-disposable@127.0.0.1:5432/gaber_staging
           GABER_AUTH_DATABASE_URL: postgres://gaber_app_auth:ci-auth-disposable@127.0.0.1:5432/gaber_staging
         run: |
-          # Миграции 001-008 уже применены verify-postgres-staging.sh; setup создаёт роли и пользователей.
+          # Миграции 001-011 уже применены verify-postgres-staging.sh; setup создаёт роли и вымышленных пользователей.
           node server/dev/setup.mjs
           node server/tests/auth-http-e2e.mjs
           node server/tests/order-lifecycle-e2e.mjs
           node server/tests/order-simulated-lifecycle-e2e.mjs
           node server/tests/mfa-e2e.mjs
+      - name: Verify DEV synthetic SKU inventory, stock reservation races, batch logistics and independent receiving
+        env:
+          GABER_DEV_ADMIN_DATABASE_URL: postgres://postgres:gaber_ci_disposable_only@127.0.0.1:5432/gaber_staging
+          GABER_ORDERS_DATABASE_URL: postgres://gaber_app_orders:ci-orders-disposable@127.0.0.1:5432/gaber_staging
+          GABER_AUTH_DATABASE_URL: postgres://gaber_app_auth:ci-auth-disposable@127.0.0.1:5432/gaber_staging
+        run: node server/tests/dev-stock-batch-e2e.mjs
       - name: Build frontend and install Chromium in isolated PostgreSQL QA
         run: |
           npm run build

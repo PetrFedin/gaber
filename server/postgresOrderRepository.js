@@ -27,6 +27,11 @@ export function createPostgresOrderRepository({pool}){
     await c.query("SELECT set_config('app.tenant_id',$1,true)",[tenantId]);
     const key=[tenantId,orderId];
     const tx={
+     /** Trusted parameterized stock SQL, same tenant-scoped serializable transaction. */
+     async stockQuery(sql,params){
+      if(typeof sql!=='string'||!Array.isArray(params))throw TypeError('INVALID_STOCK_QUERY');
+      return c.query(sql,params);
+     },
      async getResourceForUpdate(){
       const q=await c.query(`SELECT r.tenant_id AS "tenantId",r.order_id AS "orderId",
        r.client_id AS "clientId",r.brand_id AS "brandId",

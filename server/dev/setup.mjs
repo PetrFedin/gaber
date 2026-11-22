@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {hashPassword} from '../auth/passwords.js';
 import {devUsers, DEV_TENANT, DEV_FACTORY} from './seed-data.js';
+import {seedFiveDemoStockArticles} from './seedStock.js';
 
 /**
  * Разработческая подготовка базы: миграции 001..N, роли с минимальными правами, вымышленные пользователи.
@@ -30,7 +31,11 @@ export async function setupDevDatabase({adminUrl, ordersPassword, authPassword, 
     GRANT SELECT,INSERT,UPDATE ON gaber_orders.order_heads TO gaber_runtime_contract;
     GRANT SELECT,INSERT ON gaber_orders.order_events TO gaber_runtime_contract;
     GRANT SELECT,INSERT ON gaber_orders.order_factory_assignments TO gaber_runtime_contract;
-    GRANT SELECT ON gaber_orders.factory_directory TO gaber_runtime_contract`);
+    GRANT SELECT ON gaber_orders.factory_directory TO gaber_runtime_contract;
+    GRANT SELECT,UPDATE ON gaber_orders.dev_stock_skus TO gaber_runtime_contract;
+    GRANT SELECT,INSERT,UPDATE ON gaber_orders.dev_stock_reservations TO gaber_runtime_contract;
+    GRANT SELECT,INSERT ON gaber_orders.dev_stock_documents TO gaber_runtime_contract;
+    GRANT SELECT,INSERT ON gaber_orders.dev_stock_document_lines TO gaber_runtime_contract`);
     for (const [name, group, password] of [
       ['gaber_app_orders', 'gaber_runtime_contract', ordersPassword],
       ['gaber_app_auth', 'gaber_auth_runtime', authPassword]
@@ -52,6 +57,9 @@ export async function setupDevDatabase({adminUrl, ordersPassword, authPassword, 
        VALUES($1,$2,'approved','DEV-SEED',now()) ON CONFLICT DO NOTHING`,
       [DEV_TENANT, DEV_FACTORY]
     );
+    // Synthetic receipts are seeded by a privileged disposable DB bootstrap.
+    // ON CONFLICT DO NOTHING: reruns must never refill consumed stock.
+    await seedFiveDemoStockArticles({pool,tenantId:DEV_TENANT,factoryId:DEV_FACTORY});
     for (const u of devUsers)
       await pool.query(
         `INSERT INTO gaber_auth.users(user_id,tenant_id,email,name,password_hash,role,factory_id)

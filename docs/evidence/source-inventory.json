@@ -15,7 +15,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha": "03cea93b046c4e5c82a32cc772ca16da104a7fae"
+      "sha": "e236ae4e00cac2b9c8432a381e8c0a7616550939"
     },
     {
       "path": ".gitignore",
@@ -72,6 +72,10 @@
     {
       "path": "docs/GABER-ARTICLE-SYNC-FULFILLMENT-2026-11-21.md",
       "sha": "6ae96cbfaee515254db550fc31fb9e3b14a27054"
+    },
+    {
+      "path": "docs/GABER-DEV-SKU-STOCK-BATCH-2026-11-23.md",
+      "sha": "82ff03a0be31599a1dd7e0bbeabe9c0dfa70e24f"
     },
     {
       "path": "docs/GABER-FIVE-ARTICLE-FULFILLMENT-AUDIT-2026-11-22.md",
@@ -370,12 +374,24 @@
       "sha": "29aa1968fbe7aa8c74b00b8507568be2bea09052"
     },
     {
+      "path": "server/dev/seedStock.js",
+      "sha": "a01bc28a9f3afdd34696d6f7ddfc8c4f7a0dc159"
+    },
+    {
       "path": "server/dev/setup.mjs",
-      "sha": "3773357452cf9ccc5d377a71e2e97dc7930e519b"
+      "sha": "215b9c2a0959ea858f37326ca707aa5ddded8aff"
     },
     {
       "path": "server/devExternalAuthority.js",
       "sha": "99b832768c18ca6f8aaa9abe7bc7d38c0a95f6cb"
+    },
+    {
+      "path": "server/devStockHttpApi.js",
+      "sha": "fa0ae572b87dc16220ed915491685fd9efd2beb2"
+    },
+    {
+      "path": "server/devStockService.js",
+      "sha": "2d28cd11de1cd41f5d85670885c806203fe9c96a"
     },
     {
       "path": "server/factoryReviewPolicy.js",
@@ -387,11 +403,15 @@
     },
     {
       "path": "server/httpServer.js",
-      "sha": "849329238a6bdc54d7abe144ea046d6cfefeb549"
+      "sha": "8f43c93b109a021ba537b6001b9a7d4817396445"
     },
     {
       "path": "server/index.js",
-      "sha": "5c5daf1ae1a67488e2689b2117dcadc5f615211f"
+      "sha": "a94abfa533ea00e17b52d74214f3b6f9e907d625"
+    },
+    {
+      "path": "server/inventoryPlan.js",
+      "sha": "c2d69d866bf59e1ba78cae1c069009c9f1418b17"
     },
     {
       "path": "server/migrations/001_factory_review_hold.sql",
@@ -434,6 +454,10 @@
       "sha": "25ba8df1cc52084c64b059814b10b5d876f3edc4"
     },
     {
+      "path": "server/migrations/011_dev_sku_reservation_batch_documents_hold.sql",
+      "sha": "a0a6609a1ea0dd0a5875749a4bd14f2c862c97de"
+    },
+    {
       "path": "server/orderCommandAdmission.js",
       "sha": "25eac9484c9480a5348994e5ef874a2ee6c05cca"
     },
@@ -443,7 +467,7 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "5d173c22a54b95e23c2a4357d8c9f1bff139cad5"
+      "sha": "985031ab49fbc59efbe5a78af45624d446e6d6ae"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -459,7 +483,7 @@
     },
     {
       "path": "server/postgresOrderRepository.js",
-      "sha": "c010a983ae4ff44ad042dccafa4a8d6072dfcaa7"
+      "sha": "f13d92c75e2a9634d498efbacd8c7de2a2b4e50a"
     },
     {
       "path": "server/staticFiles.js",
@@ -472,6 +496,10 @@
     {
       "path": "server/tests/browser-postgres-e2e.mjs",
       "sha": "ec24d5b97218d90d41a9a5f638a6716a47251ea9"
+    },
+    {
+      "path": "server/tests/dev-stock-batch-e2e.mjs",
+      "sha": "8648778332598ff47b62bdd062eaf455a72d34c8"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",
@@ -495,7 +523,7 @@
     },
     {
       "path": "server/tests/postgres-staging-v007.sql",
-      "sha": "a81415d62170a6c3b8c830689df69d5aa0147d36"
+      "sha": "5fb0c6aa542fc26967e3bcb232503a650dd70d69"
     },
     {
       "path": "src/App.jsx",
@@ -532,6 +560,10 @@
     {
       "path": "src/DesignKit.jsx",
       "sha": "af2f9a2f5752f820eb4a6f6c9859b6971307a4d4"
+    },
+    {
+      "path": "src/DevStockPanel.jsx",
+      "sha": "c801514407f445599d6598cd7e8ea9932abb20e3"
     },
     {
       "path": "src/EngineeringAssembly.js",
@@ -587,7 +619,7 @@
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "2d598be6826404142844eaff49895827eb45a0a0"
+      "sha": "e862dbadf0c31bf1e1fdc4f9866d39521e308e11"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -856,6 +888,10 @@
     {
       "path": "tests/dev-external-authority.test.js",
       "sha": "10d63e35c6463d56a5b474d24e4e8aafcf41df34"
+    },
+    {
+      "path": "tests/dev-stock-plan.test.js",
+      "sha": "f5b355e8e10583c55e699b5166b3434c55a34c44"
     },
     {
       "path": "tests/domain.test.js",

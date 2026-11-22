@@ -20,7 +20,7 @@ function serialize(x){const s=JSON.stringify(canonical(x));if(Buffer.byteLength(
 const forbidden=new Set(['start','complete','quality_pass','ship','deliver','accept_delivery']);
 const hashEvent=(r,scope)=>sha(serialize({schema:ORDER_JOURNAL_SCHEMA,...scope,seq:r.seq,actorId:r.actorId,
  requestId:r.requestId,requestHash:r.requestHash,previousHash:r.previousHash,command:r.command}));
-function verify(head,rows,scope,replay){
+export function verifyOrderJournalSnapshot(head,rows,scope,replay){
  if(!head||!Number.isSafeInteger(head.version)||!Array.isArray(rows)||rows.length!==head.version||
    head.version>500)throw Error('JOURNAL_INTEGRITY_FAILURE');
  let prev=null;
@@ -63,7 +63,7 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    }
    const head=await tx.getHeadForUpdate();
    if(!head)return deny('ORDER_MISSING');
-   const rows=await tx.getEvents(),{state}=verify(head,rows,scope,reducer.replayOrder);
+   const rows=await tx.getEvents(),{state}=verifyOrderJournalSnapshot(head,rows,scope,reducer.replayOrder);
    if(!state)return deny('ORDER_MISSING');
    const order=projectOrderReadModel(state,access.role);
    // Provenance is kept inside the hash-chained event command. Never
@@ -140,7 +140,7 @@ export function createOrderJournalService({repository,admission,reducer,clock=Da
    if(!head&&type!=='create')return deny('ORDER_MISSING');
    const firstWrite=!head;
    if(!head){if(expectedVersion!==0)return deny('INVALID_INITIAL_VERSION');head={version:0,headHash:null};}
-   const rows=await tx.getEvents(),{events,state}=verify(head,rows,scope,reducer.replayOrder);
+   const rows=await tx.getEvents(),{events,state}=verifyOrderJournalSnapshot(head,rows,scope,reducer.replayOrder);
    const requestHash=sha(serialize({scope,requestId,expectedVersion,type,payload,
      revisionId:revisionId??null,actorId:actor.subject,role}));
    const prior=rows.find(x=>x.requestId===requestId);

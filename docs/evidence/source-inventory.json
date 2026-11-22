@@ -74,6 +74,10 @@
       "sha": "6ae96cbfaee515254db550fc31fb9e3b14a27054"
     },
     {
+      "path": "docs/GABER-FULFILLMENT-MANDATORY-GATE-2026-11-22.md",
+      "sha": "c588a1a08c0022ec2e5bdb051de797144012ce2b"
+    },
+    {
       "path": "docs/HTTP-POSTGRES-E2E-CONTRACT.md",
       "sha": "e08375c1a63863330b2e907f154c703cbf79a42a"
     },
@@ -435,7 +439,7 @@
     },
     {
       "path": "server/orderJournalService.js",
-      "sha": "7c9ce711260fa728e26abcfdca4ddabc8750e5ce"
+      "sha": "5d173c22a54b95e23c2a4357d8c9f1bff139cad5"
     },
     {
       "path": "server/orderJournalWiring.js",
@@ -443,7 +447,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "d42aaae957a71796b55439a5e0511a0c02c6f9a6"
+      "sha": "78551f69649da62a3925d739e9da3dc910c28ac1"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -463,7 +467,7 @@
     },
     {
       "path": "server/tests/browser-postgres-e2e.mjs",
-      "sha": "9fe4f94bdeef42e962aa46e49198a7ff8ebdb40b"
+      "sha": "ec24d5b97218d90d41a9a5f638a6716a47251ea9"
     },
     {
       "path": "server/tests/mfa-e2e.mjs",
@@ -475,7 +479,7 @@
     },
     {
       "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
-      "sha": "8b7c1fc6b88c2e6bba73ba609d9bd7460517abcf"
+      "sha": "25cdbdbb001cc49bfd40f37a293f6556fc2443a8"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -575,11 +579,11 @@
     },
     {
       "path": "src/ServerFulfillment.jsx",
-      "sha": "a5c7b7dcde261cd1e4ed1a4321f18ef7a6931a51"
+      "sha": "7009c7b5037b3fa07788bc3ce7636a54237fad37"
     },
     {
       "path": "src/ServerOrders.jsx",
-      "sha": "ce769b9c0bba26733a64de3ae4f3ef683e194f36"
+      "sha": "2d598be6826404142844eaff49895827eb45a0a0"
     },
     {
       "path": "src/TechnicalPage.jsx",
@@ -719,7 +723,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "6b4acf41db118dfb8d93696922aacdad1b1b7a32"
+      "sha": "ba0522d35d075ee2941bda08a83cabfed5c43dd5"
     },
     {
       "path": "src/partnerEconomics.js",
@@ -1030,12 +1034,16 @@
       "sha": "f0d1f161f8995e565d70382e3dfa996c1611f338"
     },
     {
+      "path": "tests/server-mandatory-fulfillment.test.js",
+      "sha": "e7e48377e595116499735c7f357ad9d87dc12622"
+    },
+    {
       "path": "tests/server-order-money.test.js",
       "sha": "91b6aaa06a537dd30ac2a8d11b6a10ff76cb5c94"
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "b7fa2baeb660d683cca9394479ac8b2c0f610259"
+      "sha": "e4bde352ea283091c313e4da4ec23690aeab1504"
     },
     {
       "path": "tests/server-spec-bridge.test.js",

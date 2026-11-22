@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {hashPassword} from '../auth/passwords.js';
 import {devUsers, DEV_TENANT, DEV_FACTORY} from './seed-data.js';
+import {seedFiveDemoStockArticles} from './seedStock.js';
 
 /**
  * Разработческая подготовка базы: миграции 001..N, роли с минимальными правами, вымышленные пользователи.
@@ -56,6 +57,9 @@ export async function setupDevDatabase({adminUrl, ordersPassword, authPassword, 
        VALUES($1,$2,'approved','DEV-SEED',now()) ON CONFLICT DO NOTHING`,
       [DEV_TENANT, DEV_FACTORY]
     );
+    // Synthetic receipts are seeded by a privileged disposable DB bootstrap.
+    // ON CONFLICT DO NOTHING: reruns must never refill consumed stock.
+    await seedFiveDemoStockArticles({pool,tenantId:DEV_TENANT,factoryId:DEV_FACTORY});
     for (const u of devUsers)
       await pool.query(
         `INSERT INTO gaber_auth.users(user_id,tenant_id,email,name,password_hash,role,factory_id)

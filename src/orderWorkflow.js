@@ -217,6 +217,20 @@ function apply(state,command){
       discrepancies:result.discrepancies,at:command.at,
       status:result.matched?'matched_unverified':'discrepancy',
       authority:'CLIENT_SELF_REPORTED_CONCEPT_UNVERIFIED'};
+    // Link a proposed remedy to the independent follow-up receipt. A plan
+    // merely accepted by the customer must not remain ambiguously "resolved"
+    // in the read model or look as if physical work was proved.
+    const previousIssue=s.issue;
+    if(previousIssue&&previousIssue.fromStage==='delivered'&&
+       ['correction_plan_accepted','resolved_pending_reinspection'].includes(previousIssue.status)){
+      const index=s.issues.findIndex(row=>row.id===previousIssue.id);
+      if(index<0)fail('ISSUE_HISTORY_INVALID');
+      previousIssue.reinspectionReceiptId=receipt.id;
+      previousIssue.reinspectionAt=command.at;
+      previousIssue.reinspectionOutcome=result.matched?'REPORTED_MATCH_UNVERIFIED':'REPORTED_DISCREPANCY';
+      previousIssue.status=result.matched?'reinspected_matched_unverified':'reinspected_still_disputed';
+      s.issues[index]=copy(previousIssue);
+    }
     s.receipt=receipt;s.receipts.push(copy(receipt));
     if(!result.matched){
       const issue={id:'I'+(s.issues.length+1),revisionId:current.id,

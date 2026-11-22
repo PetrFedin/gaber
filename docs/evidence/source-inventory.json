@@ -74,6 +74,10 @@
       "sha": "6ae96cbfaee515254db550fc31fb9e3b14a27054"
     },
     {
+      "path": "docs/GABER-FIVE-ARTICLE-FULFILLMENT-AUDIT-2026-11-22.md",
+      "sha": "26ee83f73654c971c4b2d6ad8dfc2898226060b0"
+    },
+    {
       "path": "docs/GABER-FULFILLMENT-MANDATORY-GATE-2026-11-22.md",
       "sha": "c588a1a08c0022ec2e5bdb051de797144012ce2b"
     },
@@ -447,7 +451,7 @@
     },
     {
       "path": "server/orderReadModel.js",
-      "sha": "78551f69649da62a3925d739e9da3dc910c28ac1"
+      "sha": "11d18544220eeadcdb7ed733270ce2df7693e387"
     },
     {
       "path": "server/postgresFactoryRepository.js",
@@ -479,7 +483,7 @@
     },
     {
       "path": "server/tests/order-simulated-lifecycle-e2e.mjs",
-      "sha": "25cdbdbb001cc49bfd40f37a293f6556fc2443a8"
+      "sha": "5d728bccb745ae6f7dac67fb4152ff754068f65f"
     },
     {
       "path": "server/tests/postgres-http-e2e-fixtures.sql",
@@ -579,7 +583,7 @@
     },
     {
       "path": "src/ServerFulfillment.jsx",
-      "sha": "7009c7b5037b3fa07788bc3ce7636a54237fad37"
+      "sha": "c2076f0496237686721ff4e18f576d4712b71091"
     },
     {
       "path": "src/ServerOrders.jsx",
@@ -663,7 +667,7 @@
     },
     {
       "path": "src/fulfillmentInspection.js",
-      "sha": "18ed26a72e11439832c1fd45889e3a7215b1d7b0"
+      "sha": "32e372f88998184788dfaf6228f3b918b0077b1e"
     },
     {
       "path": "src/icons.jsx",
@@ -723,7 +727,7 @@
     },
     {
       "path": "src/orderWorkflow.js",
-      "sha": "ba0522d35d075ee2941bda08a83cabfed5c43dd5"
+      "sha": "fa99d351848ca278e7218fc50b23abbf6e5ad71f"
     },
     {
       "path": "src/partnerEconomics.js",
@@ -903,7 +907,7 @@
     },
     {
       "path": "tests/fulfillment-inspection.test.js",
-      "sha": "b51fea4a04d7ae32e28f906bdda71266a14243ff"
+      "sha": "c6764c540714692140a7c6eabd340bf81f76b893"
     },
     {
       "path": "tests/investor-demo-ui.mjs",
@@ -1035,7 +1039,7 @@
     },
     {
       "path": "tests/server-mandatory-fulfillment.test.js",
-      "sha": "e7e48377e595116499735c7f357ad9d87dc12622"
+      "sha": "7f7a7eff6a7e7373ca8998db158dfafdd1b7c8c9"
     },
     {
       "path": "tests/server-order-money.test.js",
@@ -1043,7 +1047,7 @@
     },
     {
       "path": "tests/server-orders-ui.mjs",
-      "sha": "e4bde352ea283091c313e4da4ec23690aeab1504"
+      "sha": "c0e3db154342cfbe4064b9bcd3e2ea96e8327c6a"
     },
     {
       "path": "tests/server-spec-bridge.test.js",

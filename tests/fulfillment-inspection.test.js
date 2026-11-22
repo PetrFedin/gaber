@@ -37,3 +37,19 @@ test('independent receipt and correction proposal distinguish missing and damage
   [{partRef:short[0].partRef,kind:'replace',quantity:2}]),/CORRECTION_NOT_RELEVANT/);
  assert.throws(()=>validateConceptReceipt({...packout,complete:false},full),/PACKOUT_REQUIRED/);
 });
+
+test('a missing part cannot be marked repaired; a damaged received item may be repaired',()=>{
+ const missing=[{partRef:'frame',missingQty:2,damagedQty:0}];
+ assert.throws(()=>validateCorrectionProposal(missing,
+  [{partRef:'frame',kind:'repair',quantity:1}]),/CORRECTION_NOT_RELEVANT/);
+ assert.deepEqual(validateCorrectionProposal(missing,
+  [{partRef:'frame',kind:'replace',quantity:2}]),[{partRef:'frame',kind:'replace',quantity:2}]);
+ const damaged=[{partRef:'foam',missingQty:0,damagedQty:2}];
+ assert.deepEqual(validateCorrectionProposal(damaged,
+  [{partRef:'foam',kind:'repair',quantity:2}]),[{partRef:'foam',kind:'repair',quantity:2}]);
+ const mixed=[{partRef:'upholstery',missingQty:1,damagedQty:2}];
+ assert.throws(()=>validateCorrectionProposal(mixed,
+  [{partRef:'upholstery',kind:'repair',quantity:3}]),/CORRECTION_NOT_RELEVANT/);
+ assert.deepEqual(validateCorrectionProposal(mixed,
+  [{partRef:'upholstery',kind:'investigate',quantity:3}]).length,1);
+});

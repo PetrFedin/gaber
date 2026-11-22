@@ -86,6 +86,11 @@ test('a shortage and accepted correction plan still require independent rereceip
  assert.throws(()=>f.send('client','accept_delivery',{},'R1'),/ACCEPTANCE_BLOCKED/);
  receipt[0].receivedQty++;
  f.send('client','record_receipt',{reference:'RECEIPT2',note:'Rechecked',lines:receipt},'R1');
+ assert.equal(f.state.issues.length,1);
+ assert.equal(f.state.issues[0].reinspectionReceiptId,'RC2');
+ assert.equal(f.state.issues[0].reinspectionOutcome,'REPORTED_MATCH_UNVERIFIED');
+ assert.equal(f.state.issues[0].status,'reinspected_matched_unverified');
+ assert.equal(f.state.receipts.length,2);
  assert.equal(f.send('client','accept_delivery',{},'R1').stage,'closed');
 });
 
@@ -107,5 +112,32 @@ test('quality complaint after matched receipt still invalidates closure until cu
  assert.equal(f.state.receipt.status,'correction_pending_reinspection');
  assert.throws(()=>f.send('client','accept_delivery',{},'R1'),/ACCEPTANCE_BLOCKED/);
  f.send('client','record_receipt',{reference:'RECEIPT-Q2',note:'Second independent inspection',lines:receipt},'R1');
+ assert.equal(f.state.issues[0].reinspectionReceiptId,'RC2');
+ assert.equal(f.state.issues[0].status,'reinspected_matched_unverified');
+ assert.equal(f.state.issues[0].reinspectionAt,'2026-11-22T12:00:00.000Z');
  assert.equal(f.send('client','accept_delivery',{},'R1').stage,'closed');
+});
+
+test('failed reinspection preserves the original dispute and creates a distinct follow-up issue',()=>{
+ const f=makeScenario(true),plan=getConceptPackoutPlan(f.config);
+ const packed=plan.lines.map(x=>({partRef:x.partRef,packedQty:x.expectedQty}));
+ f.send('factory','record_packout',{reference:'PACK-1',note:'Concept packing',lines:packed},'R1');
+ f.send('factory','ship',{carrier:'Demo',tracking:'T-1',reference:'SHIP-1'},'R1');
+ f.send('factory','deliver',{reference:'POD-1'},'R1');
+ const missing=packed.map(x=>({partRef:x.partRef,receivedQty:x.packedQty,damagedQty:0}));
+ missing[0].receivedQty--;
+ f.send('client','record_receipt',{reference:'RECEIPT-1',note:'Missing',lines:missing},'R1');
+ const fix=[{partRef:missing[0].partRef,kind:'replace',quantity:1}];
+ f.send('partner','respond_issue',{note:'Replacement plan only',corrections:fix},'R1');
+ f.send('client','confirm_resolution',{},'R1');
+ f.send('client','record_receipt',{reference:'RECEIPT-2',note:'Still missing',lines:missing},'R1');
+ assert.equal(f.state.stage,'disputed');
+ assert.equal(f.state.receipts.length,2);
+ assert.equal(f.state.issues.length,2);
+ assert.equal(f.state.issues[0].reinspectionReceiptId,'RC2');
+ assert.equal(f.state.issues[0].reinspectionOutcome,'REPORTED_DISCREPANCY');
+ assert.equal(f.state.issues[0].status,'reinspected_still_disputed');
+ assert.equal(f.state.issues[1].receiptId,'RC2');
+ assert.equal(f.state.issues[1].status,'open');
+ assert.throws(()=>f.send('client','accept_delivery',{},'R1'),/ACCEPTANCE_BLOCKED/);
 });

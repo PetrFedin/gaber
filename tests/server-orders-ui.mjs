@@ -358,6 +358,10 @@ try {
   await fill('Номер акта приёмки','DEMO-REC-01');
   await fill('Комментарий клиента','В упаковке недостаёт одной детали');
   await act(async()=>setValue(getReceiptReceived()[0],String(Number(getReceiptReceived()[0].value)-1)));
+  const receiptInputs=[...document.querySelectorAll('[data-inspection="receipt"] fieldset')][0]
+    .querySelectorAll('input[type="number"]');
+  assert.equal(receiptInputs[1].max,receiptInputs[0].value,
+    'Damaged quantity must be bounded by actually received count, not planned packing');
   await click('Зафиксировать приёмку по позициям');
   assert.equal(state().stage,'disputed');
   assert.equal(state().receipt.discrepancies.length,1);
@@ -376,6 +380,13 @@ try {
   await fill('Комментарий клиента','Повторная проверка: заявлено всё');
   await click('Зафиксировать приёмку по позициям');
   assert.equal(state().receipt.status,'matched_unverified');
+  assert.equal(state().issues.length,2,'Earlier shipped complaint is a separate incident');
+  assert.equal(state().issues[0].reinspectionReceiptId,undefined,'Earlier shipped complaint is immutable');
+  assert.equal(state().issues.at(-1).reinspectionReceiptId,'RC2',
+    'The new receipt links to the later packing shortage incident');
+  assert.equal(state().issues.at(-1).status,'reinspected_matched_unverified');
+  assert.match(text(),/Журнал подтверждений/);
+  assert.match(text(),/повторная приёмка RC2/);
   await click('Принять доставку');
   assert.equal(state().stage, 'closed');
   await logout();

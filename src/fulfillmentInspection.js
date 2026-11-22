@@ -62,7 +62,11 @@ export function validateCorrectionProposal(discrepancies,raw){
      !Number.isSafeInteger(x.quantity)||x.quantity<1)fail('CORRECTION_INVALID');
   seen.add(x.partRef);
   const row=allowed.get(x.partRef);
-  if(!row||x.quantity>row.missingQty+row.damagedQty)fail('CORRECTION_NOT_RELEVANT');
+  // A missing part cannot be repaired before it has actually been received.
+  // "replace" and "investigate" may address missing and/or damaged units,
+  // while "repair" is restricted to damaged units physically reported on receipt.
+  const possible=row&&(x.kind==='repair'?row.damagedQty:row.missingQty+row.damagedQty);
+  if(!possible||x.quantity>possible)fail('CORRECTION_NOT_RELEVANT');
   return {partRef:x.partRef,kind:x.kind,quantity:x.quantity};
  });
 }

@@ -1,5 +1,6 @@
 import {createServer} from 'node:http';
 import {createOrderHttpHandler} from './orderHttpApi.js';
+import {createDevStockHttpHandler} from './devStockHttpApi.js';
 import {createAuthHttpHandler, readCookie, originAllowed} from './auth/authHttp.js';
 import {createStaticHandler} from './staticFiles.js';
 
@@ -8,10 +9,13 @@ import {createStaticHandler} from './staticFiles.js';
  * Браузер аутентифицируется httpOnly-cookie: здесь она превращается в Bearer для существующего
  * адаптера заказов. Явный заголовок Authorization имеет приоритет (для не-браузерных клиентов).
  */
-export function createGaberHttpServer({journal, authService, allowedOrigins = [], secureCookie = false, clock = Date.now, serverInfo = {}, staticDir = null}) {
+export function createGaberHttpServer({journal, devStockService = null, authService, allowedOrigins = [], secureCookie = false, clock = Date.now, serverInfo = {}, staticDir = null}) {
   const serveStatic = staticDir ? createStaticHandler(staticDir) : null;
   const orders = createOrderHttpHandler({journal, resolveSession: (t) => authService.resolveSession(t), clock});
   const auth = createAuthHttpHandler({service: authService, allowedOrigins, secureCookie, serverInfo});
+  const stock = createDevStockHttpHandler({
+    service:devStockService,resolveSession:(token)=>authService.resolveSession(token)
+  });
   return createServer(async (req, res) => {
     // Заметный сигнал для клиентов и прокси: сервер работает с имитацией внешних полномочий.
     if (serverInfo.devSimulatedAuthority) res.setHeader('X-Gaber-Dev-Simulation', 'external-authority');
@@ -24,6 +28,7 @@ export function createGaberHttpServer({journal, authService, allowedOrigins = []
     }
     const sid = readCookie(req);
     if (sid && !req.headers.authorization) req.headers.authorization = 'Bearer ' + sid;
+    if (await stock(req,res)) return;
     // Список заказов, доступных текущему пользователю (роль-DTO, без чужих заказов).
     if (new URL(req.url, 'http://localhost').pathname === '/api/v1/orders') {
       const send = (status, body) => {
